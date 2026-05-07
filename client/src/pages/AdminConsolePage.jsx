@@ -385,12 +385,13 @@ const AdminConsolePage = () => {
     }
   };
 
-  const renderLimitedCell = (submissionId, field, value) => {
+  const renderLimitedCell = (submissionId, field, value, options = {}) => {
     const lines = getDisplayLines(value);
     const cellId = `${submissionId}-${field}`;
     const expanded = Boolean(expandedTableCells[cellId]);
-    const shouldCollapse = lines.length > 6;
-    const visibleLines = shouldCollapse && !expanded ? lines.slice(0, 5) : lines;
+    const collapsedLineCount = options.collapsedLineCount || 5;
+    const shouldCollapse = lines.length > collapsedLineCount + 1;
+    const visibleLines = shouldCollapse && !expanded ? lines.slice(0, collapsedLineCount) : lines;
 
     return (
       <div className="max-w-xs rounded-2xl border px-3 py-3" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted, color: palette.textColor }}>
@@ -406,7 +407,7 @@ const AdminConsolePage = () => {
             className="mt-3 text-sm font-semibold"
             style={{ color: palette.primary }}
           >
-            {expanded ? "Show less" : `Show ${lines.length - 5} more`}
+            {expanded ? "Show less" : `Show ${lines.length - collapsedLineCount} more`}
           </button>
         ) : null}
       </div>
@@ -1212,7 +1213,7 @@ const AdminConsolePage = () => {
                                 <td className="px-4 py-4 text-sm">{renderLimitedCell(submission.id, "licenses", licenseText)}</td>
                                 <td className="px-4 py-4 text-sm">{renderLimitedCell(submission.id, "counties", countyText)}</td>
                                 <td className="px-4 py-4 text-sm">
-                                  {renderLimitedCell(submission.id, "coverage", coverageText)}
+                                  {renderLimitedCell(submission.id, "coverage", coverageText, { collapsedLineCount: 1 })}
                                 </td>
                                 <td className="px-4 py-4 text-sm">{renderLimitedCell(submission.id, "submitted", new Date(submission.created_at).toLocaleString())}</td>
                                 <td className="px-4 py-4 text-sm">

@@ -35,7 +35,7 @@ export const formatSubmissionCoverage = (submission) => {
   }
 
   if (submission.coverage_mode === "all_wards_in_county" && submission.county) {
-    return `${submission.county}\n  - All sub-counties and all wards`;
+    return `${submission.county} — All sub-counties and all wards`;
   }
 
   const coverageEntries = `${submission.coverage_details || ""}`
@@ -56,7 +56,7 @@ export const formatSubmissionCoverage = (submission) => {
         return county.trim();
       }
 
-      const detailLines = details
+      const detailSummary = details
         .split(";")
         .map((item) => item.trim())
         .filter(Boolean)
@@ -64,15 +64,16 @@ export const formatSubmissionCoverage = (submission) => {
           const match = item.match(/^(.+?)\s*\((.+)\)$/);
 
           if (!match) {
-            return `  - ${item}`;
+            return item;
           }
 
-          return `  - ${match[1].trim()}: ${match[2].trim()}`;
-        });
+          return `${match[1].trim()}: ${match[2].trim()}`;
+        })
+        .join("; ");
 
-      return [county.trim(), ...detailLines].join("\n");
+      return `${county.trim()} — ${detailSummary}`;
     })
-    .join("\n\n");
+    .join("\n");
 };
 
 export const formatSubmissionCounties = (submission) => {

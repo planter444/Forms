@@ -1,9 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSiteSettings } from "../context/SiteSettingsContext.jsx";
 
 const isInternalLink = (href = "") => href.startsWith("/") || href.startsWith("#");
+const isHashLink = (href = "") => href.startsWith("#") || href.startsWith("/#");
 
 const SiteFooter = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { palette, settings } = useSiteSettings();
   const footer = settings.footer || {};
 
@@ -25,6 +28,27 @@ const SiteFooter = () => {
     borderColor: palette.borderColor,
     color: palette.footerButtonTextColor || palette.footerTextColor || palette.textColor,
     backgroundColor: palette.footerButtonBackground || palette.surfaceBackground
+  };
+  const scrollToHashTarget = (hash) => {
+    const target = document.getElementById(hash.replace("#", ""));
+
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+  const handleHashLinkClick = (href, event) => {
+    event.preventDefault();
+
+    const hash = href.includes("#") ? `#${href.split("#").pop()}` : href;
+
+    if (location.pathname !== "/") {
+      navigate({ pathname: "/", hash });
+      window.setTimeout(() => scrollToHashTarget(hash), 100);
+      return;
+    }
+
+    window.history.replaceState(null, "", hash);
+    scrollToHashTarget(hash);
   };
 
   return (
@@ -48,7 +72,11 @@ const SiteFooter = () => {
         {links.length ? (
           <nav className={`flex flex-wrap gap-3 ${stacked ? "justify-center" : "md:justify-end"}`}>
             {links.map((link) =>
-              isInternalLink(link.href) ? (
+              isHashLink(link.href) ? (
+                <a key={`${link.label}-${link.href}`} href={link.href.startsWith("#") ? `/${link.href}` : link.href} onClick={(event) => handleHashLinkClick(link.href, event)} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5" style={footerButtonStyle}>
+                  {link.label}
+                </a>
+              ) : isInternalLink(link.href) ? (
                 <Link key={`${link.label}-${link.href}`} to={link.href} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5" style={footerButtonStyle}>
                   {link.label}
                 </Link>
