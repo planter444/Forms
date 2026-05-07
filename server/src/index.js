@@ -328,6 +328,27 @@ app.get("/api/submissions", requireAdmin, async (_request, response) => {
   }
 });
 
+app.delete("/api/submissions/:id", requireAdmin, async (request, response) => {
+  if (!requireDatabase(response)) {
+    return;
+  }
+
+  const { id } = request.params;
+
+  try {
+    const result = await pool.query("DELETE FROM submissions WHERE id = $1 RETURNING id", [id]);
+
+    if (!result.rows.length) {
+      return response.status(404).json({ message: "Submission not found." });
+    }
+
+    return response.json({ message: "Submission deleted.", id });
+  } catch (error) {
+    markDatabaseUnavailable(error);
+    return response.status(500).json({ message: "Unable to delete submission." });
+  }
+});
+
 app.get("/api/submissions/export", requireAdmin, async (_request, response) => {
   if (!requireDatabase(response)) {
     return;

@@ -1,12 +1,14 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const request = async (path, options = {}) => {
+  const { headers: customHeaders, ...rest } = options;
+
   const response = await fetch(`${API_URL}${path}`, {
+    ...rest,
     headers: {
       "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
-    ...options
+      ...(customHeaders || {})
+    }
   });
 
   const contentType = response.headers.get("content-type") || "";
@@ -88,6 +90,14 @@ export const uploadAdminMedia = async (token, file) => {
 export const getSubmissions = (token) =>
   request("/api/submissions", {
     cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+export const deleteSubmission = (token, id) =>
+  request(`/api/submissions/${id}`, {
+    method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`
     }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   adminLogin,
+  deleteSubmission,
   getSubmissions,
   resetSiteSettings,
   updateSiteSettings,
@@ -188,6 +189,7 @@ const AdminConsolePage = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [editorState, setEditorState] = useState(() => createEditorState(settings));
   const [expandedTableCells, setExpandedTableCells] = useState({});
+  const [confirmingDelete, setConfirmingDelete] = useState(null);
 
   const gatedEmail = useMemo(() => {
     const fromState = location.state?.prefillEmail || "";
@@ -385,18 +387,36 @@ const AdminConsolePage = () => {
     }
   };
 
+  const handleDeleteSubmission = async (id) => {
+    try {
+      await deleteSubmission(token, id);
+      setSubmissions((current) => current.filter((s) => s.id !== id));
+      setConfirmingDelete(null);
+      setNotice("Submission deleted.");
+    } catch (requestError) {
+      setError(requestError.message || "Unable to delete submission.");
+      setConfirmingDelete(null);
+    }
+  };
+
   const renderLimitedCell = (submissionId, field, value, options = {}) => {
     const lines = getDisplayLines(value);
+    const text = lines.join("\n");
     const cellId = `${submissionId}-${field}`;
     const expanded = Boolean(expandedTableCells[cellId]);
-    const collapsedLineCount = options.collapsedLineCount || 5;
-    const shouldCollapse = lines.length > collapsedLineCount + 1;
-    const visibleLines = shouldCollapse && !expanded ? lines.slice(0, collapsedLineCount) : lines;
+    const collapsedLineCount = options.collapsedLineCount || 6;
+    const shouldCollapse = lines.length > collapsedLineCount || text.length > 150;
+    const collapsedStyle = expanded
+      ? {}
+      : {
+          maxHeight: `${collapsedLineCount * 1.35}rem`,
+          overflow: "hidden"
+        };
 
     return (
       <div className="max-w-xs rounded-2xl border px-3 py-3" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted, color: palette.textColor }}>
-        <div className="space-y-1 break-words">
-          {visibleLines.map((line, index) => (
+        <div className="space-y-1 break-words leading-[1.35]" style={collapsedStyle}>
+          {lines.map((line, index) => (
             <div key={`${cellId}-${index}`}>{line}</div>
           ))}
         </div>
@@ -407,7 +427,7 @@ const AdminConsolePage = () => {
             className="mt-3 text-sm font-semibold"
             style={{ color: palette.primary }}
           >
-            {expanded ? "Show less" : `Show ${lines.length - collapsedLineCount} more`}
+            {expanded ? "Show less" : "Show more"}
           </button>
         ) : null}
       </div>
@@ -1213,18 +1233,52 @@ const AdminConsolePage = () => {
                                 <td className="px-4 py-4 text-sm">{renderLimitedCell(submission.id, "licenses", licenseText)}</td>
                                 <td className="px-4 py-4 text-sm">{renderLimitedCell(submission.id, "counties", countyText)}</td>
                                 <td className="px-4 py-4 text-sm">
-                                  {renderLimitedCell(submission.id, "coverage", coverageText, { collapsedLineCount: 1 })}
+                                  {renderLimitedCell(submission.id, "coverage", coverageText)}
                                 </td>
                                 <td className="px-4 py-4 text-sm">{renderLimitedCell(submission.id, "submitted", new Date(submission.created_at).toLocaleString())}</td>
                                 <td className="px-4 py-4 text-sm">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCopySubmission(submission)}
-                                    className="rounded-xl border px-3 py-2 text-sm font-semibold"
-                                    style={{ borderColor: palette.borderColor, color: palette.textColor }}
-                                  >
-                                    Copy row
-                                  </button>
+                                  <div className="flex flex-col gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopySubmission(submission)}
+                                      className="rounded-xl border px-3 py-2 text-sm font-semibold"
+                                      style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                                    >
+                                      Copy row
+                                    </button>
+                                    {confirmingDelete === submission.id ? (
+                                      <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-medium" style={{ color: "#dc2626" }}>Delete this?</span>
+                                        <div className="flex gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeleteSubmission(submission.id)}
+                                            className="rounded-lg px-2 py-1 text-xs font-semibold text-white"
+                                            style={{ backgroundColor: "#dc2626" }}
+                                          >
+                                            Yes
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setConfirmingDelete(null)}
+                                            className="rounded-lg border px-2 py-1 text-xs font-semibold"
+                                            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                                          >
+                                            No
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => setConfirmingDelete(submission.id)}
+                                        className="rounded-xl border px-3 py-2 text-xs font-semibold"
+                                        style={{ borderColor: "#fca5a5", color: "#dc2626" }}
+                                      >
+                                        Delete
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
                               </tr>
                             );
