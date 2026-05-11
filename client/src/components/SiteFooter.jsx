@@ -84,35 +84,35 @@ const SiteFooter = () => {
 
   return (
     <footer className="relative z-10 border-t" style={{ borderColor: palette.borderColor, backgroundColor: palette.footerBackground || palette.headerBackground }}>
-      <div className={`mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:px-8 ${stacked ? "text-center" : "md:grid-cols-[1fr_auto] md:items-center"}`}>
+      <div className={`mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:gap-4 lg:px-8 lg:py-6 ${stacked ? "text-center" : "md:grid-cols-[1fr_auto] md:items-center"}`}>
         <div className={stacked ? "mx-auto max-w-2xl" : "max-w-2xl"}>
-          <div className="text-lg font-bold" style={{ color: palette.footerTextColor || palette.textColor }}>
+          <div className="text-lg font-bold lg:text-base" style={{ color: palette.footerTextColor || palette.textColor }}>
             {footer.title || settings.brandName}
           </div>
           {body ? (
-            <p className="mt-2 text-sm leading-6" style={{ color: palette.footerMutedTextColor || palette.mutedTextColor }}>
+            <p className="mt-2 text-sm leading-6 lg:text-xs lg:leading-5" style={{ color: palette.footerMutedTextColor || palette.mutedTextColor }}>
               {body}
             </p>
           ) : null}
           {note ? (
-            <div className="mt-3 text-xs" style={{ color: palette.footerMutedTextColor || palette.mutedTextColor }}>
+            <div className="mt-3 text-xs lg:mt-2 lg:text-[11px]" style={{ color: palette.footerMutedTextColor || palette.mutedTextColor }}>
               {note}
             </div>
           ) : null}
         </div>
         {resolvedLinks.length ? (
-          <nav className={`flex flex-wrap gap-3 ${stacked ? "justify-center" : "md:justify-end"}`}>
+          <nav className={`flex flex-wrap gap-3 lg:gap-2 ${stacked ? "justify-center" : "md:justify-end"}`}>
             {resolvedLinks.map((link) =>
               isHashLink(link.href) ? (
-                <a key={`${link.label}-${link.href}`} href={link.href.startsWith("#") ? `/${link.href}` : link.href} onClick={(event) => handleHashLinkClick(link.href, event)} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5" style={footerButtonStyle}>
+                <a key={`${link.label}-${link.href}`} href={link.href.startsWith("#") ? `/${link.href}` : link.href} onClick={(event) => handleHashLinkClick(link.href, event)} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 lg:px-3 lg:py-1.5 lg:text-xs" style={footerButtonStyle}>
                   {link.label}
                 </a>
               ) : isInternalLink(link.href) ? (
-                <Link key={`${link.label}-${link.href}`} to={link.href} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5" style={footerButtonStyle}>
+                <Link key={`${link.label}-${link.href}`} to={link.href} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 lg:px-3 lg:py-1.5 lg:text-xs" style={footerButtonStyle}>
                   {link.label}
                 </Link>
               ) : (
-                <a key={`${link.label}-${link.href}`} href={link.href} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5" style={footerButtonStyle}>
+                <a key={`${link.label}-${link.href}`} href={link.href} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 lg:px-3 lg:py-1.5 lg:text-xs" style={footerButtonStyle}>
                   {link.label}
                 </a>
               )

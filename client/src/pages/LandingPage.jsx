@@ -81,11 +81,11 @@ const LandingPage = () => {
       <AnimatedPatternBackground />
 
       <header className="relative z-10 border-b shadow-sm backdrop-blur-xl" style={{ borderColor: palette.borderColor, backgroundColor: palette.headerBackground }}>
-        <div className={`mx-auto flex max-w-6xl items-center justify-center gap-3 px-4 ${mobileHeaderClass} sm:justify-between sm:gap-4 sm:px-6 sm:py-4 lg:px-8`}>
-          <BrandLogo size={isMobile ? mobileLogoSize : "md"} showWordmark />
+        <div className={`mx-auto flex max-w-6xl items-center justify-center gap-3 px-4 ${mobileHeaderClass} sm:justify-between sm:gap-4 sm:px-6 sm:py-4 lg:px-8 lg:py-3`}>
+          <BrandLogo size={isMobile ? mobileLogoSize : "sm"} showWordmark />
           <Link
             to="/form"
-            className={`${ctaTraceClass} ${ctaMotionClass} cta-border-sweep hidden shrink-0 items-center justify-center rounded-full px-4 py-2 text-xs font-bold shadow-soft transition hover:scale-[1.02] sm:inline-flex sm:px-6 sm:py-3 sm:text-sm ${
+            className={`${ctaTraceClass} ${ctaMotionClass} cta-border-sweep hidden shrink-0 items-center justify-center rounded-full px-4 py-2 text-xs font-bold shadow-soft transition hover:scale-[1.02] sm:inline-flex sm:px-6 sm:py-3 sm:text-sm lg:px-5 lg:py-2.5 lg:text-xs ${
               settings.theme.ctaPulse && ctaAnimation === "pulse" ? "cta-pulse" : ""
             }`}
             style={{
@@ -103,27 +103,27 @@ const LandingPage = () => {
 
       <main className="relative z-10">
         <section
-          className={`mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:px-8 lg:gap-10 lg:py-20 ${loadMotionClass} ${
+          className={`mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:px-8 lg:gap-8 lg:py-14 ${loadMotionClass} ${
             splitLayout ? "lg:grid-cols-[1.05fr_0.95fr]" : ""
           }`}
         >
           <div className={`${splitLayout ? "self-center" : "mx-auto max-w-4xl text-center"}`}>
             <div
-              className="inline-flex rounded-full border px-4 py-2 text-sm font-medium shadow-sm"
+              className="inline-flex rounded-full border px-4 py-2 text-sm font-medium shadow-sm lg:px-3 lg:py-1.5 lg:text-xs"
               style={{ borderColor: palette.primaryGlow, backgroundColor: palette.accent, color: palette.accentStrong }}
             >
               {settings.heroBadge}
             </div>
-            <h1 className={`mt-5 max-w-4xl text-2xl font-black leading-[1.08] tracking-tight sm:text-[2.35rem] sm:leading-[1.02] lg:text-5xl xl:text-6xl ${heroMotionClass}`} style={{ color: palette.textColor }}>
+            <h1 className={`mt-5 max-w-4xl text-2xl font-black leading-[1.08] tracking-tight sm:text-[2.35rem] sm:leading-[1.02] lg:text-[2.75rem] xl:text-5xl ${heroMotionClass}`} style={{ color: palette.textColor }}>
               {settings.heroTitle}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 sm:mt-4 sm:text-lg sm:leading-8" style={{ color: palette.mutedTextColor }}>
+            <p className="mt-3 max-w-2xl text-sm leading-6 sm:mt-4 sm:text-lg sm:leading-8 lg:max-w-xl lg:text-base lg:leading-7" style={{ color: palette.mutedTextColor }}>
               {settings.heroDescription}
             </p>
-            <div className={`mt-7 flex flex-row items-center gap-2 sm:gap-3 ${splitLayout ? "" : "justify-center"}`}>
+            <div className={`mt-6 flex flex-row items-center gap-2 sm:gap-3 ${splitLayout ? "" : "justify-center"}`}>
               <Link
                 to="/form"
-                className={`${heroCtaAnimationClass} inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold shadow-soft transition hover:-translate-y-0.5 sm:rounded-3xl sm:px-8 sm:py-5 sm:text-lg`}
+                className={`${heroCtaAnimationClass} inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold shadow-soft transition hover:-translate-y-0.5 sm:rounded-3xl sm:px-8 sm:py-5 sm:text-lg lg:px-6 lg:py-4 lg:text-base`}
                 style={{
                   color: palette.textOnPrimary,
                   "--cta-fill": palette.primary,
@@ -136,26 +136,26 @@ const LandingPage = () => {
               <a
                 href="#how-it-works"
                 onClick={scrollToLearnMore}
-                className="inline-flex items-center justify-center rounded-2xl border-2 px-4 py-3 text-sm font-semibold transition sm:rounded-3xl sm:px-8 sm:py-5 sm:text-lg"
+                className="inline-flex items-center justify-center rounded-2xl border-2 px-4 py-3 text-sm font-semibold transition sm:rounded-3xl sm:px-8 sm:py-5 sm:text-lg lg:px-6 lg:py-4 lg:text-base"
                 style={{ borderColor: palette.primary, backgroundColor: palette.surfaceBackground, color: palette.primaryDeep }}
               >
                 {settings.heroSecondaryCta}
               </a>
             </div>
-            <div className={`mt-10 grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3 ${loadAnimation === "stagger" ? "motion-stagger" : ""}`}>
+            <div className={`mt-8 grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3 ${loadAnimation === "stagger" ? "motion-stagger" : ""}`}>
               {heroStats.map((item, index) => {
                 const oddCardClass = getOddCardClass(heroStats.length, index);
 
                 return (
                   <div
                     key={`${item.value}-${item.label}`}
-                    className={`rounded-[28px] border p-5 shadow-soft backdrop-blur-md ${oddCardClass}`}
+                    className={`rounded-[28px] border p-5 shadow-soft backdrop-blur-md lg:p-4 ${oddCardClass}`}
                     style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
                   >
-                    <div className="text-3xl font-black" style={{ color: palette.primary }}>
+                    <div className="text-3xl font-black lg:text-2xl" style={{ color: palette.primary }}>
                       {item.value}
                     </div>
-                    <div className="mt-2 text-sm" style={{ color: palette.mutedTextColor }}>{item.label}</div>
+                    <div className="mt-2 text-sm lg:text-xs" style={{ color: palette.mutedTextColor }}>{item.label}</div>
                   </div>
                 );
               })}
@@ -163,54 +163,54 @@ const LandingPage = () => {
           </div>
 
           <div className={`${splitLayout ? "" : "mx-auto max-w-4xl"}`}>
-            <div className="rounded-[32px] border p-6 shadow-soft backdrop-blur-xl lg:p-8" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+            <div className="rounded-[32px] border p-6 shadow-soft backdrop-blur-xl lg:p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
               <div
-                className="rounded-[28px] p-6 text-white"
+                className="rounded-[28px] p-6 text-white lg:p-5"
                 style={{
                   background: `linear-gradient(135deg, ${palette.primaryDeep}, ${palette.primary})`
                 }}
               >
-                <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
+                <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/80 lg:text-xs">
                   What you’ll submit
                 </div>
-                <div className="mt-6 space-y-4">
+                <div className="mt-5 space-y-3">
                   {settings.landingHighlights.map((item) => (
-                    <div key={item} className="flex gap-3 rounded-2xl bg-white/10 p-4 backdrop-blur">
-                      <div className="mt-1 h-2.5 w-2.5 rounded-full bg-white" />
-                      <p className="text-sm leading-6 text-white/95">{item}</p>
+                    <div key={item} className="flex gap-3 rounded-2xl bg-white/10 p-4 backdrop-blur lg:p-3">
+                      <div className="mt-1 h-2.5 w-2.5 rounded-full bg-white lg:h-2 lg:w-2" />
+                      <p className="text-sm leading-6 text-white/95 lg:text-xs lg:leading-5">{item}</p>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="mt-6 rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
-                <div className="text-sm font-semibold" style={{ color: palette.textColor }}>{settings.whyItMattersTitle}</div>
-                <p className="mt-2 text-sm leading-6" style={{ color: palette.mutedTextColor }}>{settings.whyItMattersBody}</p>
+              <div className="mt-6 rounded-[28px] border p-5 lg:mt-5 lg:p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                <div className="text-sm font-semibold lg:text-xs" style={{ color: palette.textColor }}>{settings.whyItMattersTitle}</div>
+                <p className="mt-2 text-sm leading-6 lg:text-xs lg:leading-5" style={{ color: palette.mutedTextColor }}>{settings.whyItMattersBody}</p>
               </div>
             </div>
           </div>
         </section>
 
         <section id="how-it-works" className="relative border-y backdrop-blur-xl" style={{ borderColor: palette.borderColor, backgroundColor: palette.pageBackgroundAlt }}>
-          <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-12">
             <div className="max-w-2xl">
-              <div className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: palette.primary }}>
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] lg:text-xs" style={{ color: palette.primary }}>
                 How it works
               </div>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 lg:text-2xl">
                 {settings.howItWorksTitle}
               </h2>
             </div>
-            <div className="mt-10 grid grid-cols-2 gap-5 xl:grid-cols-3">
+            <div className="mt-8 grid grid-cols-2 gap-4 xl:grid-cols-3">
               {settings.howItWorksSteps.map((item, index) => (
-                <article key={item.title} className={`rounded-[28px] border p-6 shadow-sm ${getOddCardClass(settings.howItWorksSteps.length, index)}`} style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                <article key={item.title} className={`rounded-[28px] border p-6 shadow-sm lg:p-5 ${getOddCardClass(settings.howItWorksSteps.length, index)}`} style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
                   <div
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-bold"
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-bold lg:h-10 lg:w-10 lg:text-base"
                     style={{ backgroundColor: palette.primarySoft, color: palette.primaryDeep }}
                   >
                     {index + 1}
                   </div>
-                  <h3 className="mt-5 text-xl font-semibold" style={{ color: palette.textColor }}>{item.title}</h3>
-                  <p className="mt-3 text-sm leading-6" style={{ color: palette.mutedTextColor }}>{item.body}</p>
+                  <h3 className="mt-5 text-xl font-semibold lg:mt-4 lg:text-lg" style={{ color: palette.textColor }}>{item.title}</h3>
+                  <p className="mt-3 text-sm leading-6 lg:text-xs lg:leading-5" style={{ color: palette.mutedTextColor }}>{item.body}</p>
                 </article>
               ))}
             </div>
