@@ -3,6 +3,31 @@ import { useSiteSettings } from "../context/SiteSettingsContext.jsx";
 
 const isInternalLink = (href = "") => href.startsWith("/") || href.startsWith("#");
 const isHashLink = (href = "") => href.startsWith("#") || href.startsWith("/#");
+const draftStorageKey = "kerea-form-draft-v1";
+
+const hasFormDraft = () => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const rawDraft = window.localStorage.getItem(draftStorageKey);
+    const parsedDraft = rawDraft ? JSON.parse(rawDraft) : null;
+    const formValues = parsedDraft?.formValues || {};
+
+    return Boolean(
+      formValues.email ||
+        formValues.consent !== null ||
+        formValues.fullName ||
+        formValues.phoneNumber ||
+        formValues.category?.length ||
+        formValues.declineReason ||
+        formValues.countyCoverageEntries?.some((entry) => entry.county)
+    );
+  } catch {
+    return false;
+  }
+};
 
 const SiteFooter = () => {
   const location = useLocation();
@@ -21,6 +46,12 @@ const SiteFooter = () => {
   const links = Array.isArray(footer.links) && footer.links.length
     ? footer.links.filter((item) => item.label && item.href)
     : legacyLinks;
+  const draftExists = hasFormDraft();
+  const resolvedLinks = links.map((link) =>
+    draftExists && link.href === "/form" && link.label.toLowerCase().includes("start")
+      ? { ...link, label: link.label.replace(/start form/i, "Resume form").replace(/start/i, "Resume") }
+      : link
+  );
   const body = footer.body || footer.description || "";
   const note = footer.note || footer.copyright || "";
   const stacked = footer.layout === "stacked";
@@ -69,9 +100,9 @@ const SiteFooter = () => {
             </div>
           ) : null}
         </div>
-        {links.length ? (
+        {resolvedLinks.length ? (
           <nav className={`flex flex-wrap gap-3 ${stacked ? "justify-center" : "md:justify-end"}`}>
-            {links.map((link) =>
+            {resolvedLinks.map((link) =>
               isHashLink(link.href) ? (
                 <a key={`${link.label}-${link.href}`} href={link.href.startsWith("#") ? `/${link.href}` : link.href} onClick={(event) => handleHashLinkClick(link.href, event)} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5" style={footerButtonStyle}>
                   {link.label}

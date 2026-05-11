@@ -252,9 +252,13 @@ const FloatingField = ({
   activeTrace = false,
   ...props
 }) => {
-  const classes = `${activeTrace ? "field-trace border-transparent" : "border"} peer w-full rounded-2xl px-4 pb-3 pt-6 text-base shadow-sm outline-none transition placeholder:text-transparent focus:ring-4 ${
+  const compactLabel = label.length > 38;
+  const classes = `${activeTrace ? "field-trace border-transparent" : "border-2"} peer w-full rounded-2xl px-4 pb-3 pt-6 text-sm shadow-sm outline-none transition placeholder:text-transparent focus:ring-4 sm:text-base ${
     error ? "focus:ring-rose-100" : "focus:ring-slate-100"
   }`;
+  const labelClass = compactLabel
+    ? "pointer-events-none absolute left-4 right-4 top-2 whitespace-nowrap text-[8px] font-medium leading-none transition peer-placeholder-shown:top-4 peer-placeholder-shown:text-[8px] peer-focus:top-2 peer-focus:text-[8px] sm:text-xs sm:peer-placeholder-shown:text-sm sm:peer-focus:text-xs"
+    : "pointer-events-none absolute left-4 right-4 top-2 text-[11px] font-medium leading-tight transition peer-placeholder-shown:top-3 peer-placeholder-shown:text-[12px] peer-focus:top-2 peer-focus:text-[11px] sm:text-xs sm:peer-placeholder-shown:top-4 sm:peer-placeholder-shown:text-base sm:peer-focus:top-2 sm:peer-focus:text-xs";
 
   return (
     <div className="space-y-2">
@@ -270,7 +274,7 @@ const FloatingField = ({
             style={{
               backgroundColor: palette.fieldBackground || palette.surfaceBackground,
               color: palette.textColor,
-              borderColor: error ? "#f43f5e" : activeTrace ? "transparent" : palette.borderColor,
+              borderColor: error ? "#f43f5e" : activeTrace ? "transparent" : "#94a3b8",
               "--trace-color": error ? "#f43f5e" : palette.primary,
               "--trace-accent": palette.primarySoft,
               "--trace-fill": palette.fieldBackground || palette.surfaceBackground
@@ -290,7 +294,7 @@ const FloatingField = ({
             style={{
               backgroundColor: palette.fieldBackground || palette.surfaceBackground,
               color: palette.textColor,
-              borderColor: error ? "#f43f5e" : activeTrace ? "transparent" : palette.borderColor,
+              borderColor: error ? "#f43f5e" : activeTrace ? "transparent" : "#94a3b8",
               "--trace-color": error ? "#f43f5e" : palette.primary,
               "--trace-accent": palette.primarySoft,
               "--trace-fill": palette.fieldBackground || palette.surfaceBackground
@@ -302,7 +306,7 @@ const FloatingField = ({
         )}
         <label
           htmlFor={id}
-          className="pointer-events-none absolute left-4 top-2 text-xs font-medium transition peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs"
+          className={labelClass}
           style={{ color: error ? "#e11d48" : palette.mutedTextColor }}
         >
           {label}
@@ -392,17 +396,17 @@ const Stepper = ({ steps, currentIndex, palette }) => (
 );
 
 const SummaryItem = ({ label, value, error, action, children }) => (
-  <div className={`rounded-2xl border p-4 ${error ? "border-rose-400 bg-rose-50 ring-2 ring-rose-100" : "border-slate-200 bg-slate-50"}`}>
+  <div className={`rounded-2xl border-2 p-4 ${error ? "border-rose-400 bg-rose-50 ring-2 ring-rose-100" : "border-slate-300 bg-slate-50"}`}>
     <div className="flex items-start justify-between gap-3">
-      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{label}</div>
+      <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-600">{label}</div>
       {action ? (
-        <button type="button" onClick={action.onClick} className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">
+        <button type="button" onClick={action.onClick} className="shrink-0 rounded-lg bg-sky-50 px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-sky-700 transition hover:bg-sky-100">
           {action.label}
         </button>
       ) : null}
     </div>
-    <div className="mt-2 text-sm text-slate-800">{children || value || "Not provided"}</div>
-    {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
+    <div className="mt-2 break-words text-sm text-slate-800">{children || value || "Not provided"}</div>
+    {error ? <p className="mt-3 text-sm font-medium text-rose-600">{error}</p> : null}
   </div>
 );
 
@@ -418,7 +422,7 @@ const getReviewErrorLabel = (field) =>
     coverageDetails: "Coverage details"
   })[field] || field;
 
-const EnhancedMultiStepForm = () => {
+const EnhancedMultiStepForm = ({ onStepChange }) => {
   const navigate = useNavigate();
   const { palette } = useSiteSettings();
   const [draftState] = useState(() => loadDraftState());
@@ -432,6 +436,10 @@ const EnhancedMultiStepForm = () => {
 
   const steps = useMemo(() => getSteps(formValues.consent), [formValues.consent]);
   const currentStep = steps[stepIndex]?.id || "consent";
+
+  useEffect(() => {
+    onStepChange?.(currentStep);
+  }, [currentStep, onStepChange]);
 
   const deriveCoverageState = (countyCoverageEntries) => {
     const completedEntries = countyCoverageEntries.filter((entry) => isCountyCoverageEntryComplete(entry));
@@ -698,11 +706,13 @@ const EnhancedMultiStepForm = () => {
     }
 
     setStepIndex((current) => Math.min(current + 1, steps.length - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleBack = () => {
     setServerError("");
     setStepIndex((current) => Math.max(current - 1, 0));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmit = async () => {
@@ -811,7 +821,7 @@ const EnhancedMultiStepForm = () => {
           </div>
         </div>
 
-        <div className="min-h-[320px] animate-fade-in animate-slide-up">
+        <div key={`step-${currentStep}`} className="step-enter min-h-[320px]">
           {currentStep === "consent" ? (
             <div className="space-y-5">
               <FloatingField

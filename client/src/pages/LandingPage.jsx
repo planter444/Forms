@@ -42,6 +42,8 @@ const LandingPage = () => {
     ? settings.theme.mobileLoadAnimation || settings.theme.mobileSurfaceMotion
     : settings.theme.desktopLoadAnimation || settings.theme.desktopSurfaceMotion;
   const ctaMotionClass = getMotionClass(ctaAnimation);
+  const heroCtaAnimation = settings.theme.heroCtaAnimation || "white-line";
+  const heroCtaAnimationClass = heroCtaAnimation === "white-line" ? "hero-cta-border-trace" : getMotionClass(heroCtaAnimation);
   const heroMotionClass = getMotionClass(heroAnimation);
   const loadMotionClass = getMotionClass(loadAnimation);
   const ctaTraceClass = ctaTraceEnabled !== false ? "cta-trace" : "";
@@ -75,18 +77,18 @@ const LandingPage = () => {
     <div className="relative min-h-screen overflow-hidden" style={{ backgroundColor: palette.pageBackground, color: palette.textColor }}>
       <AnimatedPatternBackground />
 
-      <header className="relative z-10 border-b backdrop-blur-xl" style={{ borderColor: palette.borderColor, backgroundColor: palette.headerBackground }}>
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <BrandLogo size="md" showWordmark />
+      <header className="relative z-10 border-b shadow-sm backdrop-blur-xl" style={{ borderColor: palette.borderColor, backgroundColor: palette.headerBackground }}>
+        <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-4 py-4 sm:justify-between sm:gap-4 sm:px-6 lg:px-8">
+          <BrandLogo size={isMobile ? "sm" : "md"} showWordmark />
           <Link
             to="/form"
-            className={`${ctaTraceClass} ${ctaMotionClass} inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-bold shadow-soft transition hover:scale-[1.02] ${
+            className={`${ctaTraceClass} ${ctaMotionClass} cta-border-sweep hidden shrink-0 items-center justify-center rounded-full px-4 py-2 text-xs font-bold shadow-soft transition hover:scale-[1.02] sm:inline-flex sm:px-6 sm:py-3 sm:text-sm ${
               settings.theme.ctaPulse && ctaAnimation === "pulse" ? "cta-pulse" : ""
             }`}
             style={{
               color: palette.textOnPrimary,
-              "--trace-color": palette.accent,
-              "--trace-accent": palette.primarySoft,
+              "--trace-color": palette.ctaTraceColor || "#ffffff",
+              "--trace-accent": palette.ctaTraceAccent || palette.primarySoft,
               "--cta-fill": palette.primary,
               boxShadow: `0 10px 28px ${palette.primaryGlow}`
             }}
@@ -109,23 +111,20 @@ const LandingPage = () => {
             >
               {settings.heroBadge}
             </div>
-            <h1 className={`mt-5 max-w-4xl text-[2.35rem] font-black leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl ${heroMotionClass}`} style={{ color: palette.textColor }}>
+            <h1 className={`mt-5 max-w-4xl text-2xl font-black leading-[1.08] tracking-tight sm:text-[2.35rem] sm:leading-[1.02] lg:text-5xl xl:text-6xl ${heroMotionClass}`} style={{ color: palette.textColor }}>
               {settings.heroTitle}
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 sm:text-lg sm:leading-8" style={{ color: palette.mutedTextColor }}>
+            <p className="mt-3 max-w-2xl text-sm leading-6 sm:mt-4 sm:text-lg sm:leading-8" style={{ color: palette.mutedTextColor }}>
               {settings.heroDescription}
             </p>
-            <div className={`mt-7 flex gap-3 ${splitLayout ? "flex-col sm:flex-row" : "flex-col items-stretch sm:flex-row sm:justify-center sm:items-center"}`}>
+            <div className={`mt-7 flex flex-row items-center gap-2 sm:gap-3 ${splitLayout ? "" : "justify-center"}`}>
               <Link
                 to="/form"
-                className={`${ctaTraceClass} ${ctaMotionClass} inline-flex items-center justify-center rounded-3xl px-8 py-5 text-lg font-bold shadow-soft transition hover:-translate-y-0.5 ${
-                  settings.theme.ctaPulse && ctaAnimation === "pulse" ? "cta-pulse" : ""
-                }`}
+                className={`${heroCtaAnimationClass} inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold shadow-soft transition hover:-translate-y-0.5 sm:rounded-3xl sm:px-8 sm:py-5 sm:text-lg`}
                 style={{
                   color: palette.textOnPrimary,
-                  "--trace-color": palette.accent,
-                  "--trace-accent": palette.primarySoft,
                   "--cta-fill": palette.primary,
+                  backgroundColor: palette.primary,
                   boxShadow: `0 12px 35px ${palette.primaryGlow}`
                 }}
               >
@@ -134,7 +133,7 @@ const LandingPage = () => {
               <a
                 href="#how-it-works"
                 onClick={scrollToLearnMore}
-                className="inline-flex items-center justify-center rounded-3xl border-2 px-8 py-5 text-lg font-semibold transition"
+                className="inline-flex items-center justify-center rounded-2xl border-2 px-4 py-3 text-sm font-semibold transition sm:rounded-3xl sm:px-8 sm:py-5 sm:text-lg"
                 style={{ borderColor: palette.primary, backgroundColor: palette.surfaceBackground, color: palette.primaryDeep }}
               >
                 {settings.heroSecondaryCta}

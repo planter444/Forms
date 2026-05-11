@@ -44,6 +44,33 @@ export const defaultSiteSettings = {
     "If you consent to listing, keep your phone number and county details ready.",
     "Your information will be reviewed before publication on the platform."
   ],
+  formStepTips: {
+    consent: [
+      "Use an email address you check regularly.",
+      "If you proceed to listing, keep your phone number and county details ready.",
+      "Your information will be reviewed before publication on the platform."
+    ],
+    details: [
+      "Enter the name exactly as it should appear on the KEREA USSD platform.",
+      "Use a phone number that customers or the KEREA team can reliably reach.",
+      "Select every service category that properly describes your work."
+    ],
+    location: [
+      "Choose each county where you actively operate.",
+      "Use the sub-county and ward choices to make your listing easier to find.",
+      "Add another county if your services cover more than one area."
+    ],
+    review: [
+      "Check your email, phone number, service categories, and coverage areas.",
+      "Use the Edit buttons if anything needs correction before submission.",
+      "Submit only when the details are accurate and ready for review."
+    ],
+    decline: [
+      "You can leave a short note if you do not want to be listed right now.",
+      "Your preference will be recorded without publishing a listing.",
+      "You can return later if your organization decides to participate."
+    ]
+  },
   formBanner: "Clear flow, mobile-friendly controls, and fast submission.",
   successTitle:
     "Thank you! Your information has been received and will be reviewed before listing.",
@@ -87,6 +114,7 @@ export const defaultSiteSettings = {
     desktopCtaTrace: true,
     mobileCtaAnimation: "pulse",
     desktopCtaAnimation: "pulse",
+    heroCtaAnimation: "white-line",
     mobileHeroAnimation: "float",
     desktopHeroAnimation: "shake",
     mobileLoadAnimation: "rise",
@@ -112,6 +140,8 @@ export const defaultSiteSettings = {
       footerMutedTextColor: "#475569",
       footerButtonBackground: "#ffffff",
       footerButtonTextColor: "#0f172a",
+      ctaTraceColor: "#ffffff",
+      ctaTraceAccent: "#dbeafe",
       borderColor: "#dbeafe",
       textColor: "#0f172a",
       mutedTextColor: "#475569"
@@ -120,6 +150,7 @@ export const defaultSiteSettings = {
 };
 
 export const paletteOptions = ["sky", "emerald", "teal", "lavender", "slate", "sunrise", "midnight", "forest"];
+export const appearancePresetOptions = ["original", "green"];
 export const patternOptions = ["orbs", "grid", "waves", "rings", "dots", "mesh"];
 export const backgroundOptions = ["soft", "glow", "contrast"];
 
@@ -141,6 +172,10 @@ const paletteMap = {
     footerBackground: "#ffffff",
     footerTextColor: "#0f172a",
     footerMutedTextColor: "#475569",
+    footerButtonBackground: "#ffffff",
+    footerButtonTextColor: "#0f172a",
+    ctaTraceColor: "#ffffff",
+    ctaTraceAccent: "#dbeafe",
     borderColor: "#dbeafe",
     textColor: "#0f172a",
     mutedTextColor: "#475569"
@@ -159,6 +194,13 @@ const paletteMap = {
     surfaceMuted: "#f2fbf6",
     fieldBackground: "#f7fcf9",
     headerBackground: "rgba(255, 255, 255, 0.92)",
+    footerBackground: "#ffffff",
+    footerTextColor: "#0f172a",
+    footerMutedTextColor: "#475569",
+    footerButtonBackground: "#ffffff",
+    footerButtonTextColor: "#064e3b",
+    ctaTraceColor: "#ffffff",
+    ctaTraceAccent: "#bbf7d0",
     borderColor: "#d7f5e1",
     textColor: "#0f172a",
     mutedTextColor: "#475569"
@@ -177,6 +219,13 @@ const paletteMap = {
     surfaceMuted: "#f2f8f4",
     fieldBackground: "#f6fbf7",
     headerBackground: "rgba(255, 255, 255, 0.92)",
+    footerBackground: "#ffffff",
+    footerTextColor: "#0f172a",
+    footerMutedTextColor: "#475569",
+    footerButtonBackground: "#ffffff",
+    footerButtonTextColor: "#14532d",
+    ctaTraceColor: "#ffffff",
+    ctaTraceAccent: "#bbf7d0",
     borderColor: "#d8eee0",
     textColor: "#0f172a",
     mutedTextColor: "#475569"

@@ -11,6 +11,7 @@ import {
 import { clearAdminAccess, getAdminAccess, grantAdminAccess } from "../lib/adminAccess.js";
 import { useSiteSettings } from "../context/SiteSettingsContext.jsx";
 import {
+  appearancePresetOptions,
   backgroundOptions,
   defaultSiteSettings,
   paletteOptions,
@@ -35,7 +36,58 @@ import {
 
 const storageKey = "kerea-admin-token";
 const animationOptions = ["none", "pulse", "float", "shake", "breathe"];
+const heroCtaAnimationOptions = ["white-line", "breathe", "shake", "pulse", "float", "none"];
 const loadAnimationOptions = ["none", "rise", "stagger"];
+const appearanceColorPresets = {
+  original: {
+    palette: "sky",
+    primary: "#2563eb",
+    primaryDeep: "#1d4ed8",
+    primarySoft: "#dbeafe",
+    accent: "#eff6ff",
+    accentStrong: "#1e3a8a",
+    pageBackground: "#f8fbff",
+    pageBackgroundAlt: "#ffffff",
+    surfaceBackground: "#ffffff",
+    surfaceMuted: "#f3f8ff",
+    fieldBackground: "#f8fbff",
+    headerBackground: "rgba(255, 255, 255, 0.92)",
+    footerBackground: "#ffffff",
+    footerTextColor: "#0f172a",
+    footerMutedTextColor: "#475569",
+    footerButtonBackground: "#ffffff",
+    footerButtonTextColor: "#0f172a",
+    ctaTraceColor: "#ffffff",
+    ctaTraceAccent: "#dbeafe",
+    borderColor: "#dbeafe",
+    textColor: "#0f172a",
+    mutedTextColor: "#475569"
+  },
+  green: {
+    palette: "forest",
+    primary: "#15803d",
+    primaryDeep: "#14532d",
+    primarySoft: "#dcfce7",
+    accent: "#ecfdf5",
+    accentStrong: "#064e3b",
+    pageBackground: "#f7fbf8",
+    pageBackgroundAlt: "#ffffff",
+    surfaceBackground: "#ffffff",
+    surfaceMuted: "#f0fdf4",
+    fieldBackground: "#f7fff9",
+    headerBackground: "rgba(255, 255, 255, 0.94)",
+    footerBackground: "#f8fff9",
+    footerTextColor: "#052e16",
+    footerMutedTextColor: "#3f5f46",
+    footerButtonBackground: "#ffffff",
+    footerButtonTextColor: "#14532d",
+    ctaTraceColor: "#ffffff",
+    ctaTraceAccent: "#bbf7d0",
+    borderColor: "#bbf7d0",
+    textColor: "#0b1f13",
+    mutedTextColor: "#3f5f46"
+  }
+};
 
 const toMultiline = (items, fallback) => (items && items.length ? items : fallback).join("\n");
 const serializeFooterLinks = (links = []) =>
@@ -109,6 +161,7 @@ const createEditorState = (settings) => ({
   desktopCtaTrace: settings.theme.desktopCtaTrace ?? settings.theme.desktopCtaTraceEnabled ?? true,
   mobileCtaAnimation: settings.theme.mobileCtaAnimation || settings.theme.mobileCtaMotion || "pulse",
   desktopCtaAnimation: settings.theme.desktopCtaAnimation || settings.theme.desktopCtaMotion || "pulse",
+  heroCtaAnimation: settings.theme.heroCtaAnimation || "white-line",
   mobileHeroAnimation: settings.theme.mobileHeroAnimation || settings.theme.mobileBrandMotion || "float",
   desktopHeroAnimation: settings.theme.desktopHeroAnimation || settings.theme.desktopBrandMotion || "shake",
   mobileLoadAnimation: settings.theme.mobileLoadAnimation || settings.theme.mobileSurfaceMotion || "rise",
@@ -131,6 +184,8 @@ const createEditorState = (settings) => ({
   footerMutedTextColor: settings.theme.colors?.footerMutedTextColor || defaultSiteSettings.theme.colors.footerMutedTextColor,
   footerButtonBackground: settings.theme.colors?.footerButtonBackground || defaultSiteSettings.theme.colors.footerButtonBackground,
   footerButtonTextColor: settings.theme.colors?.footerButtonTextColor || defaultSiteSettings.theme.colors.footerButtonTextColor,
+  ctaTraceColor: settings.theme.colors?.ctaTraceColor || defaultSiteSettings.theme.colors.ctaTraceColor || "#ffffff",
+  ctaTraceAccent: settings.theme.colors?.ctaTraceAccent || defaultSiteSettings.theme.colors.ctaTraceAccent || defaultSiteSettings.theme.colors.primarySoft,
   borderColor: settings.theme.colors?.borderColor || defaultSiteSettings.theme.colors.borderColor,
   textColor: settings.theme.colors?.textColor || defaultSiteSettings.theme.colors.textColor,
   mutedTextColor: settings.theme.colors?.mutedTextColor || defaultSiteSettings.theme.colors.mutedTextColor
@@ -260,6 +315,19 @@ const AdminConsolePage = () => {
 
   const applyEditorChange = (field, value) => {
     setEditorState((current) => ({ ...current, [field]: value }));
+  };
+
+  const applyAppearancePreset = (preset) => {
+    const colors = appearanceColorPresets[preset];
+
+    if (!colors) {
+      return;
+    }
+
+    setEditorState((current) => ({
+      ...current,
+      ...colors
+    }));
   };
  
    const updateEditorListItem = (field, index, key, value) => {
@@ -507,6 +575,7 @@ const AdminConsolePage = () => {
         desktopCtaTrace: editorState.desktopCtaTrace,
         mobileCtaAnimation: editorState.mobileCtaAnimation,
         desktopCtaAnimation: editorState.desktopCtaAnimation,
+        heroCtaAnimation: editorState.heroCtaAnimation,
         mobileHeroAnimation: editorState.mobileHeroAnimation,
         desktopHeroAnimation: editorState.desktopHeroAnimation,
         mobileLoadAnimation: editorState.mobileLoadAnimation,
@@ -532,6 +601,8 @@ const AdminConsolePage = () => {
           footerMutedTextColor: editorState.footerMutedTextColor,
           footerButtonBackground: editorState.footerButtonBackground,
           footerButtonTextColor: editorState.footerButtonTextColor,
+          ctaTraceColor: editorState.ctaTraceColor,
+          ctaTraceAccent: editorState.ctaTraceAccent,
           borderColor: editorState.borderColor,
           textColor: editorState.textColor,
           mutedTextColor: editorState.mutedTextColor
@@ -1000,6 +1071,29 @@ const AdminConsolePage = () => {
                 <h2 className="text-2xl font-semibold" style={{ color: palette.textColor }}>Appearance</h2>
                 <div className="mt-6 grid gap-6 lg:grid-cols-2">
                   <div className="space-y-4">
+                    <div className="rounded-[28px] border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                      <div className="text-sm font-semibold" style={{ color: palette.textColor }}>UI color preset</div>
+                      <p className="mt-1 text-sm" style={{ color: palette.mutedTextColor }}>
+                        Switch only the colors. Content, logo, media, responses, and layout stay unchanged.
+                      </p>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        {appearancePresetOptions.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => applyAppearancePreset(option)}
+                            className="rounded-2xl border px-4 py-3 text-sm font-semibold capitalize transition hover:-translate-y-0.5"
+                            style={{
+                              borderColor: option === "green" ? "#86efac" : palette.borderColor,
+                              backgroundColor: option === "green" ? "#ecfdf5" : palette.surfaceBackground,
+                              color: option === "green" ? "#14532d" : palette.textColor
+                            }}
+                          >
+                            {option === "green" ? "Green ecosystem" : "Original UI"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
                       Color palette
                       <select value={editorState.palette} onChange={(event) => applyEditorChange("palette", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }}>
@@ -1064,6 +1158,12 @@ const AdminConsolePage = () => {
                           Mobile CTA movement
                           <select value={editorState.mobileCtaAnimation} onChange={(event) => applyEditorChange("mobileCtaAnimation", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }}>
                             {animationOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Homepage Start Form Now animation
+                          <select value={editorState.heroCtaAnimation} onChange={(event) => applyEditorChange("heroCtaAnimation", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }}>
+                            {heroCtaAnimationOptions.map((option) => <option key={option} value={option}>{option === "white-line" ? "White line around border" : option}</option>)}
                           </select>
                         </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
@@ -1171,6 +1271,8 @@ const AdminConsolePage = () => {
                       ["footerMutedTextColor", "Footer muted text color"],
                       ["footerButtonBackground", "Footer button background"],
                       ["footerButtonTextColor", "Footer button text color"],
+                      ["ctaTraceColor", "CTA moving line color"],
+                      ["ctaTraceAccent", "CTA moving line accent"],
                       ["borderColor", "Border color"],
                       ["textColor", "Text color"],
                       ["mutedTextColor", "Muted text color"]

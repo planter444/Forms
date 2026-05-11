@@ -107,13 +107,20 @@ export const updateSiteSettings = async (updates) => {
 };
 
 export const resetSiteSettings = async () => {
+  const current = await getSiteSettings();
   const defaults = clone(defaultSiteSettings);
-  const savedToDatabase = await saveDatabaseSettings(defaults);
+  const next = mergeSettings(current, {
+    theme: {
+      ...defaults.theme,
+      colors: defaults.theme.colors
+    }
+  });
+  const savedToDatabase = await saveDatabaseSettings(next);
 
   if (!savedToDatabase) {
     await ensureStore();
-    await writeFile(settingsPath, JSON.stringify(defaults, null, 2), "utf8");
+    await writeFile(settingsPath, JSON.stringify(next, null, 2), "utf8");
   }
 
-  return defaults;
+  return next;
 };

@@ -9,6 +9,7 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -33,6 +34,10 @@ textarea {
 }
 
 .cta-pulse {
+  animation: ctaPulse 1.8s ease-in-out infinite;
+}
+
+.motion-pulse {
   animation: ctaPulse 1.8s ease-in-out infinite;
 }
 
@@ -109,6 +114,35 @@ textarea {
   opacity: 0.55;
   pointer-events: none;
   position: absolute;
+}
+
+.hero-cta-border-trace {
+  animation: traceSpin 0.95s linear infinite;
+  background:
+    linear-gradient(var(--cta-fill), var(--cta-fill)) padding-box,
+    conic-gradient(
+      from var(--trace-angle, 0deg),
+      transparent 0deg,
+      transparent 38deg,
+      rgba(255, 255, 255, 0.78) 58deg,
+      #ffffff 82deg,
+      #ffffff 142deg,
+      rgba(255, 255, 255, 0.78) 164deg,
+      transparent 190deg,
+      transparent 360deg
+    ) border-box;
+  border: 4px solid transparent;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.95),
+    0 12px 35px var(--cta-glow, rgba(255, 255, 255, 0.22));
+}
+
+.hero-cta-border-trace::before {
+  display: none;
+}
+
+.hero-cta-border-trace::after {
+  display: none;
 }
 
 @media (min-width: 1024px) {
@@ -284,4 +318,92 @@ textarea {
   to {
     --trace-angle: 360deg;
   }
+}
+
+@keyframes heroCtaSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Step content transition */
+@keyframes stepSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-enter {
+  animation: stepSlideIn 0.38s ease-out both;
+}
+
+/* Success page celebration */
+@keyframes successPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes successConfetti {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(0);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-20px) rotate(90deg) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) rotate(240deg) scale(0.6);
+  }
+}
+
+.success-pop {
+  animation: successPop 0.6s ease-out both;
+}
+
+.success-pop-delay {
+  animation: successPop 0.5s ease-out 0.2s both;
+}
+
+/* Mobile CTA border sweep */
+@keyframes ctaBorderSweep {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.25);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+.cta-border-sweep {
+  animation: ctaBorderSweep 2s ease-in-out infinite;
 }

@@ -41,11 +41,11 @@ const BrandLogo = ({ size = "md", showWordmark = false, brandName, supportLabel,
         </div>
       )}
       {showWordmark ? (
-        <div>
-          <div className="text-sm font-semibold uppercase tracking-[0.24em]" style={{ color: palette.primaryDeep }}>
+        <div className="min-w-0">
+          <div className="text-[9px] font-semibold uppercase leading-tight tracking-[0.16em] sm:text-sm sm:tracking-[0.24em]" style={{ color: palette.primaryDeep }}>
             {resolvedBrandName}
           </div>
-          <div className="text-sm" style={{ color: palette.mutedTextColor }}>
+          <div className="text-[9px] leading-tight sm:text-sm" style={{ color: palette.mutedTextColor }}>
             {resolvedSupportLabel}
           </div>
         </div>

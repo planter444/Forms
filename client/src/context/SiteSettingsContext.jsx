@@ -5,17 +5,39 @@ import { setLocationHierarchy } from "../lib/locationCoverage.js";
 import { defaultSiteSettings, getPalette, mergeSettings } from "../lib/siteTheme.js";
 
 const SiteSettingsContext = createContext(null);
+const settingsCacheKey = "kerea-site-settings-cache-v1";
+
+const loadCachedSettings = () => {
+  if (typeof window === "undefined") {
+    return defaultSiteSettings;
+  }
+
+  try {
+    const cached = window.localStorage.getItem(settingsCacheKey);
+    return cached ? mergeSettings(defaultSiteSettings, JSON.parse(cached)) : defaultSiteSettings;
+  } catch {
+    return defaultSiteSettings;
+  }
+};
 
 export const SiteSettingsProvider = ({ children }) => {
-  const [settings, setSettings] = useState(defaultSiteSettings);
+  const [settings, setSettingsState] = useState(loadCachedSettings);
   const [loading, setLoading] = useState(true);
+  const setSettings = (nextSettings) => {
+    const resolvedSettings = mergeSettings(defaultSiteSettings, nextSettings || {});
+    setSettingsState(resolvedSettings);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(settingsCacheKey, JSON.stringify(resolvedSettings));
+    }
+  };
 
   const refreshSettings = async () => {
     try {
       const data = await getSiteSettings();
-      setSettings(mergeSettings(defaultSiteSettings, data.settings || {}));
+      setSettings(data.settings || {});
     } catch {
-      setSettings(defaultSiteSettings);
+      setSettings(settings);
     } finally {
       setLoading(false);
     }
