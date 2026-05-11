@@ -26,6 +26,7 @@ import {
   serializeLocationHierarchy
 } from "../lib/locationHierarchyText.js";
 import BrandLogo from "../components/BrandLogo.jsx";
+import { categories } from "../data/formOptions.js";
 import {
   downloadSubmissionsExcel,
   formatSubmissionCoverage,
@@ -245,6 +246,16 @@ const getDisplayLines = (text) => {
   return lines.length ? lines : ["-"];
 };
 
+const initialResponseFilters = {
+  search: "",
+  consent: "all",
+  category: "all",
+  county: "",
+  coverage: "",
+  sortBy: "created_at",
+  sortDirection: "desc"
+};
+
 const AdminConsolePage = () => {
   const location = useLocation();
   const { palette, refreshSettings, setSettings, settings } = useSiteSettings();
@@ -260,6 +271,7 @@ const AdminConsolePage = () => {
   const [editorState, setEditorState] = useState(() => createEditorState(settings));
   const [expandedTableCells, setExpandedTableCells] = useState({});
   const [confirmingDelete, setConfirmingDelete] = useState(null);
+  const [responseFilters, setResponseFilters] = useState(initialResponseFilters);
 
   const gatedEmail = useMemo(() => {
     const fromState = location.state?.prefillEmail || "";
@@ -307,6 +319,81 @@ const AdminConsolePage = () => {
       { label: "Declined", value: declined }
     ];
   }, [submissions]);
+
+  const responseCategoryOptions = useMemo(() => {
+    const dynamicOptions = submissions
+      .flatMap((submission) => getDisplayLines(submission.category || submission.decline_reason || ""))
+      .filter((item) => item && item !== "-");
+
+    return [...new Set([...categories, ...dynamicOptions])].sort((a, b) => a.localeCompare(b));
+  }, [submissions]);
+
+  const filteredSubmissions = useMemo(() => {
+    const searchNeedle = responseFilters.search.trim().toLowerCase();
+    const countyNeedle = responseFilters.county.trim().toLowerCase();
+    const coverageNeedle = responseFilters.coverage.trim().toLowerCase();
+
+    const filtered = submissions.filter((submission) => {
+      const categoryText = submission.category || submission.decline_reason || "";
+      const countyText = formatSubmissionCounties(submission);
+      const coverageText = formatSubmissionCoverage(submission);
+      const rowText = formatSubmissionRowText(submission).toLowerCase();
+
+      if (responseFilters.consent === "yes" && !submission.consent) {
+        return false;
+      }
+
+      if (responseFilters.consent === "no" && submission.consent) {
+        return false;
+      }
+
+      if (responseFilters.category !== "all" && !categoryText.toLowerCase().includes(responseFilters.category.toLowerCase())) {
+        return false;
+      }
+
+      if (countyNeedle && !countyText.toLowerCase().includes(countyNeedle)) {
+        return false;
+      }
+
+      if (coverageNeedle && !coverageText.toLowerCase().includes(coverageNeedle)) {
+        return false;
+      }
+
+      if (searchNeedle && !rowText.includes(searchNeedle)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      const direction = responseFilters.sortDirection === "asc" ? 1 : -1;
+      const sortValue = (submission) => {
+        if (responseFilters.sortBy === "date") {
+          return new Date(submission.created_at).toISOString().slice(0, 10);
+        }
+
+        if (responseFilters.sortBy === "time") {
+          return new Date(submission.created_at).getTime();
+        }
+
+        return new Date(submission.created_at).getTime();
+      };
+
+      const first = sortValue(a);
+      const second = sortValue(b);
+
+      if (first < second) {
+        return -1 * direction;
+      }
+
+      if (first > second) {
+        return 1 * direction;
+      }
+
+      return 0;
+    });
+  }, [responseFilters, submissions]);
 
   const locationPreview = useMemo(() => {
     try {
@@ -436,9 +523,17 @@ const AdminConsolePage = () => {
     setPassword("");
   };
 
+  const updateResponseFilter = (field, value) => {
+    setResponseFilters((current) => ({ ...current, [field]: value }));
+  };
+
+  const resetResponseFilters = () => {
+    setResponseFilters(initialResponseFilters);
+  };
+
   const handleExport = async () => {
     try {
-      downloadSubmissionsExcel(submissions);
+      downloadSubmissionsExcel(filteredSubmissions);
       setNotice("Excel export downloaded.");
     } catch (requestError) {
       setError(requestError.message || "Export failed.");
@@ -455,7 +550,7 @@ const AdminConsolePage = () => {
   };
 
   const handleCopyAllSubmissions = async () => {
-    const rows = submissions.map((submission, index) =>
+    const rows = filteredSubmissions.map((submission, index) =>
       [
         `Response ${index + 1}`,
         formatSubmissionRowText(submission)
@@ -464,7 +559,7 @@ const AdminConsolePage = () => {
 
     try {
       await navigator.clipboard.writeText(rows.join("\n\n------------------------------\n\n"));
-      setNotice(`Copied ${submissions.length} response${submissions.length === 1 ? "" : "s"}.`);
+      setNotice(`Copied ${filteredSubmissions.length} response${filteredSubmissions.length === 1 ? "" : "s"}.`);
     } catch {
       setError("Unable to copy all responses.");
     }
@@ -765,8 +860,8 @@ const AdminConsolePage = () => {
                 <button type="button" onClick={() => loadSubmissions(token)} className="rounded-2xl border px-4 py-3 text-sm font-semibold" style={{ borderColor: palette.borderColor, color: palette.textColor }}>
                   Refresh submissions
                 </button>
-                <button type="button" onClick={handleExport} className="rounded-2xl px-4 py-3 text-sm font-semibold text-white" style={{ backgroundColor: palette.primary }}>
-                  Export Excel
+                <button type="button" onClick={handleExport} disabled={!filteredSubmissions.length} className="rounded-2xl px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50" style={{ backgroundColor: palette.primary }}>
+                  Export filtered Excel
                 </button>
               </div>
             </div>
@@ -1351,12 +1446,94 @@ const AdminConsolePage = () => {
                   <button
                     type="button"
                     onClick={handleCopyAllSubmissions}
-                    disabled={!submissions.length}
+                    disabled={!filteredSubmissions.length}
                     className="rounded-2xl border px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                     style={{ borderColor: palette.borderColor, color: palette.textColor }}
                   >
-                    Copy all responses
+                    Copy filtered responses
                   </button>
+                </div>
+                <div className="mt-5 rounded-[28px] border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-sm font-semibold" style={{ color: palette.textColor }}>Filter responses</div>
+                      <p className="text-xs" style={{ color: palette.mutedTextColor }}>
+                        Showing {filteredSubmissions.length} of {submissions.length} response{submissions.length === 1 ? "" : "s"}.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={resetResponseFilters}
+                      className="rounded-2xl border px-4 py-2 text-sm font-semibold"
+                      style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}
+                    >
+                      Reset filters
+                    </button>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                      Search all columns
+                      <input
+                        value={responseFilters.search}
+                        onChange={(event) => updateResponseFilter("search", event.target.value)}
+                        placeholder="Search name, email, phone..."
+                        className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                        style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                      />
+                    </label>
+                    <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                      Consent
+                      <select value={responseFilters.consent} onChange={(event) => updateResponseFilter("consent", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                        <option value="all">All</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                    </label>
+                    <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                      Category / reason
+                      <select value={responseFilters.category} onChange={(event) => updateResponseFilter("category", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                        <option value="all">All categories and reasons</option>
+                        {responseCategoryOptions.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                      County
+                      <input
+                        value={responseFilters.county}
+                        onChange={(event) => updateResponseFilter("county", event.target.value)}
+                        placeholder="Filter counties"
+                        className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                        style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                      />
+                    </label>
+                    <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                      Coverage
+                      <input
+                        value={responseFilters.coverage}
+                        onChange={(event) => updateResponseFilter("coverage", event.target.value)}
+                        placeholder="Sub-county, ward, coverage..."
+                        className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                        style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                      />
+                    </label>
+                    <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                      Sort by
+                      <select value={responseFilters.sortBy} onChange={(event) => updateResponseFilter("sortBy", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                        <option value="created_at">Date and time</option>
+                        <option value="date">Date only</option>
+                        <option value="time">Time submitted</option>
+                      </select>
+                    </label>
+                    <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                      Sort direction
+                      <select value={responseFilters.sortDirection} onChange={(event) => updateResponseFilter("sortDirection", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                        <option value="desc">Newest first</option>
+                        <option value="asc">Oldest first</option>
+                      </select>
+                    </label>
+                  </div>
                 </div>
                 <div className="mt-6 overflow-hidden rounded-[28px] border" style={{ borderColor: palette.borderColor }}>
                   <div className="overflow-x-auto">
@@ -1373,8 +1550,8 @@ const AdminConsolePage = () => {
                       <tbody style={{ backgroundColor: palette.surfaceBackground }}>
                         {loading ? (
                           <tr><td className="px-4 py-8 text-sm" colSpan={10} style={{ color: palette.mutedTextColor }}>Loading submissions...</td></tr>
-                        ) : submissions.length > 0 ? (
-                          submissions.map((submission) => {
+                        ) : filteredSubmissions.length > 0 ? (
+                          filteredSubmissions.map((submission) => {
                             const coverageText = formatSubmissionCoverage(submission);
                             const countyText = formatSubmissionCounties(submission);
                             const licenseText = formatSubmissionLicenses(submission);
@@ -1440,7 +1617,7 @@ const AdminConsolePage = () => {
                             );
                           })
                         ) : (
-                          <tr><td className="px-4 py-8 text-sm" colSpan={10} style={{ color: palette.mutedTextColor }}>No submissions yet or the database is currently unavailable.</td></tr>
+                          <tr><td className="px-4 py-8 text-sm" colSpan={10} style={{ color: palette.mutedTextColor }}>{submissions.length ? "No responses match the current filters." : "No submissions yet or the database is currently unavailable."}</td></tr>
                         )}
                       </tbody>
                     </table>
