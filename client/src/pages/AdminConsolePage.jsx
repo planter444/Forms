@@ -38,6 +38,7 @@ const storageKey = "kerea-admin-token";
 const animationOptions = ["none", "pulse", "float", "shake", "breathe"];
 const heroCtaAnimationOptions = ["white-line", "breathe", "shake", "pulse", "float", "none"];
 const loadAnimationOptions = ["none", "rise", "stagger"];
+const pageLoadAnimationOptions = ["fade", "pop", "bounce", "rotate", "shake", "none"];
 const appearanceColorPresets = {
   original: {
     palette: "sky",
@@ -51,6 +52,9 @@ const appearanceColorPresets = {
     surfaceBackground: "#ffffff",
     surfaceMuted: "#f3f8ff",
     fieldBackground: "#f8fbff",
+    guidanceBackground: "#eaf5ff",
+    guidanceCardBackground: "#ffffff",
+    guidanceBorderColor: "#bfdbfe",
     headerBackground: "rgba(255, 255, 255, 0.92)",
     footerBackground: "#ffffff",
     footerTextColor: "#0f172a",
@@ -75,6 +79,9 @@ const appearanceColorPresets = {
     surfaceBackground: "#ffffff",
     surfaceMuted: "#f0fdf4",
     fieldBackground: "#f7fff9",
+    guidanceBackground: "#e8f8ed",
+    guidanceCardBackground: "#f8fff9",
+    guidanceBorderColor: "#9ae6b4",
     headerBackground: "rgba(255, 255, 255, 0.94)",
     footerBackground: "#f8fff9",
     footerTextColor: "#052e16",
@@ -168,6 +175,11 @@ const createEditorState = (settings) => ({
   desktopLoadAnimation: settings.theme.desktopLoadAnimation || settings.theme.desktopSurfaceMotion || "stagger",
   ctaPulse: settings.theme.ctaPulse,
   formTipsLayout: settings.theme.formTipsLayout,
+  mobileHeaderSize: settings.theme.mobileHeaderSize || "large",
+  mobilePageLoadEnabled: settings.theme.mobilePageLoadEnabled ?? true,
+  desktopPageLoadEnabled: settings.theme.desktopPageLoadEnabled ?? true,
+  mobilePageLoadAnimation: settings.theme.mobilePageLoadAnimation || "pop",
+  desktopPageLoadAnimation: settings.theme.desktopPageLoadAnimation || "fade",
   primary: settings.theme.colors?.primary || defaultSiteSettings.theme.colors.primary,
   primaryDeep: settings.theme.colors?.primaryDeep || defaultSiteSettings.theme.colors.primaryDeep,
   primarySoft: settings.theme.colors?.primarySoft || defaultSiteSettings.theme.colors.primarySoft,
@@ -178,6 +190,9 @@ const createEditorState = (settings) => ({
   surfaceBackground: settings.theme.colors?.surfaceBackground || defaultSiteSettings.theme.colors.surfaceBackground,
   surfaceMuted: settings.theme.colors?.surfaceMuted || defaultSiteSettings.theme.colors.surfaceMuted,
   fieldBackground: settings.theme.colors?.fieldBackground || defaultSiteSettings.theme.colors.fieldBackground,
+  guidanceBackground: settings.theme.colors?.guidanceBackground || defaultSiteSettings.theme.colors.guidanceBackground || defaultSiteSettings.theme.colors.surfaceMuted,
+  guidanceCardBackground: settings.theme.colors?.guidanceCardBackground || defaultSiteSettings.theme.colors.guidanceCardBackground || defaultSiteSettings.theme.colors.surfaceBackground,
+  guidanceBorderColor: settings.theme.colors?.guidanceBorderColor || defaultSiteSettings.theme.colors.guidanceBorderColor || defaultSiteSettings.theme.colors.borderColor,
   headerBackground: settings.theme.colors?.headerBackground || defaultSiteSettings.theme.colors.headerBackground,
   footerBackground: settings.theme.colors?.footerBackground || defaultSiteSettings.theme.colors.footerBackground,
   footerTextColor: settings.theme.colors?.footerTextColor || defaultSiteSettings.theme.colors.footerTextColor,
@@ -582,6 +597,11 @@ const AdminConsolePage = () => {
         desktopLoadAnimation: editorState.desktopLoadAnimation,
         ctaPulse: editorState.ctaPulse,
         formTipsLayout: editorState.formTipsLayout,
+        mobileHeaderSize: editorState.mobileHeaderSize,
+        mobilePageLoadEnabled: editorState.mobilePageLoadEnabled,
+        desktopPageLoadEnabled: editorState.desktopPageLoadEnabled,
+        mobilePageLoadAnimation: editorState.mobilePageLoadAnimation,
+        desktopPageLoadAnimation: editorState.desktopPageLoadAnimation,
         colors: {
           primary: editorState.primary,
           primaryDeep: editorState.primaryDeep,
@@ -595,6 +615,9 @@ const AdminConsolePage = () => {
           surfaceBackground: editorState.surfaceBackground,
           surfaceMuted: editorState.surfaceMuted,
           fieldBackground: editorState.fieldBackground,
+          guidanceBackground: editorState.guidanceBackground,
+          guidanceCardBackground: editorState.guidanceCardBackground,
+          guidanceBorderColor: editorState.guidanceBorderColor,
           headerBackground: editorState.headerBackground,
           footerBackground: editorState.footerBackground,
           footerTextColor: editorState.footerTextColor,
@@ -1178,6 +1201,24 @@ const AdminConsolePage = () => {
                             {loadAnimationOptions.map((option) => <option key={option} value={option}>{option}</option>)}
                           </select>
                         </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile header size
+                          <select value={editorState.mobileHeaderSize} onChange={(event) => applyEditorChange("mobileHeaderSize", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }}>
+                            <option value="compact">Compact</option>
+                            <option value="large">Large</option>
+                            <option value="xl">Extra large</option>
+                          </select>
+                        </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable mobile page load style
+                          <input type="checkbox" checked={editorState.mobilePageLoadEnabled} onChange={(event) => applyEditorChange("mobilePageLoadEnabled", event.target.checked)} />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile page load style
+                          <select value={editorState.mobilePageLoadAnimation} onChange={(event) => applyEditorChange("mobilePageLoadAnimation", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }}>
+                            {pageLoadAnimationOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        </label>
                       </div>
                     </div>
                     <div className="rounded-[28px] border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
@@ -1233,6 +1274,16 @@ const AdminConsolePage = () => {
                             {loadAnimationOptions.map((option) => <option key={option} value={option}>{option}</option>)}
                           </select>
                         </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable desktop page load style
+                          <input type="checkbox" checked={editorState.desktopPageLoadEnabled} onChange={(event) => applyEditorChange("desktopPageLoadEnabled", event.target.checked)} />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Desktop page load style
+                          <select value={editorState.desktopPageLoadAnimation} onChange={(event) => applyEditorChange("desktopPageLoadAnimation", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }}>
+                            {pageLoadAnimationOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        </label>
                       </div>
                     </div>
                     {[
@@ -1265,6 +1316,9 @@ const AdminConsolePage = () => {
                       ["surfaceBackground", "Surface background"],
                       ["surfaceMuted", "Surface muted"],
                       ["fieldBackground", "Input / answer box background"],
+                      ["guidanceBackground", "Step guidance section background"],
+                      ["guidanceCardBackground", "Step guidance card background"],
+                      ["guidanceBorderColor", "Step guidance border color"],
                       ["headerBackground", "Header background"],
                       ["footerBackground", "Footer background"],
                       ["footerTextColor", "Footer text color"],

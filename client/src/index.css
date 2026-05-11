@@ -69,6 +69,27 @@ textarea {
   animation-delay: 0.24s;
 }
 
+.page-load-fade {
+  animation: pageLoadFade 0.42s ease-out both;
+}
+
+.page-load-pop {
+  animation: pageLoadPop 0.46s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.page-load-bounce {
+  animation: pageLoadBounce 0.62s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.page-load-rotate {
+  animation: pageLoadRotate 0.48s ease-out both;
+  transform-origin: center top;
+}
+
+.page-load-shake {
+  animation: pageLoadShake 0.5s ease-out both;
+}
+
 .field-trace {
   border: 2px solid transparent;
   background:
@@ -287,6 +308,78 @@ textarea {
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes pageLoadFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pageLoadPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pageLoadBounce {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.97);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.01);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pageLoadRotate {
+  from {
+    opacity: 0;
+    transform: rotate(-1.6deg) translateY(14px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(0deg) translateY(0) scale(1);
+  }
+}
+
+@keyframes pageLoadShake {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  35% {
+    opacity: 1;
+    transform: translateX(8px);
+  }
+
+  70% {
+    transform: translateX(-3px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 

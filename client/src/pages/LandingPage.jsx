@@ -47,6 +47,9 @@ const LandingPage = () => {
   const heroMotionClass = getMotionClass(heroAnimation);
   const loadMotionClass = getMotionClass(loadAnimation);
   const ctaTraceClass = ctaTraceEnabled !== false ? "cta-trace" : "";
+  const mobileHeaderSize = settings.theme.mobileHeaderSize || "large";
+  const mobileHeaderClass = mobileHeaderSize === "xl" ? "py-7" : mobileHeaderSize === "compact" ? "py-4" : "py-6";
+  const mobileLogoSize = mobileHeaderSize === "xl" ? "lg" : mobileHeaderSize === "compact" ? "sm" : "md";
   const getOddCardClass = (length, index) =>
     length % 2 === 1 && index === length - 1
       ? "col-span-2 mx-auto w-full max-w-[18rem] xl:col-span-1 xl:max-w-none"
@@ -78,8 +81,8 @@ const LandingPage = () => {
       <AnimatedPatternBackground />
 
       <header className="relative z-10 border-b shadow-sm backdrop-blur-xl" style={{ borderColor: palette.borderColor, backgroundColor: palette.headerBackground }}>
-        <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-4 py-4 sm:justify-between sm:gap-4 sm:px-6 lg:px-8">
-          <BrandLogo size={isMobile ? "sm" : "md"} showWordmark />
+        <div className={`mx-auto flex max-w-6xl items-center justify-center gap-3 px-4 ${mobileHeaderClass} sm:justify-between sm:gap-4 sm:px-6 sm:py-4 lg:px-8`}>
+          <BrandLogo size={isMobile ? mobileLogoSize : "md"} showWordmark />
           <Link
             to="/form"
             className={`${ctaTraceClass} ${ctaMotionClass} cta-border-sweep hidden shrink-0 items-center justify-center rounded-full px-4 py-2 text-xs font-bold shadow-soft transition hover:scale-[1.02] sm:inline-flex sm:px-6 sm:py-3 sm:text-sm ${

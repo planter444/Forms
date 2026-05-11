@@ -357,19 +357,22 @@ const RadioCard = ({ title, description, checked, onClick, activeColor, softColo
   </button>
 );
 
-const Stepper = ({ steps, currentIndex, palette }) => (
+const Stepper = ({ steps, currentIndex, palette, onStepSelect }) => (
   <div className={`grid grid-cols-2 gap-3 ${steps.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>
     {steps.map((step, index) => {
       const active = index === currentIndex;
       const complete = index < currentIndex;
 
       return (
-        <div
+        <button
           key={step.id}
-          className="rounded-2xl border px-3 py-3 shadow-sm transition sm:px-4"
+          type="button"
+          onClick={() => onStepSelect(index)}
+          className="rounded-2xl border px-3 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-4 sm:px-4"
           style={{
             borderColor: active ? palette.primary : complete ? palette.primarySoft : "#e2e8f0",
-            backgroundColor: active ? palette.accent : "rgba(255,255,255,0.9)"
+            backgroundColor: active ? palette.accent : "rgba(255,255,255,0.9)",
+            "--tw-ring-color": palette.primaryGlow
           }}
         >
           <div className="flex items-center gap-2">
@@ -389,7 +392,7 @@ const Stepper = ({ steps, currentIndex, palette }) => (
           <div className="mt-2 text-sm font-semibold leading-snug sm:text-base" style={{ color: active ? palette.primaryDeep : "#0f172a" }}>
             {step.title}
           </div>
-        </div>
+        </button>
       );
     })}
   </div>
@@ -715,6 +718,12 @@ const EnhancedMultiStepForm = ({ onStepChange }) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleStepSelect = (targetIndex) => {
+    setServerError("");
+    setStepIndex(Math.max(0, Math.min(targetIndex, steps.length - 1)));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleSubmit = async () => {
     const nextErrors = validateAll();
     setErrors(nextErrors);
@@ -783,7 +792,7 @@ const EnhancedMultiStepForm = ({ onStepChange }) => {
 
   return (
     <div className="space-y-6">
-      <Stepper steps={steps} currentIndex={stepIndex} palette={palette} />
+      <Stepper steps={steps} currentIndex={stepIndex} palette={palette} onStepSelect={handleStepSelect} />
 
       <div className="rounded-[30px] border border-white/40 bg-white/85 p-5 shadow-soft backdrop-blur-xl sm:p-8">
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
