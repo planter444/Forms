@@ -813,7 +813,7 @@ const EnhancedMultiStepForm = ({ onStepChange }) => {
               {currentStep === "details" &&
                 "This helps clients find you faster and ensures the directory stays trusted and useful."}
               {currentStep === "location" &&
-                "Select each county you serve, then choose the right sub-counties and wards from the dropdowns."}
+                "Select each county you serve, then choose whether you cover all sub-counties and wards or only specific areas."}
               {currentStep === "decline" &&
                 "Optional, but helpful if your organization may want to participate later."}
               {currentStep === "review" &&
@@ -975,7 +975,7 @@ const EnhancedMultiStepForm = ({ onStepChange }) => {
                 }}
               />
               <div className="rounded-2xl p-4 text-sm" style={{ backgroundColor: palette.accent, color: palette.primaryDeep }}>
-                This dropdown flow lets you choose all sub-counties, all wards, or only selected wards without blocking you from adding another county.
+                If you cover all sub-counties and wards in a county, you can immediately add another county without filling sub-county coverage.
               </div>
             </div>
           ) : null}

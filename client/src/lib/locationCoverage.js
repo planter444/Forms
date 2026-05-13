@@ -78,15 +78,7 @@ export const isCountyCoverageEntryComplete = (entry) => {
   }
 
   if (entry.subCountyMode === "all_sub_counties") {
-    if (!entry.wardMode) {
-      return false;
-    }
-
-    if (entry.wardMode !== "selected_wards") {
-      return true;
-    }
-
-    return availableSubCounties.every((subCounty) => (entry.selectedWardsBySubCounty?.[subCounty] || []).length > 0);
+    return true;
   }
 
   const activeSubCounties = getEntrySubCounties(entry);
@@ -113,7 +105,7 @@ export const formatCountyCoverageEntry = (entry) => {
     return entry.county;
   }
 
-  if (entry.subCountyMode === "all_sub_counties" && entry.wardMode === "all_wards") {
+  if (entry.subCountyMode === "all_sub_counties") {
     return `${entry.county}: all sub-counties, all wards`;
   }
 
@@ -141,7 +133,7 @@ export const deriveCoverageMode = (entries) => {
   if (completeEntries.length === 1) {
     const [entry] = completeEntries;
 
-    if (entry.subCountyMode === "all_sub_counties" && entry.wardMode === "all_wards") {
+    if (entry.subCountyMode === "all_sub_counties") {
       return "all_wards_in_county";
     }
   }

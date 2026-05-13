@@ -72,7 +72,6 @@ const CountyCoverageSelector = ({ entries, onChange, errors = {} }) => {
         const hasSubCounties = availableSubCounties.length > 0;
         const requiresSelectedSubCounties = entry.subCountyMode === "selected_sub_counties";
         const hasChosenSubCounties = entry.selectedSubCounties.length > 0;
-        const shouldShowWardMode = hasSubCounties && entry.subCountyMode === "all_sub_counties";
         const activeSubCounties =
           entry.subCountyMode === "all_sub_counties"
             ? availableSubCounties
@@ -88,9 +87,6 @@ const CountyCoverageSelector = ({ entries, onChange, errors = {} }) => {
         const selectedSubCountiesError = Boolean(
           (errors.coverageMode || errors.coverageDetails) && requiresSelectedSubCounties && !hasChosenSubCounties
         );
-        const wardModeError = Boolean(
-          (errors.coverageMode || errors.coverageDetails) && shouldShowWardMode && !entry.wardMode
-        );
         const wardSelectionError = Boolean(
           (errors.coverageMode || errors.coverageDetails) &&
             entry.wardMode === "selected_wards" &&
@@ -102,13 +98,10 @@ const CountyCoverageSelector = ({ entries, onChange, errors = {} }) => {
             ? "subCountyMode"
             : requiresSelectedSubCounties && !hasChosenSubCounties
               ? "subCounties"
-              : shouldShowWardMode && !entry.wardMode
-                ? "wardMode"
-                : missingWardSelections.length > 0
-                  ? `wards:${missingWardSelections[0]}`
-                  : "";
+              : missingWardSelections.length > 0
+                ? `wards:${missingWardSelections[0]}`
+                : "";
         const isEntryComplete = isCountyCoverageEntryComplete(entry);
-        const wardModeId = `ward-mode-${entry.id}`;
 
         return (
           <div
@@ -122,7 +115,7 @@ const CountyCoverageSelector = ({ entries, onChange, errors = {} }) => {
                   County coverage {index + 1}
                 </div>
                 <div className="mt-1 text-sm" style={{ color: palette.mutedTextColor }}>
-                  Select the county, then choose whether you cover all sub-counties or specific ones.
+                  Select the county, then choose whether you cover every sub-county and ward or only specific areas.
                 </div>
               </div>
               {entries.length > 1 ? (
@@ -183,13 +176,13 @@ const CountyCoverageSelector = ({ entries, onChange, errors = {} }) => {
                 {hasSubCounties ? (
                   <div className="grid gap-3 md:grid-cols-2">
                     <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-                      Sub-county coverage
+                      Coverage in {entry.county}
                       <select
                         value={entry.subCountyMode}
                         onChange={(event) =>
                           updateEntry(entry.id, {
                             subCountyMode: event.target.value,
-                            wardMode: "",
+                            wardMode: event.target.value === "all_sub_counties" ? "all_wards" : "",
                             selectedSubCounties: [],
                             selectedWardsBySubCounty: {}
                           })
@@ -205,46 +198,10 @@ const CountyCoverageSelector = ({ entries, onChange, errors = {} }) => {
                         }}
                       >
                         <option value="">Choose an option</option>
-                        <option value="all_sub_counties">Select all sub-counties in {entry.county}</option>
-                        <option value="selected_sub_counties">Select specific sub-counties</option>
+                        <option value="all_sub_counties">I operate in all sub-counties and all wards in {entry.county}</option>
+                        <option value="selected_sub_counties">I operate in specific sub-counties in {entry.county}</option>
                       </select>
                     </label>
-
-                    {shouldShowWardMode ? (
-                      <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-                        Ward coverage
-                        <select
-                          id={wardModeId}
-                          value={entry.wardMode}
-                          onChange={(event) =>
-                            updateEntry(entry.id, {
-                              wardMode: event.target.value,
-                              selectedWardsBySubCounty:
-                                event.target.value === "all_wards"
-                                  ? {}
-                                  : entry.selectedWardsBySubCounty || {}
-                            })
-                          }
-                          className={getSelectClasses(activeField === "wardMode", wardModeError)}
-                          style={{
-                            borderColor: wardModeError ? "#f43f5e" : activeField === "wardMode" ? "transparent" : palette.borderColor,
-                            backgroundColor: palette.fieldBackground || palette.surfaceBackground,
-                            color: palette.textColor,
-                            "--trace-color": wardModeError ? "#f43f5e" : palette.primary,
-                            "--trace-accent": palette.primarySoft,
-                            "--trace-fill": palette.fieldBackground || palette.surfaceBackground
-                          }}
-                        >
-                          <option value="">Choose an option</option>
-                          <option value="all_wards">
-                            {entry.subCountyMode === "all_sub_counties"
-                              ? `Select all wards in ${entry.county}`
-                              : "Select all wards in the selected sub-counties"}
-                          </option>
-                          <option value="selected_wards">Select specific wards</option>
-                        </select>
-                      </label>
-                    ) : null}
                   </div>
                 ) : (
                   <div
@@ -335,21 +292,7 @@ const CountyCoverageSelector = ({ entries, onChange, errors = {} }) => {
                     })}
                   </div>
                 ) : null}
-
-                {shouldShowWardMode && entry.wardMode === "all_wards" ? (
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => focusElement("add-another-county")}
-                      className="rounded-2xl px-4 py-2 text-sm font-semibold text-white"
-                      style={{ backgroundColor: palette.primary }}
-                    >
-                      Proceed to next county or review
-                    </button>
-                  </div>
-                ) : null}
-
-                {entry.wardMode === "selected_wards" && !missingWardSelections.length ? (
+                {entry.subCountyMode === "all_sub_counties" || (entry.wardMode === "selected_wards" && !missingWardSelections.length) ? (
                   <div className="flex justify-end">
                     <button
                       type="button"
