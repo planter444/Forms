@@ -55,7 +55,7 @@ const hasFormDraft = () => {
   }
 };
 
-const SiteFooter = ({ desktopHomepageSize = "" }) => {
+const SiteFooter = ({ desktopHomepageSize = "", desktopScaleStyle }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { palette, settings } = useSiteSettings();
@@ -111,7 +111,7 @@ const SiteFooter = ({ desktopHomepageSize = "" }) => {
 
   return (
     <footer className="relative z-10 border-t" style={{ borderColor: palette.borderColor, backgroundColor: palette.footerBackground || palette.headerBackground }}>
-      <div className={`mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:px-8 ${homepageFooterClasses.wrapper} ${stacked ? "text-center" : "md:grid-cols-[1fr_auto] md:items-center"}`}>
+      <div className={`mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:px-8 ${homepageFooterClasses.wrapper} ${stacked ? "text-center" : "md:grid-cols-[1fr_auto] md:items-center"}`} style={desktopScaleStyle}>
         <div className={stacked ? "mx-auto max-w-2xl" : "max-w-2xl"}>
           <div className={`text-lg font-bold ${homepageFooterClasses.title}`} style={{ color: palette.footerTextColor || palette.textColor }}>
             {footer.title || settings.brandName}

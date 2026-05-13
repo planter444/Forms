@@ -92,6 +92,34 @@ const desktopHomepageSizeClasses = {
   }
 };
 
+const legacyDesktopHomepageScale = {
+  normal: 100,
+  large: 115,
+  xl: 135
+};
+
+const normalizeDesktopHomepageScale = (value, fallback = 115) => {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return Math.min(180, Math.max(70, numericValue));
+};
+
+const getDesktopHomepageSizeFromScale = (scale) => {
+  if (scale >= 130) {
+    return "xl";
+  }
+
+  if (scale >= 106) {
+    return "large";
+  }
+
+  return "normal";
+};
+
 const getDeviceState = () =>
   typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)").matches : false;
 
@@ -143,15 +171,25 @@ const LandingPage = () => {
   const mobileHeaderSize = settings.theme.mobileHeaderSize || "large";
   const mobileHeaderClass = mobileHeaderSize === "xl" ? "py-7" : mobileHeaderSize === "compact" ? "py-4" : "py-6";
   const mobileLogoSize = mobileHeaderSize === "xl" ? "lg" : mobileHeaderSize === "compact" ? "sm" : "md";
-  const desktopHomepageSize = settings.theme.desktopHomepageSize || "large";
+  const desktopHomepageScale = normalizeDesktopHomepageScale(
+    settings.theme.desktopHomepageScale,
+    legacyDesktopHomepageScale[settings.theme.desktopHomepageSize] || 115
+  );
+  const desktopHomepageSize = getDesktopHomepageSizeFromScale(desktopHomepageScale);
+  const desktopScaleBase = legacyDesktopHomepageScale[desktopHomepageSize] || 115;
+  const desktopScaleStyle = isMobile
+    ? undefined
+    : {
+        zoom: `${desktopHomepageScale / desktopScaleBase}`
+      };
   const desktopClasses = desktopHomepageSizeClasses[desktopHomepageSize] || desktopHomepageSizeClasses.large;
   const getOddCardClass = (length, index) =>
     length % 2 === 1 && index === length - 1
-      ? "col-span-2 mx-auto w-full max-w-[18rem] xl:col-span-1 xl:max-w-none"
+      ? "col-span-2 mx-auto w-full max-w-[18rem] min-[900px]:col-span-1 min-[900px]:max-w-none"
       : "";
   const getOddStatCardClass = (length, index) =>
     length % 2 === 1 && index === length - 1
-      ? "col-span-2 mx-auto w-full max-w-[18rem] lg:col-span-1 lg:max-w-none"
+      ? "col-span-2 mx-auto w-full max-w-[18rem] min-[900px]:col-span-1 min-[900px]:max-w-none"
       : "";
   const scrollToLearnMore = (event) => {
     event.preventDefault();
@@ -180,7 +218,7 @@ const LandingPage = () => {
       <AnimatedPatternBackground />
 
       <header className="relative z-10 border-b shadow-sm backdrop-blur-xl" style={{ borderColor: palette.borderColor, backgroundColor: palette.headerBackground }}>
-        <div className={`mx-auto flex max-w-6xl items-center justify-center gap-3 px-4 ${mobileHeaderClass} sm:justify-between sm:gap-4 sm:px-6 sm:py-4 lg:px-8 ${desktopClasses.headerPadding}`}>
+        <div className={`mx-auto flex max-w-6xl items-center justify-center gap-3 px-4 ${mobileHeaderClass} sm:justify-between sm:gap-4 sm:px-6 sm:py-4 lg:px-8 ${desktopClasses.headerPadding}`} style={desktopScaleStyle}>
           <BrandLogo size={isMobile ? mobileLogoSize : desktopClasses.logoSize} showWordmark />
           <Link
             to="/form"
@@ -209,17 +247,17 @@ const LandingPage = () => {
           <div className={`${splitLayout ? "self-center" : "mx-auto max-w-4xl text-center"}`}>
             <div
               className={`inline-flex rounded-full border px-4 py-2 text-sm font-medium shadow-sm ${desktopClasses.heroBadge}`}
-              style={{ borderColor: palette.primaryGlow, backgroundColor: palette.accent, color: palette.accentStrong }}
+              style={{ ...desktopScaleStyle, borderColor: palette.primaryGlow, backgroundColor: palette.accent, color: palette.accentStrong }}
             >
               {settings.heroBadge}
             </div>
             <h1 className={`mt-5 max-w-4xl text-2xl font-black leading-[1.08] tracking-tight sm:text-[2.35rem] sm:leading-[1.02] lg:text-[2.75rem] xl:text-5xl ${heroMotionClass}`} style={{ color: palette.textColor }}>
               {settings.heroTitle}
             </h1>
-            <p className={`mt-3 max-w-2xl text-sm leading-6 sm:mt-4 sm:text-lg sm:leading-8 ${desktopClasses.heroDescription}`} style={{ color: palette.mutedTextColor }}>
+            <p className={`mt-3 max-w-2xl text-sm leading-6 sm:mt-4 sm:text-lg sm:leading-8 ${desktopClasses.heroDescription}`} style={{ ...desktopScaleStyle, color: palette.mutedTextColor }}>
               {settings.heroDescription}
             </p>
-            <div className={`mt-6 flex flex-row items-center gap-2 sm:gap-3 ${splitLayout ? "" : "justify-center"}`}>
+            <div className={`mt-6 flex flex-row items-center gap-2 sm:gap-3 ${splitLayout ? "" : "justify-center"}`} style={desktopScaleStyle}>
               <Link
                 to="/form"
                 className={`${heroCtaAnimationClass} inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold shadow-soft transition hover:-translate-y-0.5 sm:rounded-3xl sm:px-8 sm:py-5 sm:text-lg ${desktopClasses.heroButton}`}
@@ -241,7 +279,7 @@ const LandingPage = () => {
                 {settings.heroSecondaryCta}
               </a>
             </div>
-            <div className={`mt-8 grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-3 ${loadAnimation === "stagger" ? "motion-stagger" : ""}`}>
+            <div className={`mt-8 grid grid-cols-2 gap-4 md:grid-cols-2 min-[900px]:grid-cols-3 ${loadAnimation === "stagger" ? "motion-stagger" : ""}`} style={desktopScaleStyle}>
               {heroStats.map((item, index) => {
                 const oddCardClass = getOddStatCardClass(heroStats.length, index);
 
@@ -262,7 +300,7 @@ const LandingPage = () => {
           </div>
 
           <div className={`${splitLayout ? "" : "mx-auto max-w-4xl"}`}>
-            <div className={`rounded-[32px] border p-6 shadow-soft backdrop-blur-xl ${desktopClasses.panel}`} style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+            <div className={`rounded-[32px] border p-6 shadow-soft backdrop-blur-xl ${desktopClasses.panel}`} style={{ ...desktopScaleStyle, borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
               <div
                 className={`rounded-[28px] p-6 text-white ${desktopClasses.innerPanel}`}
                 style={{
@@ -290,7 +328,7 @@ const LandingPage = () => {
         </section>
 
         <section id="how-it-works" className="relative border-y backdrop-blur-xl" style={{ borderColor: palette.borderColor, backgroundColor: palette.pageBackgroundAlt }}>
-          <div className={`mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 ${desktopClasses.sectionPadding}`}>
+          <div className={`mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 ${desktopClasses.sectionPadding}`} style={desktopScaleStyle}>
             <div className="max-w-2xl">
               <div className={`text-sm font-semibold uppercase tracking-[0.2em] ${desktopClasses.eyebrow}`} style={{ color: palette.primary }}>
                 How it works
@@ -299,7 +337,7 @@ const LandingPage = () => {
                 {settings.howItWorksTitle}
               </h2>
             </div>
-            <div className="mt-8 grid grid-cols-2 gap-4 xl:grid-cols-3">
+            <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-2 min-[900px]:grid-cols-3">
               {settings.howItWorksSteps.map((item, index) => (
                 <article key={item.title} className={`rounded-[28px] border p-6 shadow-sm ${desktopClasses.stepCard} ${getOddCardClass(settings.howItWorksSteps.length, index)}`} style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
                   <div
@@ -316,7 +354,7 @@ const LandingPage = () => {
           </div>
         </section>
       </main>
-      <SiteFooter desktopHomepageSize={desktopHomepageSize} />
+      <SiteFooter desktopHomepageSize={desktopHomepageSize} desktopScaleStyle={desktopScaleStyle} />
     </div>
   );
 };

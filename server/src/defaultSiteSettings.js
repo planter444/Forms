@@ -164,6 +164,7 @@ export const defaultSiteSettings = {
     formTipsLayout: "row",
     mobileHeaderSize: "large",
     desktopHomepageSize: "large",
+    desktopHomepageScale: 115,
     mobilePageLoadEnabled: true,
     desktopPageLoadEnabled: true,
     mobilePageLoadAnimation: "pop",

@@ -177,7 +177,10 @@ const createEditorState = (settings) => ({
   ctaPulse: settings.theme.ctaPulse,
   formTipsLayout: settings.theme.formTipsLayout,
   mobileHeaderSize: settings.theme.mobileHeaderSize || "large",
-  desktopHomepageSize: settings.theme.desktopHomepageSize || "large",
+  desktopHomepageScale: normalizeDesktopHomepageScale(
+    settings.theme.desktopHomepageScale,
+    legacyDesktopHomepageScale[settings.theme.desktopHomepageSize] || 115
+  ),
   mobilePageLoadEnabled: settings.theme.mobilePageLoadEnabled ?? true,
   desktopPageLoadEnabled: settings.theme.desktopPageLoadEnabled ?? true,
   mobilePageLoadAnimation: settings.theme.mobilePageLoadAnimation || "pop",
@@ -225,6 +228,22 @@ const parseFooterLinks = (value) =>
       return { label, href };
     })
     .filter((link) => link.label && link.href);
+
+const legacyDesktopHomepageScale = {
+  normal: 100,
+  large: 115,
+  xl: 135
+};
+
+const normalizeDesktopHomepageScale = (value, fallback = 115) => {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return Math.min(180, Math.max(70, Math.round(numericValue)));
+};
 
 const tabs = [
   { id: "overview", label: "Overview" },
@@ -694,7 +713,7 @@ const AdminConsolePage = () => {
         ctaPulse: editorState.ctaPulse,
         formTipsLayout: editorState.formTipsLayout,
         mobileHeaderSize: editorState.mobileHeaderSize,
-        desktopHomepageSize: editorState.desktopHomepageSize,
+        desktopHomepageScale: normalizeDesktopHomepageScale(editorState.desktopHomepageScale),
         mobilePageLoadEnabled: editorState.mobilePageLoadEnabled,
         desktopPageLoadEnabled: editorState.desktopPageLoadEnabled,
         mobilePageLoadAnimation: editorState.mobilePageLoadAnimation,
@@ -1376,12 +1395,12 @@ const AdminConsolePage = () => {
                           <input type="checkbox" checked={editorState.desktopPageLoadEnabled} onChange={(event) => applyEditorChange("desktopPageLoadEnabled", event.target.checked)} />
                         </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-                          Desktop homepage size
-                          <select value={editorState.desktopHomepageSize} onChange={(event) => applyEditorChange("desktopHomepageSize", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }}>
-                            <option value="normal">Normal</option>
-                            <option value="large">Large</option>
-                            <option value="xl">Extra large</option>
-                          </select>
+                          Desktop homepage scale (%)
+                          <div className="mt-2 flex items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                            <input type="number" min="70" max="180" step="1" value={editorState.desktopHomepageScale} onChange={(event) => applyEditorChange("desktopHomepageScale", event.target.value)} className="w-full bg-transparent outline-none" />
+                            <span className="text-sm font-semibold" style={{ color: palette.mutedTextColor }}>%</span>
+                          </div>
+                          <span className="mt-2 block text-xs" style={{ color: palette.mutedTextColor }}>Use any value from 70 to 180. This affects desktop homepage only.</span>
                         </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
                           Desktop page load style
