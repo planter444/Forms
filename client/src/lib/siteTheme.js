@@ -122,6 +122,7 @@ export const defaultSiteSettings = {
     ctaPulse: true,
     formTipsLayout: "row",
     mobileHeaderSize: "large",
+    desktopHomepageSize: "large",
     mobilePageLoadEnabled: true,
     desktopPageLoadEnabled: true,
     mobilePageLoadAnimation: "pop",

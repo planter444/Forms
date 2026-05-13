@@ -4,6 +4,32 @@ import { useSiteSettings } from "../context/SiteSettingsContext.jsx";
 const isInternalLink = (href = "") => href.startsWith("/") || href.startsWith("#");
 const isHashLink = (href = "") => href.startsWith("#") || href.startsWith("/#");
 const draftStorageKey = "kerea-form-draft-v1";
+const desktopHomepageFooterClasses = {
+  normal: {
+    wrapper: "lg:gap-4 lg:py-6",
+    title: "lg:text-base",
+    body: "lg:text-xs lg:leading-5",
+    note: "lg:mt-2 lg:text-[11px]",
+    nav: "lg:gap-2",
+    button: "lg:px-3 lg:py-1.5 lg:text-xs"
+  },
+  large: {
+    wrapper: "lg:gap-5 lg:py-8",
+    title: "lg:text-lg",
+    body: "lg:text-sm lg:leading-6",
+    note: "lg:mt-3 lg:text-xs",
+    nav: "lg:gap-3",
+    button: "lg:px-4 lg:py-2 lg:text-sm"
+  },
+  xl: {
+    wrapper: "lg:gap-6 lg:py-10",
+    title: "lg:text-xl",
+    body: "lg:text-base lg:leading-7",
+    note: "lg:mt-4 lg:text-sm",
+    nav: "lg:gap-4",
+    button: "lg:px-5 lg:py-2.5 lg:text-base"
+  }
+};
 
 const hasFormDraft = () => {
   if (typeof window === "undefined") {
@@ -29,7 +55,7 @@ const hasFormDraft = () => {
   }
 };
 
-const SiteFooter = () => {
+const SiteFooter = ({ desktopHomepageSize = "" }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { palette, settings } = useSiteSettings();
@@ -55,6 +81,7 @@ const SiteFooter = () => {
   const body = footer.body || footer.description || "";
   const note = footer.note || footer.copyright || "";
   const stacked = footer.layout === "stacked";
+  const homepageFooterClasses = desktopHomepageFooterClasses[desktopHomepageSize] || desktopHomepageFooterClasses.normal;
   const footerButtonStyle = {
     borderColor: palette.borderColor,
     color: palette.footerButtonTextColor || palette.footerTextColor || palette.textColor,
@@ -84,35 +111,35 @@ const SiteFooter = () => {
 
   return (
     <footer className="relative z-10 border-t" style={{ borderColor: palette.borderColor, backgroundColor: palette.footerBackground || palette.headerBackground }}>
-      <div className={`mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:gap-4 lg:px-8 lg:py-6 ${stacked ? "text-center" : "md:grid-cols-[1fr_auto] md:items-center"}`}>
+      <div className={`mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:px-8 ${homepageFooterClasses.wrapper} ${stacked ? "text-center" : "md:grid-cols-[1fr_auto] md:items-center"}`}>
         <div className={stacked ? "mx-auto max-w-2xl" : "max-w-2xl"}>
-          <div className="text-lg font-bold lg:text-base" style={{ color: palette.footerTextColor || palette.textColor }}>
+          <div className={`text-lg font-bold ${homepageFooterClasses.title}`} style={{ color: palette.footerTextColor || palette.textColor }}>
             {footer.title || settings.brandName}
           </div>
           {body ? (
-            <p className="mt-2 text-sm leading-6 lg:text-xs lg:leading-5" style={{ color: palette.footerMutedTextColor || palette.mutedTextColor }}>
+            <p className={`mt-2 text-sm leading-6 ${homepageFooterClasses.body}`} style={{ color: palette.footerMutedTextColor || palette.mutedTextColor }}>
               {body}
             </p>
           ) : null}
           {note ? (
-            <div className="mt-3 text-xs lg:mt-2 lg:text-[11px]" style={{ color: palette.footerMutedTextColor || palette.mutedTextColor }}>
+            <div className={`mt-3 text-xs ${homepageFooterClasses.note}`} style={{ color: palette.footerMutedTextColor || palette.mutedTextColor }}>
               {note}
             </div>
           ) : null}
         </div>
         {resolvedLinks.length ? (
-          <nav className={`flex flex-wrap gap-3 lg:gap-2 ${stacked ? "justify-center" : "md:justify-end"}`}>
+          <nav className={`flex flex-wrap gap-3 ${homepageFooterClasses.nav} ${stacked ? "justify-center" : "md:justify-end"}`}>
             {resolvedLinks.map((link) =>
               isHashLink(link.href) ? (
-                <a key={`${link.label}-${link.href}`} href={link.href.startsWith("#") ? `/${link.href}` : link.href} onClick={(event) => handleHashLinkClick(link.href, event)} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 lg:px-3 lg:py-1.5 lg:text-xs" style={footerButtonStyle}>
+                <a key={`${link.label}-${link.href}`} href={link.href.startsWith("#") ? `/${link.href}` : link.href} onClick={(event) => handleHashLinkClick(link.href, event)} className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${homepageFooterClasses.button}`} style={footerButtonStyle}>
                   {link.label}
                 </a>
               ) : isInternalLink(link.href) ? (
-                <Link key={`${link.label}-${link.href}`} to={link.href} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 lg:px-3 lg:py-1.5 lg:text-xs" style={footerButtonStyle}>
+                <Link key={`${link.label}-${link.href}`} to={link.href} className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${homepageFooterClasses.button}`} style={footerButtonStyle}>
                   {link.label}
                 </Link>
               ) : (
-                <a key={`${link.label}-${link.href}`} href={link.href} className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 lg:px-3 lg:py-1.5 lg:text-xs" style={footerButtonStyle}>
+                <a key={`${link.label}-${link.href}`} href={link.href} className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${homepageFooterClasses.button}`} style={footerButtonStyle}>
                   {link.label}
                 </a>
               )

@@ -177,6 +177,7 @@ const createEditorState = (settings) => ({
   ctaPulse: settings.theme.ctaPulse,
   formTipsLayout: settings.theme.formTipsLayout,
   mobileHeaderSize: settings.theme.mobileHeaderSize || "large",
+  desktopHomepageSize: settings.theme.desktopHomepageSize || "large",
   mobilePageLoadEnabled: settings.theme.mobilePageLoadEnabled ?? true,
   desktopPageLoadEnabled: settings.theme.desktopPageLoadEnabled ?? true,
   mobilePageLoadAnimation: settings.theme.mobilePageLoadAnimation || "pop",
@@ -693,6 +694,7 @@ const AdminConsolePage = () => {
         ctaPulse: editorState.ctaPulse,
         formTipsLayout: editorState.formTipsLayout,
         mobileHeaderSize: editorState.mobileHeaderSize,
+        desktopHomepageSize: editorState.desktopHomepageSize,
         mobilePageLoadEnabled: editorState.mobilePageLoadEnabled,
         desktopPageLoadEnabled: editorState.desktopPageLoadEnabled,
         mobilePageLoadAnimation: editorState.mobilePageLoadAnimation,
@@ -1372,6 +1374,14 @@ const AdminConsolePage = () => {
                         <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
                           Enable desktop page load style
                           <input type="checkbox" checked={editorState.desktopPageLoadEnabled} onChange={(event) => applyEditorChange("desktopPageLoadEnabled", event.target.checked)} />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Desktop homepage size
+                          <select value={editorState.desktopHomepageSize} onChange={(event) => applyEditorChange("desktopHomepageSize", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }}>
+                            <option value="normal">Normal</option>
+                            <option value="large">Large</option>
+                            <option value="xl">Extra large</option>
+                          </select>
                         </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
                           Desktop page load style
