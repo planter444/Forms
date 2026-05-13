@@ -149,6 +149,10 @@ const LandingPage = () => {
     length % 2 === 1 && index === length - 1
       ? "col-span-2 mx-auto w-full max-w-[18rem] xl:col-span-1 xl:max-w-none"
       : "";
+  const getOddStatCardClass = (length, index) =>
+    length % 2 === 1 && index === length - 1
+      ? "col-span-2 mx-auto w-full max-w-[18rem] lg:col-span-1 lg:max-w-none"
+      : "";
   const scrollToLearnMore = (event) => {
     event.preventDefault();
     document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -237,9 +241,9 @@ const LandingPage = () => {
                 {settings.heroSecondaryCta}
               </a>
             </div>
-            <div className={`mt-8 grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3 ${loadAnimation === "stagger" ? "motion-stagger" : ""}`}>
+            <div className={`mt-8 grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-3 ${loadAnimation === "stagger" ? "motion-stagger" : ""}`}>
               {heroStats.map((item, index) => {
-                const oddCardClass = getOddCardClass(heroStats.length, index);
+                const oddCardClass = getOddStatCardClass(heroStats.length, index);
 
                 return (
                   <div
