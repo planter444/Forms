@@ -177,10 +177,22 @@ VITE_API_URL=https://your-render-service.onrender.com
 8. Go back to Render and update:
 
 ```env
-CLIENT_URL=https://your-netlify-site.netlify.app
+CLIENT_URL=https://your-custom-domain.example
+CLIENT_URLS=https://your-custom-domain.example,https://your-netlify-site.netlify.app
 ```
 
-9. Redeploy the Render backend after changing `CLIENT_URL`.
+9. Redeploy the Render backend after changing `CLIENT_URL` or `CLIENT_URLS`.
+
+For the current live deployment, use these exact values:
+
+```env
+# Render backend
+CLIENT_URL=https://ussd.kerea.org
+CLIENT_URLS=https://ussd.kerea.org,https://kereaussd.netlify.app
+
+# Netlify frontend
+VITE_API_URL=https://kerea-listing-api.onrender.com
+```
 
 ## 6. Test the live system
 

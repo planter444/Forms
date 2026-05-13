@@ -18,6 +18,13 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 4000;
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+const allowedOrigins = [
+  clientUrl,
+  ...(process.env.CLIENT_URLS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+];
 const adminEmail = `${process.env.ADMIN_EMAIL || "admin@kerea.org"}`.trim().toLowerCase();
 const adminUsername = process.env.ADMIN_USERNAME || "admin";
 const adminPassword = process.env.ADMIN_PASSWORD || "change-me";
@@ -54,7 +61,14 @@ const normalizeStoredCategories = (submission) => {
 
 app.use(
   cors({
-    origin: clientUrl,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: false
   })
 );
