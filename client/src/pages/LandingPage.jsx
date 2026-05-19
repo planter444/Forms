@@ -108,6 +108,16 @@ const normalizeDesktopHomepageScale = (value, fallback = 115) => {
   return Math.min(180, Math.max(70, numericValue));
 };
 
+const normalizeDesktopHeroTitleFontSize = (value, fallback = 48) => {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return Math.min(96, Math.max(24, numericValue));
+};
+
 const getDesktopHomepageSizeFromScale = (scale) => {
   if (scale >= 130) {
     return "xl";
@@ -183,6 +193,12 @@ const LandingPage = () => {
         zoom: `${desktopHomepageScale / desktopScaleBase}`
       };
   const desktopClasses = desktopHomepageSizeClasses[desktopHomepageSize] || desktopHomepageSizeClasses.large;
+  const desktopHeroTitleStyle = isMobile
+    ? { color: palette.textColor }
+    : {
+        color: palette.textColor,
+        fontSize: `${normalizeDesktopHeroTitleFontSize(settings.theme.desktopHeroTitleFontSize)}px`
+      };
   const getOddCardClass = (length, index) =>
     length % 2 === 1 && index === length - 1
       ? "col-span-2 mx-auto w-full max-w-[18rem] min-[900px]:col-span-1 min-[900px]:max-w-none"
@@ -251,7 +267,7 @@ const LandingPage = () => {
             >
               {settings.heroBadge}
             </div>
-            <h1 className={`mt-5 max-w-4xl text-2xl font-black leading-[1.08] tracking-tight sm:text-[2.35rem] sm:leading-[1.02] lg:text-[2.75rem] xl:text-5xl ${heroMotionClass}`} style={{ color: palette.textColor }}>
+            <h1 className={`mt-5 max-w-4xl text-2xl font-black leading-[1.08] tracking-tight sm:text-[2.35rem] sm:leading-[1.02] lg:text-[2.75rem] xl:text-5xl ${heroMotionClass}`} style={desktopHeroTitleStyle}>
               {settings.heroTitle}
             </h1>
             <p className={`mt-3 max-w-2xl text-sm leading-6 sm:mt-4 sm:text-lg sm:leading-8 ${desktopClasses.heroDescription}`} style={{ ...desktopScaleStyle, color: palette.mutedTextColor }}>

@@ -28,11 +28,13 @@ import {
 import BrandLogo from "../components/BrandLogo.jsx";
 import { categories } from "../data/formOptions.js";
 import {
+  downloadSubmissionsJson,
   downloadSubmissionsExcel,
   formatSubmissionCoverage,
   formatSubmissionCounties,
   formatSubmissionLicenses,
-  formatSubmissionRowText
+  formatSubmissionRowText,
+  printSubmissionsPdf
 } from "../lib/submissionAdmin.js";
 
 const storageKey = "kerea-admin-token";
@@ -135,6 +137,9 @@ const createEditorState = (settings) => ({
         : defaultSiteSettings.footer.links
   ),
   footerNote: settings.footer?.note || settings.footer?.copyright || defaultSiteSettings.footer.note,
+  footerSupportTitle: settings.footer?.supportTitle || defaultSiteSettings.footer.supportTitle,
+  footerSupportPhone: settings.footer?.supportPhone || "",
+  footerSupportEmail: settings.footer?.supportEmail || "",
   logoUrl: settings.branding?.logoUrl || "",
   logoAlt: settings.branding?.logoAlt || defaultSiteSettings.branding.logoAlt,
   faviconUrl: settings.branding?.faviconUrl || "",
@@ -177,6 +182,7 @@ const createEditorState = (settings) => ({
   ctaPulse: settings.theme.ctaPulse,
   formTipsLayout: settings.theme.formTipsLayout,
   mobileHeaderSize: settings.theme.mobileHeaderSize || "large",
+  desktopHeroTitleFontSize: normalizeDesktopHeroTitleFontSize(settings.theme.desktopHeroTitleFontSize),
   desktopHomepageScale: normalizeDesktopHomepageScale(
     settings.theme.desktopHomepageScale,
     legacyDesktopHomepageScale[settings.theme.desktopHomepageSize] || 115
@@ -243,6 +249,16 @@ const normalizeDesktopHomepageScale = (value, fallback = 115) => {
   }
 
   return Math.min(180, Math.max(70, Math.round(numericValue)));
+};
+
+const normalizeDesktopHeroTitleFontSize = (value, fallback = 48) => {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return Math.min(96, Math.max(24, Math.round(numericValue)));
 };
 
 const tabs = [
@@ -551,8 +567,20 @@ const AdminConsolePage = () => {
     setResponseFilters(initialResponseFilters);
   };
 
-  const handleExport = async () => {
+  const handleExport = async (format = "excel") => {
     try {
+      if (format === "json") {
+        downloadSubmissionsJson(filteredSubmissions);
+        setNotice("JSON export downloaded.");
+        return;
+      }
+
+      if (format === "pdf") {
+        printSubmissionsPdf(filteredSubmissions);
+        setNotice("PDF report opened. Choose Save as PDF in the print dialog.");
+        return;
+      }
+
       downloadSubmissionsExcel(filteredSubmissions);
       setNotice("Excel export downloaded.");
     } catch (requestError) {
@@ -668,7 +696,10 @@ const AdminConsolePage = () => {
         title: editorState.footerTitle.trim(),
         body: editorState.footerBody.trim(),
         links: parseFooterLinks(editorState.footerLinksText),
-        note: editorState.footerNote.trim()
+        note: editorState.footerNote.trim(),
+        supportTitle: editorState.footerSupportTitle.trim(),
+        supportPhone: editorState.footerSupportPhone.trim(),
+        supportEmail: editorState.footerSupportEmail.trim()
       },
       branding: {
         logoUrl: editorState.logoUrl.trim(),
@@ -713,6 +744,7 @@ const AdminConsolePage = () => {
         ctaPulse: editorState.ctaPulse,
         formTipsLayout: editorState.formTipsLayout,
         mobileHeaderSize: editorState.mobileHeaderSize,
+        desktopHeroTitleFontSize: normalizeDesktopHeroTitleFontSize(editorState.desktopHeroTitleFontSize),
         desktopHomepageScale: normalizeDesktopHomepageScale(editorState.desktopHomepageScale),
         mobilePageLoadEnabled: editorState.mobilePageLoadEnabled,
         desktopPageLoadEnabled: editorState.desktopPageLoadEnabled,
@@ -1080,6 +1112,20 @@ const AdminConsolePage = () => {
                         Footer note
                         <input type="text" value={editorState.footerNote} onChange={(event) => applyEditorChange("footerNote", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }} />
                       </label>
+                      <div className="grid gap-3 rounded-2xl border p-4 md:grid-cols-3" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Contact section title
+                          <input type="text" value={editorState.footerSupportTitle} onChange={(event) => applyEditorChange("footerSupportTitle", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }} />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Support phone
+                          <input type="text" value={editorState.footerSupportPhone} onChange={(event) => applyEditorChange("footerSupportPhone", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }} />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Support email
+                          <input type="email" value={editorState.footerSupportEmail} onChange={(event) => applyEditorChange("footerSupportEmail", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }} />
+                        </label>
+                      </div>
                     </div>
                     <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
                       How it works title
@@ -1385,6 +1431,14 @@ const AdminConsolePage = () => {
                           </select>
                         </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Desktop hero title font size (px)
+                          <div className="mt-2 flex items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                            <input type="number" min="24" max="96" step="1" value={editorState.desktopHeroTitleFontSize} onChange={(event) => applyEditorChange("desktopHeroTitleFontSize", event.target.value)} className="w-full bg-transparent outline-none" />
+                            <span className="text-sm font-semibold" style={{ color: palette.mutedTextColor }}>px</span>
+                          </div>
+                          <span className="mt-2 block text-xs" style={{ color: palette.mutedTextColor }}>Controls only the main homepage title on desktop.</span>
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
                           Desktop card loading style
                           <select value={editorState.desktopLoadAnimation} onChange={(event) => applyEditorChange("desktopLoadAnimation", event.target.value)} className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none" style={{ borderColor: palette.borderColor }}>
                             {loadAnimationOptions.map((option) => <option key={option} value={option}>{option}</option>)}
@@ -1472,15 +1526,26 @@ const AdminConsolePage = () => {
               <section className={cardClass} style={{ backgroundColor: palette.surfaceBackground, borderColor: palette.borderColor }}>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-2xl font-semibold" style={{ color: palette.textColor }}>Responses</h2>
-                  <button
-                    type="button"
-                    onClick={handleCopyAllSubmissions}
-                    disabled={!filteredSubmissions.length}
-                    className="rounded-2xl border px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{ borderColor: palette.borderColor, color: palette.textColor }}
-                  >
-                    Copy filtered responses
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyAllSubmissions}
+                      disabled={!filteredSubmissions.length}
+                      className="rounded-2xl border px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                    >
+                      Copy filtered responses
+                    </button>
+                    <button type="button" onClick={() => handleExport("json")} disabled={!filteredSubmissions.length} className="rounded-2xl border px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50" style={{ borderColor: palette.borderColor, color: palette.textColor }}>
+                      Export JSON
+                    </button>
+                    <button type="button" onClick={() => handleExport("pdf")} disabled={!filteredSubmissions.length} className="rounded-2xl border px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50" style={{ borderColor: palette.borderColor, color: palette.textColor }}>
+                      Export PDF
+                    </button>
+                    <button type="button" onClick={() => handleExport("excel")} disabled={!filteredSubmissions.length} className="rounded-2xl border px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50" style={{ borderColor: palette.borderColor, color: palette.textColor }}>
+                      Export Excel
+                    </button>
+                  </div>
                 </div>
                 <div className="mt-5 rounded-[28px] border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

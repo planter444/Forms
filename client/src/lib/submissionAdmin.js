@@ -111,6 +111,97 @@ export const formatSubmissionRowText = (submission) => {
   return rows.map(([label, value]) => `${label}: ${value}`).join("\n");
 };
 
+export const getSubmissionExportRows = (submissions) =>
+  submissions.map((submission) => ({
+    email: submission.email || "",
+    consent: submission.consent ? "Yes" : "No",
+    name: submission.full_name || "",
+    phone: submission.phone_number || "",
+    category: submission.category || "",
+    licenseDetails: formatSubmissionLicenses(submission),
+    county: formatSubmissionCounties(submission),
+    coverage: formatSubmissionCoverage(submission),
+    declineReason: submission.decline_reason || "",
+    submitted: submission.created_at ? new Date(submission.created_at).toLocaleString() : ""
+  }));
+
+export const downloadSubmissionsJson = (submissions) => {
+  const blob = new Blob([JSON.stringify(getSubmissionExportRows(submissions), null, 2)], { type: "application/json;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `kerea-submissions-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
+export const printSubmissionsPdf = (submissions) => {
+  const rows = getSubmissionExportRows(submissions);
+  const tableRows = rows
+    .map(
+      (row) => `<tr>
+        <td>${escapeXml(row.email)}</td>
+        <td>${escapeXml(row.consent)}</td>
+        <td>${escapeXml(row.name)}</td>
+        <td>${escapeXml(row.phone)}</td>
+        <td>${escapeXml(row.category)}</td>
+        <td>${escapeXml(row.licenseDetails)}</td>
+        <td>${escapeXml(row.county)}</td>
+        <td>${escapeXml(row.coverage)}</td>
+        <td>${escapeXml(row.declineReason)}</td>
+        <td>${escapeXml(row.submitted)}</td>
+      </tr>`
+    )
+    .join("");
+  const reportWindow = window.open("", "_blank", "noopener,noreferrer");
+
+  if (!reportWindow) {
+    throw new Error("Unable to open the PDF report window. Please allow pop-ups and try again.");
+  }
+
+  reportWindow.document.write(`<!doctype html>
+    <html>
+      <head>
+        <title>KEREA submissions report</title>
+        <style>
+          body { font-family: Arial, sans-serif; color: #0f172a; margin: 32px; }
+          h1 { margin: 0; font-size: 24px; }
+          p { color: #475569; margin: 8px 0 24px; }
+          table { width: 100%; border-collapse: collapse; font-size: 11px; }
+          th { background: #eff6ff; color: #1e3a8a; text-align: left; }
+          th, td { border: 1px solid #bfdbfe; padding: 8px; vertical-align: top; white-space: pre-line; }
+          @media print { body { margin: 16px; } }
+        </style>
+      </head>
+      <body>
+        <h1>KEREA submissions report</h1>
+        <p>${rows.length} response${rows.length === 1 ? "" : "s"} exported on ${new Date().toLocaleString()}.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Consent</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Category</th>
+              <th>License details</th>
+              <th>County</th>
+              <th>Coverage</th>
+              <th>Decline reason</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </body>
+    </html>`);
+  reportWindow.document.close();
+  reportWindow.focus();
+  reportWindow.print();
+};
+
 export const downloadSubmissionsExcel = (submissions) => {
   const headers = [
     "Email",

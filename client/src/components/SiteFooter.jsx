@@ -80,6 +80,10 @@ const SiteFooter = ({ desktopHomepageSize = "", desktopScaleStyle }) => {
   );
   const body = footer.body || footer.description || "";
   const note = footer.note || footer.copyright || "";
+  const supportTitle = footer.supportTitle || "Need help?";
+  const supportPhone = footer.supportPhone || "";
+  const supportEmail = footer.supportEmail || "";
+  const hasSupportContacts = Boolean(supportPhone || supportEmail);
   const stacked = footer.layout === "stacked";
   const homepageFooterClasses = desktopHomepageFooterClasses[desktopHomepageSize] || desktopHomepageFooterClasses.normal;
   const footerButtonStyle = {
@@ -127,24 +131,39 @@ const SiteFooter = ({ desktopHomepageSize = "", desktopScaleStyle }) => {
             </div>
           ) : null}
         </div>
-        {resolvedLinks.length ? (
-          <nav className={`flex flex-wrap gap-3 ${homepageFooterClasses.nav} ${stacked ? "justify-center" : "md:justify-end"}`}>
-            {resolvedLinks.map((link) =>
-              isHashLink(link.href) ? (
-                <a key={`${link.label}-${link.href}`} href={link.href.startsWith("#") ? `/${link.href}` : link.href} onClick={(event) => handleHashLinkClick(link.href, event)} className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${homepageFooterClasses.button}`} style={footerButtonStyle}>
-                  {link.label}
-                </a>
-              ) : isInternalLink(link.href) ? (
-                <Link key={`${link.label}-${link.href}`} to={link.href} className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${homepageFooterClasses.button}`} style={footerButtonStyle}>
-                  {link.label}
-                </Link>
-              ) : (
-                <a key={`${link.label}-${link.href}`} href={link.href} className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${homepageFooterClasses.button}`} style={footerButtonStyle}>
-                  {link.label}
-                </a>
-              )
-            )}
-          </nav>
+        {resolvedLinks.length || hasSupportContacts ? (
+          <div className={`flex flex-col gap-4 ${stacked ? "items-center" : "md:items-end"}`}>
+            {hasSupportContacts ? (
+              <div className={`${stacked ? "text-center" : "md:text-right"}`}>
+                <div className={`text-sm font-bold ${homepageFooterClasses.title}`} style={{ color: palette.footerTextColor || palette.textColor }}>
+                  {supportTitle}
+                </div>
+                <div className={`mt-2 flex flex-wrap gap-2 text-sm ${stacked ? "justify-center" : "md:justify-end"}`} style={{ color: palette.footerMutedTextColor || palette.mutedTextColor }}>
+                  {supportPhone ? <a href={`tel:${supportPhone.replace(/\s+/g, "")}`} className="font-semibold transition hover:underline">{supportPhone}</a> : null}
+                  {supportEmail ? <a href={`mailto:${supportEmail}`} className="font-semibold transition hover:underline">{supportEmail}</a> : null}
+                </div>
+              </div>
+            ) : null}
+            {resolvedLinks.length ? (
+              <nav className={`flex flex-wrap gap-3 ${homepageFooterClasses.nav} ${stacked ? "justify-center" : "md:justify-end"}`}>
+                {resolvedLinks.map((link) =>
+                  isHashLink(link.href) ? (
+                    <a key={`${link.label}-${link.href}`} href={link.href.startsWith("#") ? `/${link.href}` : link.href} onClick={(event) => handleHashLinkClick(link.href, event)} className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${homepageFooterClasses.button}`} style={footerButtonStyle}>
+                      {link.label}
+                    </a>
+                  ) : isInternalLink(link.href) ? (
+                    <Link key={`${link.label}-${link.href}`} to={link.href} className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${homepageFooterClasses.button}`} style={footerButtonStyle}>
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <a key={`${link.label}-${link.href}`} href={link.href} className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${homepageFooterClasses.button}`} style={footerButtonStyle}>
+                      {link.label}
+                    </a>
+                  )
+                )}
+              </nav>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </footer>

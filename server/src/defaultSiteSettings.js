@@ -128,6 +128,9 @@ export const defaultSiteSettings = {
         href: "#how-it-works"
       }
     ],
+    supportTitle: "Need help?",
+    supportPhone: "",
+    supportEmail: "",
     note: "© 2026 KEREA. All rights reserved."
   },
   branding: {
@@ -163,6 +166,7 @@ export const defaultSiteSettings = {
     ctaPulse: true,
     formTipsLayout: "row",
     mobileHeaderSize: "large",
+    desktopHeroTitleFontSize: 48,
     desktopHomepageSize: "large",
     desktopHomepageScale: 115,
     mobilePageLoadEnabled: true,
