@@ -1882,7 +1882,7 @@ const AdminConsolePage = () => {
                           />
                         </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-                          Background Image URL
+                          Desktop Background Image URL
                           <input
                             type="text"
                             value={solarMkononiEditor.hero?.backgroundUrl || ""}
@@ -1890,6 +1890,71 @@ const AdminConsolePage = () => {
                             className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
                             style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
                             placeholder="https://..."
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Upload Desktop Background Image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  const result = await uploadAdminMedia(token, file);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, hero: { ...solarMkononiEditor.hero, backgroundUrl: result.url } });
+                                  setNotice("Desktop background image uploaded successfully.");
+                                } catch (error) {
+                                  setError(error.message || "Unable to upload background image.");
+                                }
+                              }
+                            }}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile Background Image URL
+                          <input
+                            type="text"
+                            value={solarMkononiEditor.hero?.backgroundUrlMobile || ""}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, hero: { ...solarMkononiEditor.hero, backgroundUrlMobile: e.target.value } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            placeholder="https://..."
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Upload Mobile Background Image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  const result = await uploadAdminMedia(token, file);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, hero: { ...solarMkononiEditor.hero, backgroundUrlMobile: result.url } });
+                                  setNotice("Mobile background image uploaded successfully.");
+                                } catch (error) {
+                                  setError(error.message || "Unable to upload background image.");
+                                }
+                              }
+                            }}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Overlay Opacity ({Math.round((solarMkononiEditor.hero?.overlayOpacity || 0.5) * 100)}%)
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.1"
+                            value={solarMkononiEditor.hero?.overlayOpacity || 0.5}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, hero: { ...solarMkononiEditor.hero, overlayOpacity: parseFloat(e.target.value) } })}
+                            className="mt-2 w-full"
                           />
                         </label>
                         <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
@@ -1946,8 +2011,139 @@ const AdminConsolePage = () => {
                                   style={{ borderColor: palette.borderColor }}
                                 />
                               </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newItems = solarMkononiEditor.stats.items.filter((_, i) => i !== index);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, stats: { ...solarMkononiEditor.stats, items: newItems } });
+                                }}
+                                className="md:col-span-2 rounded-xl border px-3 py-2 text-sm font-semibold"
+                                style={{ borderColor: "#fca5a5", color: "#dc2626" }}
+                              >
+                                Remove
+                              </button>
                             </div>
                           ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newItems = [...(solarMkononiEditor.stats.items || []), { label: "", value: "" }];
+                              setSolarMkononiEditor({ ...solarMkononiEditor, stats: { ...solarMkononiEditor.stats, items: newItems } });
+                            }}
+                            className="w-full rounded-2xl border px-4 py-3 text-sm font-semibold"
+                            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                          >
+                            + Add Statistic
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                        <div>
+                          <div className="text-sm font-semibold" style={{ color: palette.textColor }}>Services</div>
+                          <p className="mt-1 text-sm" style={{ color: palette.mutedTextColor }}>Configure the services cards.</p>
+                        </div>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable services section
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.services?.enabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, enabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable load-in animations
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.services?.animationEnabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, animationEnabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Style
+                          <select
+                            value={solarMkononiEditor.services?.animationStyle || "fade-up"}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, animationStyle: e.target.value } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          >
+                            <option value="fade-up">Fade Up</option>
+                            <option value="fade-down">Fade Down</option>
+                            <option value="fade-left">Fade Left</option>
+                            <option value="fade-right">Fade Right</option>
+                            <option value="scale-up">Scale Up</option>
+                            <option value="scale-down">Scale Down</option>
+                            <option value="slide-up">Slide Up</option>
+                            <option value="slide-down">Slide Down</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.services?.animationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
+                        <div className="space-y-3">
+                          {solarMkononiEditor.services?.cards?.map((card, index) => (
+                            <div key={index} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Title
+                                <input
+                                  type="text"
+                                  value={card.title || ""}
+                                  onChange={(e) => {
+                                    const newCards = [...solarMkononiEditor.services.cards];
+                                    newCards[index] = { ...newCards[index], title: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, cards: newCards } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Description
+                                <textarea
+                                  rows={2}
+                                  value={card.description || ""}
+                                  onChange={(e) => {
+                                    const newCards = [...solarMkononiEditor.services.cards];
+                                    newCards[index] = { ...newCards[index], description: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, cards: newCards } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newCards = solarMkononiEditor.services.cards.filter((_, i) => i !== index);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, cards: newCards } });
+                                }}
+                                className="w-full rounded-xl border px-3 py-2 text-sm font-semibold"
+                                style={{ borderColor: "#fca5a5", color: "#dc2626" }}
+                              >
+                                Remove Service
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newCards = [...(solarMkononiEditor.services.cards || []), { title: "", description: "" }];
+                              setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, cards: newCards } });
+                            }}
+                            className="w-full rounded-2xl border px-4 py-3 text-sm font-semibold"
+                            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                          >
+                            + Add Service
+                          </button>
                         </div>
                       </div>
 
@@ -1965,6 +2161,27 @@ const AdminConsolePage = () => {
                             className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
                             style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
                             placeholder="https://..."
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Upload Logo
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  const result = await uploadAdminMedia(token, file);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, branding: { ...solarMkononiEditor.branding, logoUrl: result.url } });
+                                  setNotice("Logo uploaded successfully.");
+                                } catch (error) {
+                                  setError(error.message || "Unable to upload logo.");
+                                }
+                              }
+                            }}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
                           />
                         </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
@@ -1986,6 +2203,345 @@ const AdminConsolePage = () => {
                             className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
                             style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
                             placeholder="https://..."
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Upload Favicon
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  const result = await uploadAdminMedia(token, file);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, branding: { ...solarMkononiEditor.branding, faviconUrl: result.url } });
+                                  setNotice("Favicon uploaded successfully.");
+                                } catch (error) {
+                                  setError(error.message || "Unable to upload favicon.");
+                                }
+                              }
+                            }}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="space-y-4 rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                        <div>
+                          <div className="text-sm font-semibold" style={{ color: palette.textColor }}>How It Works</div>
+                          <p className="mt-1 text-sm" style={{ color: palette.mutedTextColor }}>Configure the how it works steps.</p>
+                        </div>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable how it works section
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.howItWorks?.enabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, howItWorks: { ...solarMkononiEditor.howItWorks, enabled: e.target.checked } })}
+                          />
+                        </label>
+                        <div className="space-y-3">
+                          {solarMkononiEditor.howItWorks?.steps?.map((step, index) => (
+                            <div key={index} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Title
+                                <input
+                                  type="text"
+                                  value={step.title || ""}
+                                  onChange={(e) => {
+                                    const newSteps = [...solarMkononiEditor.howItWorks.steps];
+                                    newSteps[index] = { ...newSteps[index], title: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, howItWorks: { ...solarMkononiEditor.howItWorks, steps: newSteps } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Description
+                                <textarea
+                                  rows={2}
+                                  value={step.description || ""}
+                                  onChange={(e) => {
+                                    const newSteps = [...solarMkononiEditor.howItWorks.steps];
+                                    newSteps[index] = { ...newSteps[index], description: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, howItWorks: { ...solarMkononiEditor.howItWorks, steps: newSteps } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newSteps = solarMkononiEditor.howItWorks.steps.filter((_, i) => i !== index);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, howItWorks: { ...solarMkononiEditor.howItWorks, steps: newSteps } });
+                                }}
+                                className="w-full rounded-xl border px-3 py-2 text-sm font-semibold"
+                                style={{ borderColor: "#fca5a5", color: "#dc2626" }}
+                              >
+                                Remove Step
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newSteps = [...(solarMkononiEditor.howItWorks.steps || []), { title: "", description: "" }];
+                              setSolarMkononiEditor({ ...solarMkononiEditor, howItWorks: { ...solarMkononiEditor.howItWorks, steps: newSteps } });
+                            }}
+                            className="w-full rounded-2xl border px-4 py-3 text-sm font-semibold"
+                            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                          >
+                            + Add Step
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                        <div>
+                          <div className="text-sm font-semibold" style={{ color: palette.textColor }}>USSD Section</div>
+                          <p className="mt-1 text-sm" style={{ color: palette.mutedTextColor }}>Configure the USSD section.</p>
+                        </div>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable USSD section
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.ussd?.enabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, enabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable load-in animations
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.ussd?.animationEnabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, animationEnabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Style
+                          <select
+                            value={solarMkononiEditor.ussd?.animationStyle || "fade-up"}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, animationStyle: e.target.value } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          >
+                            <option value="fade-up">Fade Up</option>
+                            <option value="fade-down">Fade Down</option>
+                            <option value="fade-left">Fade Left</option>
+                            <option value="fade-right">Fade Right</option>
+                            <option value="scale-up">Scale Up</option>
+                            <option value="scale-down">Scale Down</option>
+                            <option value="slide-up">Slide Up</option>
+                            <option value="slide-down">Slide Down</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.ussd?.animationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Background Color
+                          <div className="mt-2 flex items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                            <input
+                              type="color"
+                              value={solarMkononiEditor.ussd?.backgroundColor || "#059669"}
+                              onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, backgroundColor: e.target.value } })}
+                              className="h-8 w-12 rounded cursor-pointer"
+                            />
+                            <input
+                              type="text"
+                              value={solarMkononiEditor.ussd?.backgroundColor || "#059669"}
+                              onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, backgroundColor: e.target.value } })}
+                              className="flex-1 bg-transparent outline-none"
+                            />
+                          </div>
+                        </label>
+                        <div className="space-y-3">
+                          {solarMkononiEditor.ussd?.instructions?.map((instruction, index) => (
+                            <div key={index} className="rounded-2xl border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Instruction {index + 1}
+                                <input
+                                  type="text"
+                                  value={instruction || ""}
+                                  onChange={(e) => {
+                                    const newInstructions = [...solarMkononiEditor.ussd.instructions];
+                                    newInstructions[index] = e.target.value;
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, instructions: newInstructions } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newInstructions = solarMkononiEditor.ussd.instructions.filter((_, i) => i !== index);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, instructions: newInstructions } });
+                                }}
+                                className="mt-3 w-full rounded-xl border px-3 py-2 text-sm font-semibold"
+                                style={{ borderColor: "#fca5a5", color: "#dc2626" }}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newInstructions = [...(solarMkononiEditor.ussd.instructions || []), ""];
+                              setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, instructions: newInstructions } });
+                            }}
+                            className="w-full rounded-2xl border px-4 py-3 text-sm font-semibold"
+                            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                          >
+                            + Add Instruction
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                        <div>
+                          <div className="text-sm font-semibold" style={{ color: palette.textColor }}>PAYGO Solutions</div>
+                          <p className="mt-1 text-sm" style={{ color: palette.mutedTextColor }}>Configure the PAYGO items.</p>
+                        </div>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable PAYGO section
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.paygo?.enabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, enabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable load-in animations
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.paygo?.animationEnabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, animationEnabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Style
+                          <select
+                            value={solarMkononiEditor.paygo?.animationStyle || "fade-up"}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, animationStyle: e.target.value } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          >
+                            <option value="fade-up">Fade Up</option>
+                            <option value="fade-down">Fade Down</option>
+                            <option value="fade-left">Fade Left</option>
+                            <option value="fade-right">Fade Right</option>
+                            <option value="scale-up">Scale Up</option>
+                            <option value="scale-down">Scale Down</option>
+                            <option value="slide-up">Slide Up</option>
+                            <option value="slide-down">Slide Down</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.paygo?.animationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
+                        <div className="space-y-3">
+                          {solarMkononiEditor.paygo?.items?.map((item, index) => (
+                            <div key={index} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Title
+                                <input
+                                  type="text"
+                                  value={item.title || ""}
+                                  onChange={(e) => {
+                                    const newItems = [...solarMkononiEditor.paygo.items];
+                                    newItems[index] = { ...newItems[index], title: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, items: newItems } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Description
+                                <textarea
+                                  rows={2}
+                                  value={item.description || ""}
+                                  onChange={(e) => {
+                                    const newItems = [...solarMkononiEditor.paygo.items];
+                                    newItems[index] = { ...newItems[index], description: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, items: newItems } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newItems = solarMkononiEditor.paygo.items.filter((_, i) => i !== index);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, items: newItems } });
+                                }}
+                                className="w-full rounded-xl border px-3 py-2 text-sm font-semibold"
+                                style={{ borderColor: "#fca5a5", color: "#dc2626" }}
+                              >
+                                Remove Item
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newItems = [...(solarMkononiEditor.paygo.items || []), { title: "", description: "" }];
+                              setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, items: newItems } });
+                            }}
+                            className="w-full rounded-2xl border px-4 py-3 text-sm font-semibold"
+                            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                          >
+                            + Add Item
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                        <div>
+                          <div className="text-sm font-semibold" style={{ color: palette.textColor }}>Contact Section</div>
+                          <p className="mt-1 text-sm" style={{ color: palette.mutedTextColor }}>Configure contact information.</p>
+                        </div>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable contact section
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.contact?.enabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, contact: { ...solarMkononiEditor.contact, enabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Form Recipient Email
+                          <input
+                            type="email"
+                            value={solarMkononiEditor.contact?.recipientEmail || ""}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, contact: { ...solarMkononiEditor.contact, recipientEmail: e.target.value } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            placeholder="email@example.com"
                           />
                         </label>
                       </div>
@@ -2064,6 +2620,216 @@ const AdminConsolePage = () => {
                               />
                             </div>
                           </label>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                        <div>
+                          <div className="text-sm font-semibold" style={{ color: palette.textColor }}>Resource Library</div>
+                          <p className="mt-1 text-sm" style={{ color: palette.mutedTextColor }}>Configure the resource library.</p>
+                        </div>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable resource library section
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.resourceLibrary?.enabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, resourceLibrary: { ...solarMkononiEditor.resourceLibrary, enabled: e.target.checked } })}
+                          />
+                        </label>
+                        <div className="space-y-3">
+                          {solarMkononiEditor.resourceLibrary?.resources?.map((resource, index) => (
+                            <div key={index} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Title
+                                <input
+                                  type="text"
+                                  value={resource.title || ""}
+                                  onChange={(e) => {
+                                    const newResources = [...solarMkononiEditor.resourceLibrary.resources];
+                                    newResources[index] = { ...newResources[index], title: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, resourceLibrary: { ...solarMkononiEditor.resourceLibrary, resources: newResources } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Description
+                                <textarea
+                                  rows={2}
+                                  value={resource.description || ""}
+                                  onChange={(e) => {
+                                    const newResources = [...solarMkononiEditor.resourceLibrary.resources];
+                                    newResources[index] = { ...newResources[index], description: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, resourceLibrary: { ...solarMkononiEditor.resourceLibrary, resources: newResources } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                URL
+                                <input
+                                  type="text"
+                                  value={resource.url || ""}
+                                  onChange={(e) => {
+                                    const newResources = [...solarMkononiEditor.resourceLibrary.resources];
+                                    newResources[index] = { ...newResources[index], url: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, resourceLibrary: { ...solarMkononiEditor.resourceLibrary, resources: newResources } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                  placeholder="https://..."
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newResources = solarMkononiEditor.resourceLibrary.resources.filter((_, i) => i !== index);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, resourceLibrary: { ...solarMkononiEditor.resourceLibrary, resources: newResources } });
+                                }}
+                                className="w-full rounded-xl border px-3 py-2 text-sm font-semibold"
+                                style={{ borderColor: "#fca5a5", color: "#dc2626" }}
+                              >
+                                Remove Resource
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newResources = [...(solarMkononiEditor.resourceLibrary.resources || []), { title: "", description: "", url: "" }];
+                              setSolarMkononiEditor({ ...solarMkononiEditor, resourceLibrary: { ...solarMkononiEditor.resourceLibrary, resources: newResources } });
+                            }}
+                            className="w-full rounded-2xl border px-4 py-3 text-sm font-semibold"
+                            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                          >
+                            + Add Resource
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                        <div>
+                          <div className="text-sm font-semibold" style={{ color: palette.textColor }}>Impact Section</div>
+                          <p className="mt-1 text-sm" style={{ color: palette.mutedTextColor }}>Configure the impact stories.</p>
+                        </div>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable impact section
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.impact?.enabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, enabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable load-in animations
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.impact?.animationEnabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, animationEnabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Style
+                          <select
+                            value={solarMkononiEditor.impact?.animationStyle || "fade-up"}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, animationStyle: e.target.value } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          >
+                            <option value="fade-up">Fade Up</option>
+                            <option value="fade-down">Fade Down</option>
+                            <option value="fade-left">Fade Left</option>
+                            <option value="fade-right">Fade Right</option>
+                            <option value="scale-up">Scale Up</option>
+                            <option value="scale-down">Scale Down</option>
+                            <option value="slide-up">Slide Up</option>
+                            <option value="slide-down">Slide Down</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.impact?.animationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
+                        <div className="space-y-3">
+                          {solarMkononiEditor.impact?.stories?.map((story, index) => (
+                            <div key={index} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Title
+                                <input
+                                  type="text"
+                                  value={story.title || ""}
+                                  onChange={(e) => {
+                                    const newStories = [...solarMkononiEditor.impact.stories];
+                                    newStories[index] = { ...newStories[index], title: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, stories: newStories } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Description
+                                <textarea
+                                  rows={2}
+                                  value={story.description || ""}
+                                  onChange={(e) => {
+                                    const newStories = [...solarMkononiEditor.impact.stories];
+                                    newStories[index] = { ...newStories[index], description: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, stories: newStories } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Image URL
+                                <input
+                                  type="text"
+                                  value={story.imageUrl || ""}
+                                  onChange={(e) => {
+                                    const newStories = [...solarMkononiEditor.impact.stories];
+                                    newStories[index] = { ...newStories[index], imageUrl: e.target.value };
+                                    setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, stories: newStories } });
+                                  }}
+                                  className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                                  style={{ borderColor: palette.borderColor }}
+                                  placeholder="https://..."
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newStories = solarMkononiEditor.impact.stories.filter((_, i) => i !== index);
+                                  setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, stories: newStories } });
+                                }}
+                                className="w-full rounded-xl border px-3 py-2 text-sm font-semibold"
+                                style={{ borderColor: "#fca5a5", color: "#dc2626" }}
+                              >
+                                Remove Story
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newStories = [...(solarMkononiEditor.impact.stories || []), { title: "", description: "", imageUrl: "" }];
+                              setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, stories: newStories } });
+                            }}
+                            className="w-full rounded-2xl border px-4 py-3 text-sm font-semibold"
+                            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                          >
+                            + Add Story
+                          </button>
                         </div>
                       </div>
 

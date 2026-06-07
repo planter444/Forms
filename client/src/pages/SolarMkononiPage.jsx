@@ -1,6 +1,61 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { getSolarMkononiSettings } from "../lib/api.js";
+
+const useCountUp = (endValue, duration = 2000) => {
+  const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const elementRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          const originalValue = endValue.toString();
+          const hasPlus = originalValue.includes("+");
+          const hasComma = originalValue.includes(",");
+          const numericValue = parseFloat(originalValue.replace(/[^0-9.]/g, "")) || 0;
+
+          let startTime;
+          const animate = (currentTime) => {
+            if (!startTime) startTime = currentTime;
+            const progress = Math.min((currentTime - startTime) / duration, 1);
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+            const currentCount = easeOutQuart * numericValue;
+
+            let displayValue = Math.floor(currentCount);
+            if (hasComma) {
+              displayValue = displayValue.toLocaleString();
+            }
+            if (hasPlus) {
+              displayValue = displayValue + "+";
+            }
+
+            setCount(displayValue);
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            } else {
+              setCount(originalValue);
+            }
+          };
+
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [endValue, duration, hasAnimated]);
+
+  return [count, elementRef];
+};
 
 const SolarMkononiPage = () => {
   const [settings, setSettings] = useState(null);
@@ -63,17 +118,27 @@ const SolarMkononiPage = () => {
 const HeroSection = ({ settings, theme }) => {
   const hero = settings.hero || {};
   const branding = settings.branding || {};
+  const [isMobile, setIsMobile] = useState(false);
 
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const backgroundUrl = isMobile && hero.backgroundUrlMobile ? hero.backgroundUrlMobile : hero.backgroundUrl;
   const heroStyle = {
-    backgroundImage: hero.backgroundUrl ? `url(${hero.backgroundUrl})` : undefined,
-    backgroundColor: hero.backgroundUrl ? undefined : theme.primaryColor || "#059669",
+    backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : undefined,
+    backgroundColor: backgroundUrl ? undefined : theme.primaryColor || "#059669",
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat"
   };
 
+  const overlayOpacity = hero.overlayOpacity !== undefined ? hero.overlayOpacity : 0.5;
   const overlayStyle = {
-    backgroundColor: "rgba(0, 0, 0, 0.5)"
+    backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`
   };
 
   return (
@@ -115,16 +180,19 @@ const StatsSection = ({ settings, theme }) => {
     <section className="py-20 px-4" style={{ backgroundColor: theme.surfaceBackground || "#ffffff" }}>
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
-          {items.map((item, index) => (
-            <div key={index} className="text-center">
-              <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: theme.primaryColor || "#059669" }}>
-                {item.value}
+          {items.map((item, index) => {
+            const [count, ref] = useCountUp(item.value);
+            return (
+              <div key={index} className="text-center" ref={ref}>
+                <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: theme.primaryColor || "#059669" }}>
+                  {count}
+                </div>
+                <div className="text-sm md:text-base" style={{ color: theme.mutedTextColor || "#475569" }}>
+                  {item.label}
+                </div>
               </div>
-              <div className="text-sm md:text-base" style={{ color: theme.mutedTextColor || "#475569" }}>
-                {item.label}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
@@ -134,9 +202,53 @@ const StatsSection = ({ settings, theme }) => {
 const ServicesSection = ({ settings, theme }) => {
   const services = settings.services || {};
   const cards = services.cards || [];
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev + 1) % cards.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length);
+  };
+
+  const getAnimationStyle = (index) => {
+    if (!services.animationEnabled) return {};
+    const style = services.animationStyle || "fade-up";
+    const delay = index * (services.animationDelay || 100);
+    const animations = {
+      "fade-up": { opacity: 0, transform: "translateY(30px)", animation: `fadeInUp 0.6s ease-out ${delay}ms forwards` },
+      "fade-down": { opacity: 0, transform: "translateY(-30px)", animation: `fadeInDown 0.6s ease-out ${delay}ms forwards` },
+      "fade-left": { opacity: 0, transform: "translateX(30px)", animation: `fadeInLeft 0.6s ease-out ${delay}ms forwards` },
+      "fade-right": { opacity: 0, transform: "translateX(-30px)", animation: `fadeInRight 0.6s ease-out ${delay}ms forwards` },
+      "scale-up": { opacity: 0, transform: "scale(0.8)", animation: `scaleUp 0.6s ease-out ${delay}ms forwards` },
+      "scale-down": { opacity: 0, transform: "scale(1.2)", animation: `scaleDown 0.6s ease-out ${delay}ms forwards` },
+      "slide-up": { opacity: 0, transform: "translateY(100%)", animation: `slideUp 0.6s ease-out ${delay}ms forwards` },
+      "slide-down": { opacity: 0, transform: "translateY(-100%)", animation: `slideDown 0.6s ease-out ${delay}ms forwards` }
+    };
+    return animations[style] || animations["fade-up"];
+  };
 
   return (
     <section id="services" className="py-20 px-4" style={{ backgroundColor: theme.backgroundColor || "#f0fdf4" }}>
+      <style>{`
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInLeft { to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeInRight { to { opacity: 1; transform: translateX(0); } }
+        @keyframes scaleUp { to { opacity: 1; transform: scale(1); } }
+        @keyframes scaleDown { to { opacity: 1; transform: scale(1); } }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { to { opacity: 1; transform: translateY(0); } }
+      `}</style>
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4" style={{ color: theme.textColor || "#064e3b" }}>
           {services.title || "Our Services"}
@@ -144,21 +256,84 @@ const ServicesSection = ({ settings, theme }) => {
         <p className="text-center mb-12 max-w-2xl mx-auto" style={{ color: theme.mutedTextColor || "#475569" }}>
           {services.description || "Comprehensive renewable energy solutions for Kenya"}
         </p>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {cards.map((card, index) => (
-            <div
-              key={index}
-              className="p-6 rounded-2xl transition hover:scale-105"
-              style={{ backgroundColor: theme.surfaceBackground || "#ffffff", border: `1px solid ${theme.borderColor || "#a7f3d0"}` }}
-            >
-              <div className="text-4xl mb-4">🌟</div>
-              <h3 className="text-xl font-bold mb-2" style={{ color: theme.textColor || "#064e3b" }}>
-                {card.title}
-              </h3>
-              <p style={{ color: theme.mutedTextColor || "#475569" }}>{card.description}</p>
+
+        {isMobile ? (
+          <div className="relative">
+            <div className="overflow-hidden">
+              <div
+                className="flex transition-transform duration-300 ease-in-out"
+                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+              >
+                {cards.map((card, index) => (
+                  <div key={index} className="w-full flex-shrink-0 px-4">
+                    <div
+                      className="p-6 rounded-2xl"
+                      style={{
+                        backgroundColor: theme.surfaceBackground || "#ffffff",
+                        border: `1px solid ${theme.borderColor || "#a7f3d0"}`,
+                        ...getAnimationStyle(index)
+                      }}
+                    >
+                      <div className="text-4xl mb-4">🌟</div>
+                      <h3 className="text-xl font-bold mb-2" style={{ color: theme.textColor || "#064e3b" }}>
+                        {card.title}
+                      </h3>
+                      <p style={{ color: theme.mutedTextColor || "#475569" }}>{card.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
+            <div className="flex justify-center gap-4 mt-6">
+              <button
+                onClick={prevSlide}
+                className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold transition hover:scale-110"
+                style={{ backgroundColor: theme.primaryColor || "#059669", color: "#ffffff" }}
+              >
+                ←
+              </button>
+              <div className="flex items-center gap-2">
+                {cards.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`w-3 h-3 rounded-full transition ${index === currentIndex ? "scale-125" : ""}`}
+                    style={{
+                      backgroundColor: index === currentIndex ? theme.primaryColor || "#059669" : theme.borderColor || "#a7f3d0"
+                    }}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={nextSlide}
+                className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold transition hover:scale-110"
+                style={{ backgroundColor: theme.primaryColor || "#059669", color: "#ffffff" }}
+              >
+                →
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {cards.map((card, index) => (
+              <div
+                key={index}
+                className="p-6 rounded-2xl transition hover:scale-105"
+                style={{
+                  backgroundColor: theme.surfaceBackground || "#ffffff",
+                  border: `1px solid ${theme.borderColor || "#a7f3d0"}`,
+                  ...getAnimationStyle(index)
+                }}
+              >
+                <div className="text-4xl mb-4">🌟</div>
+                <h3 className="text-xl font-bold mb-2" style={{ color: theme.textColor || "#064e3b" }}>
+                  {card.title}
+                </h3>
+                <p style={{ color: theme.mutedTextColor || "#475569" }}>{card.description}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -174,19 +349,20 @@ const HowItWorksSection = ({ settings, theme }) => {
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12" style={{ color: theme.textColor || "#064e3b" }}>
           {howItWorks.title || "How It Works"}
         </h2>
-        <div className="grid md:grid-cols-4 gap-8">
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {steps.map((step, index) => (
             <div key={index} className="text-center">
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-white"
+                className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 text-lg md:text-2xl font-bold text-white"
                 style={{ backgroundColor: theme.primaryColor || "#059669" }}
               >
                 {index + 1}
               </div>
-              <h3 className="text-lg font-bold mb-2" style={{ color: theme.textColor || "#064e3b" }}>
+              <h3 className="text-sm md:text-lg font-bold mb-2" style={{ color: theme.textColor || "#064e3b" }}>
                 {step.title}
               </h3>
-              <p className="text-sm" style={{ color: theme.mutedTextColor || "#475569" }}>
+              <p className="text-xs md:text-sm" style={{ color: theme.mutedTextColor || "#475569" }}>
                 {step.description}
               </p>
             </div>
@@ -199,23 +375,56 @@ const HowItWorksSection = ({ settings, theme }) => {
 
 const USSDSection = ({ settings, theme }) => {
   const ussd = settings.ussd || {};
+  const backgroundColor = ussd.backgroundColor || theme.primaryColor || "#059669";
+
+  const getAnimationStyle = (index) => {
+    if (!ussd.animationEnabled) return {};
+    const style = ussd.animationStyle || "fade-up";
+    const delay = index * (ussd.animationDelay || 100);
+    const animations = {
+      "fade-up": { opacity: 0, transform: "translateY(30px)", animation: `fadeInUp 0.6s ease-out ${delay}ms forwards` },
+      "fade-down": { opacity: 0, transform: "translateY(-30px)", animation: `fadeInDown 0.6s ease-out ${delay}ms forwards` },
+      "fade-left": { opacity: 0, transform: "translateX(30px)", animation: `fadeInLeft 0.6s ease-out ${delay}ms forwards` },
+      "fade-right": { opacity: 0, transform: "translateX(-30px)", animation: `fadeInRight 0.6s ease-out ${delay}ms forwards` },
+      "scale-up": { opacity: 0, transform: "scale(0.8)", animation: `scaleUp 0.6s ease-out ${delay}ms forwards` },
+      "scale-down": { opacity: 0, transform: "scale(1.2)", animation: `scaleDown 0.6s ease-out ${delay}ms forwards` },
+      "slide-up": { opacity: 0, transform: "translateY(100%)", animation: `slideUp 0.6s ease-out ${delay}ms forwards` },
+      "slide-down": { opacity: 0, transform: "translateY(-100%)", animation: `slideDown 0.6s ease-out ${delay}ms forwards` }
+    };
+    return animations[style] || animations["fade-up"];
+  };
 
   return (
-    <section id="ussd" className="py-20 px-4" style={{ backgroundColor: theme.primaryColor || "#059669" }}>
+    <section id="ussd" className="py-20 px-4" style={{ backgroundColor }}>
+      <style>{`
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInLeft { to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeInRight { to { opacity: 1; transform: translateX(0); } }
+        @keyframes scaleUp { to { opacity: 1; transform: scale(1); } }
+        @keyframes scaleDown { to { opacity: 1; transform: scale(1); } }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { to { opacity: 1; transform: translateY(0); } }
+      `}</style>
       <div className="max-w-6xl mx-auto text-center text-white">
         <h2 className="text-3xl md:text-4xl font-bold mb-4">{ussd.title || "Access via USSD"}</h2>
         <p className="text-xl mb-8 max-w-2xl mx-auto">
           {ussd.description || "No internet? No problem. Access our platform directly from your mobile phone"}
         </p>
         <div className="inline-block bg-white rounded-2xl p-8 mb-8">
-          <div className="text-5xl md:text-6xl font-bold mb-4" style={{ color: theme.primaryColor || "#059669" }}>
+          <div className="text-5xl md:text-6xl font-bold mb-4" style={{ color: backgroundColor }}>
             {ussd.dialCode || "*789*788#"}
           </div>
           <p className="text-gray-600">Dial this code from any mobile phone</p>
         </div>
-        <div className="grid md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
           {ussd.instructions?.map((instruction, index) => (
-            <div key={index} className="bg-white bg-opacity-20 rounded-lg p-4">
+            <div
+              key={index}
+              className="bg-white bg-opacity-20 rounded-lg p-4"
+              style={getAnimationStyle(index)}
+            >
               <div className="text-2xl mb-2">{index + 1}</div>
               <p className="text-sm">{instruction}</p>
             </div>
@@ -230,8 +439,35 @@ const PAYGOSection = ({ settings, theme }) => {
   const paygo = settings.paygo || {};
   const items = paygo.items || [];
 
+  const getAnimationStyle = (index) => {
+    if (!paygo.animationEnabled) return {};
+    const style = paygo.animationStyle || "fade-up";
+    const delay = index * (paygo.animationDelay || 100);
+    const animations = {
+      "fade-up": { opacity: 0, transform: "translateY(30px)", animation: `fadeInUp 0.6s ease-out ${delay}ms forwards` },
+      "fade-down": { opacity: 0, transform: "translateY(-30px)", animation: `fadeInDown 0.6s ease-out ${delay}ms forwards` },
+      "fade-left": { opacity: 0, transform: "translateX(30px)", animation: `fadeInLeft 0.6s ease-out ${delay}ms forwards` },
+      "fade-right": { opacity: 0, transform: "translateX(-30px)", animation: `fadeInRight 0.6s ease-out ${delay}ms forwards` },
+      "scale-up": { opacity: 0, transform: "scale(0.8)", animation: `scaleUp 0.6s ease-out ${delay}ms forwards` },
+      "scale-down": { opacity: 0, transform: "scale(1.2)", animation: `scaleDown 0.6s ease-out ${delay}ms forwards` },
+      "slide-up": { opacity: 0, transform: "translateY(100%)", animation: `slideUp 0.6s ease-out ${delay}ms forwards` },
+      "slide-down": { opacity: 0, transform: "translateY(-100%)", animation: `slideDown 0.6s ease-out ${delay}ms forwards` }
+    };
+    return animations[style] || animations["fade-up"];
+  };
+
   return (
     <section className="py-20 px-4" style={{ backgroundColor: theme.backgroundColor || "#f0fdf4" }}>
+      <style>{`
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInLeft { to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeInRight { to { opacity: 1; transform: translateX(0); } }
+        @keyframes scaleUp { to { opacity: 1; transform: scale(1); } }
+        @keyframes scaleDown { to { opacity: 1; transform: scale(1); } }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { to { opacity: 1; transform: translateY(0); } }
+      `}</style>
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4" style={{ color: theme.textColor || "#064e3b" }}>
           {paygo.title || "PAYGO Solutions"}
@@ -244,7 +480,11 @@ const PAYGOSection = ({ settings, theme }) => {
             <div
               key={index}
               className="p-6 rounded-2xl text-center transition hover:scale-105"
-              style={{ backgroundColor: theme.surfaceBackground || "#ffffff", border: `1px solid ${theme.borderColor || "#a7f3d0"}` }}
+              style={{
+                backgroundColor: theme.surfaceBackground || "#ffffff",
+                border: `1px solid ${theme.borderColor || "#a7f3d0"}`,
+                ...getAnimationStyle(index)
+              }}
             >
               <div className="text-4xl mb-4">💡</div>
               <h3 className="text-lg font-bold mb-2" style={{ color: theme.textColor || "#064e3b" }}>
@@ -314,8 +554,35 @@ const ImpactSection = ({ settings, theme }) => {
   const impact = settings.impact || {};
   const stories = impact.stories || [];
 
+  const getAnimationStyle = (index) => {
+    if (!impact.animationEnabled) return {};
+    const style = impact.animationStyle || "fade-up";
+    const delay = index * (impact.animationDelay || 100);
+    const animations = {
+      "fade-up": { opacity: 0, transform: "translateY(30px)", animation: `fadeInUp 0.6s ease-out ${delay}ms forwards` },
+      "fade-down": { opacity: 0, transform: "translateY(-30px)", animation: `fadeInDown 0.6s ease-out ${delay}ms forwards` },
+      "fade-left": { opacity: 0, transform: "translateX(30px)", animation: `fadeInLeft 0.6s ease-out ${delay}ms forwards` },
+      "fade-right": { opacity: 0, transform: "translateX(-30px)", animation: `fadeInRight 0.6s ease-out ${delay}ms forwards` },
+      "scale-up": { opacity: 0, transform: "scale(0.8)", animation: `scaleUp 0.6s ease-out ${delay}ms forwards` },
+      "scale-down": { opacity: 0, transform: "scale(1.2)", animation: `scaleDown 0.6s ease-out ${delay}ms forwards` },
+      "slide-up": { opacity: 0, transform: "translateY(100%)", animation: `slideUp 0.6s ease-out ${delay}ms forwards` },
+      "slide-down": { opacity: 0, transform: "translateY(-100%)", animation: `slideDown 0.6s ease-out ${delay}ms forwards` }
+    };
+    return animations[style] || animations["fade-up"];
+  };
+
   return (
     <section className="py-20 px-4" style={{ backgroundColor: theme.backgroundColor || "#f0fdf4" }}>
+      <style>{`
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInLeft { to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeInRight { to { opacity: 1; transform: translateX(0); } }
+        @keyframes scaleUp { to { opacity: 1; transform: scale(1); } }
+        @keyframes scaleDown { to { opacity: 1; transform: scale(1); } }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { to { opacity: 1; transform: translateY(0); } }
+      `}</style>
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4" style={{ color: theme.textColor || "#064e3b" }}>
           {impact.title || "Our Impact"}
@@ -328,7 +595,11 @@ const ImpactSection = ({ settings, theme }) => {
             <div
               key={index}
               className="rounded-2xl overflow-hidden transition hover:scale-105"
-              style={{ backgroundColor: theme.surfaceBackground || "#ffffff", border: `1px solid ${theme.borderColor || "#a7f3d0"}` }}
+              style={{
+                backgroundColor: theme.surfaceBackground || "#ffffff",
+                border: `1px solid ${theme.borderColor || "#a7f3d0"}`,
+                ...getAnimationStyle(index)
+              }}
             >
               {story.imageUrl && (
                 <img src={story.imageUrl} alt={story.title} className="w-full h-48 object-cover" />

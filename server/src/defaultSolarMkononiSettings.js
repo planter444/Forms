@@ -11,6 +11,8 @@ export const defaultSolarMkononiSettings = {
     secondaryCtaHref: "#ussd",
     backgroundType: "image",
     backgroundUrl: "",
+    backgroundUrlMobile: "",
+    overlayOpacity: 0.5,
     videoUrl: "",
     enabled: true
   },
@@ -30,6 +32,9 @@ export const defaultSolarMkononiSettings = {
     enabled: true,
     title: "Our Services",
     description: "Comprehensive renewable energy solutions for Kenya",
+    animationEnabled: true,
+    animationStyle: "fade-up",
+    animationDelay: 100,
     cards: [
       {
         title: "Solar Suppliers",
@@ -96,19 +101,26 @@ export const defaultSolarMkononiSettings = {
     title: "Access via USSD",
     description: "No internet? No problem. Access our platform directly from your mobile phone",
     dialCode: "*789*788#",
+    animationEnabled: true,
+    animationStyle: "fade-up",
+    animationDelay: 100,
     instructions: [
       "Open your phone's dialer",
       "Enter *789*788#",
       "Press the call button",
       "Follow the menu prompts"
     ],
-    screenshotUrl: ""
+    screenshotUrl: "",
+    backgroundColor: "#059669"
   },
 
   paygo: {
     enabled: true,
     title: "PAYGO Solutions",
     description: "Pay-as-you-go solar solutions for affordable clean energy access",
+    animationEnabled: true,
+    animationStyle: "fade-up",
+    animationDelay: 100,
     items: [
       {
         title: "Solar Pumps",
@@ -140,6 +152,9 @@ export const defaultSolarMkononiSettings = {
     enabled: true,
     title: "Our Impact",
     description: "Transforming lives through renewable energy across Kenya",
+    animationEnabled: true,
+    animationStyle: "fade-up",
+    animationDelay: 100,
     stories: [
       {
         title: "Lighting Up Rural Kenya",
@@ -173,7 +188,8 @@ export const defaultSolarMkononiSettings = {
     email: "info@solarmkononi.org",
     phone: "+254 700 000 000",
     address: "Nairobi, Kenya",
-    formEnabled: true
+    formEnabled: true,
+    recipientEmail: "info@solarmkononi.org"
   },
 
   footer: {
