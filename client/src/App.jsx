@@ -5,6 +5,7 @@ import LandingPage from "./pages/LandingPage.jsx";
 import FormPage from "./pages/FormPage.jsx";
 import SuccessPage from "./pages/SuccessPage.jsx";
 import AdminConsolePage from "./pages/AdminConsolePage.jsx";
+import SolarMkononiPage from "./pages/SolarMkononiPage.jsx";
 
 const isMobileViewport = () =>
   typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)").matches : false;
@@ -47,6 +48,7 @@ const App = () => {
         <Route path="/form" element={<FormPage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/admin" element={<AdminConsolePage />} />
+        <Route path="/solar-mkononi" element={<SolarMkononiPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </PageTransition>

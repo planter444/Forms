@@ -66,6 +66,28 @@ export const resetSiteSettings = (token) =>
     }
   });
 
+export const getSolarMkononiSettings = () =>
+  request("/api/solar-mkononi-settings", {
+    cache: "no-store"
+  });
+
+export const updateSolarMkononiSettings = (token, settings) =>
+  request("/api/solar-mkononi-settings", {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(settings)
+  });
+
+export const resetSolarMkononiSettings = (token) =>
+  request("/api/solar-mkononi-settings/reset", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
 export const uploadAdminMedia = async (token, file) => {
   const formData = new FormData();
   formData.append("file", file);

@@ -11,6 +11,7 @@ import { databaseState, initializeDatabase, markDatabaseUnavailable, pool } from
 import { requireAdmin, issueAdminToken } from "./auth.js";
 import { categories, counties } from "./constants.js";
 import { getSiteSettings, resetSiteSettings, updateSiteSettings } from "./siteSettingsStore.js";
+import { getSolarMkononiSettings, resetSolarMkononiSettings, updateSolarMkononiSettings } from "./solarMkononiSettingsStore.js";
 import { escapeCsvValue, sanitizeSubmissionInput, validateSubmission } from "./validators.js";
 
 dotenv.config();
@@ -140,6 +141,29 @@ app.put("/api/site-settings", requireAdmin, async (request, response) => {
 
 app.post("/api/site-settings/reset", requireAdmin, async (_request, response) => {
   const settings = await resetSiteSettings();
+  response.json({ settings });
+});
+
+app.get("/api/solar-mkononi-settings", async (_request, response) => {
+  const settings = await getSolarMkononiSettings();
+  response.set("Cache-Control", "no-store");
+  response.json({ settings });
+});
+
+app.put("/api/solar-mkononi-settings", requireAdmin, async (request, response) => {
+  try {
+    const settings = await updateSolarMkononiSettings(request.body || {});
+    response.json({ settings });
+  } catch (error) {
+    response.status(500).json({
+      message: "Unable to save Solar Mkononi settings.",
+      detail: error?.message || "Unknown settings save error."
+    });
+  }
+});
+
+app.post("/api/solar-mkononi-settings/reset", requireAdmin, async (_request, response) => {
+  const settings = await resetSolarMkononiSettings();
   response.json({ settings });
 });
 
