@@ -315,6 +315,7 @@ const AdminConsolePage = () => {
   const [solarMkononiSettings, setSolarMkononiSettings] = useState(null);
   const [solarMkononiEditor, setSolarMkononiEditor] = useState(null);
   const [savingSolarMkononi, setSavingSolarMkononi] = useState(false);
+  const [solarMkononiSubTab, setSolarMkononiSubTab] = useState("hero");
 
   const gatedEmail = useMemo(() => {
     const fromState = location.state?.prefillEmail || "";
@@ -1814,7 +1815,34 @@ const AdminConsolePage = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_300px]">
+                  <div className="mt-6">
+                    <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2">
+                      {[
+                        { id: "hero", label: "Hero" },
+                        { id: "stats", label: "Statistics" },
+                        { id: "services", label: "Services" },
+                        { id: "howItWorks", label: "How It Works" },
+                        { id: "ussd", label: "USSD" },
+                        { id: "paygo", label: "PAYGO" },
+                        { id: "impact", label: "Impact" },
+                        { id: "contact", label: "Contact" },
+                        { id: "footer", label: "Footer" },
+                        { id: "theme", label: "Theme" },
+                        { id: "branding", label: "Branding" }
+                      ].map((subTab) => (
+                        <button
+                          key={subTab.id}
+                          onClick={() => setSolarMkononiSubTab(subTab.id)}
+                          className="rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition"
+                          style={{
+                            backgroundColor: solarMkononiSubTab === subTab.id ? palette.primary : palette.surfaceMuted,
+                            color: solarMkononiSubTab === subTab.id ? "#ffffff" : palette.textColor
+                          }}
+                        >
+                          {subTab.label}
+                        </button>
+                      ))}
+                    </div>
                     <div className="space-y-6">
                       <div className="space-y-4 rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
                         <div>
@@ -1965,6 +1993,14 @@ const AdminConsolePage = () => {
                             onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, hero: { ...solarMkononiEditor.hero, enabled: e.target.checked } })}
                           />
                         </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Use desktop background on mobile if no mobile background is set
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.hero?.useDesktopOnMobile !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, hero: { ...solarMkononiEditor.hero, useDesktopOnMobile: e.target.checked } })}
+                          />
+                        </label>
                       </div>
 
                       <div className="space-y-4 rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
@@ -2083,6 +2119,44 @@ const AdminConsolePage = () => {
                             type="number"
                             value={solarMkononiEditor.services?.animationDelay || 100}
                             onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable mobile load-in animations
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.services?.mobileAnimationEnabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, mobileAnimationEnabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile Animation Style
+                          <select
+                            value={solarMkononiEditor.services?.mobileAnimationStyle || "fade-up"}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, mobileAnimationStyle: e.target.value } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          >
+                            <option value="fade-up">Fade Up</option>
+                            <option value="fade-down">Fade Down</option>
+                            <option value="fade-left">Fade Left</option>
+                            <option value="fade-right">Fade Right</option>
+                            <option value="scale-up">Scale Up</option>
+                            <option value="scale-down">Scale Down</option>
+                            <option value="slide-up">Slide Up</option>
+                            <option value="slide-down">Slide Down</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.services?.mobileAnimationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, mobileAnimationDelay: parseInt(e.target.value) || 100 } })}
                             className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
                             style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
                             min="0"
@@ -2350,6 +2424,44 @@ const AdminConsolePage = () => {
                             step="50"
                           />
                         </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable mobile load-in animations
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.ussd?.mobileAnimationEnabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, mobileAnimationEnabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile Animation Style
+                          <select
+                            value={solarMkononiEditor.ussd?.mobileAnimationStyle || "fade-up"}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, mobileAnimationStyle: e.target.value } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          >
+                            <option value="fade-up">Fade Up</option>
+                            <option value="fade-down">Fade Down</option>
+                            <option value="fade-left">Fade Left</option>
+                            <option value="fade-right">Fade Right</option>
+                            <option value="scale-up">Scale Up</option>
+                            <option value="scale-down">Scale Down</option>
+                            <option value="slide-up">Slide Up</option>
+                            <option value="slide-down">Slide Down</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.ussd?.mobileAnimationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, ussd: { ...solarMkononiEditor.ussd, mobileAnimationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
                           Background Color
                           <div className="mt-2 flex items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
@@ -2456,6 +2568,44 @@ const AdminConsolePage = () => {
                             type="number"
                             value={solarMkononiEditor.paygo?.animationDelay || 100}
                             onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable mobile load-in animations
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.paygo?.mobileAnimationEnabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, mobileAnimationEnabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile Animation Style
+                          <select
+                            value={solarMkononiEditor.paygo?.mobileAnimationStyle || "fade-up"}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, mobileAnimationStyle: e.target.value } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          >
+                            <option value="fade-up">Fade Up</option>
+                            <option value="fade-down">Fade Down</option>
+                            <option value="fade-left">Fade Left</option>
+                            <option value="fade-right">Fade Right</option>
+                            <option value="scale-up">Scale Up</option>
+                            <option value="scale-down">Scale Down</option>
+                            <option value="slide-up">Slide Up</option>
+                            <option value="slide-down">Slide Down</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.paygo?.mobileAnimationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, paygo: { ...solarMkononiEditor.paygo, mobileAnimationDelay: parseInt(e.target.value) || 100 } })}
                             className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
                             style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
                             min="0"
@@ -2754,6 +2904,44 @@ const AdminConsolePage = () => {
                             type="number"
                             value={solarMkononiEditor.impact?.animationDelay || 100}
                             onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
+                        <label className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: palette.borderColor, color: palette.textColor, backgroundColor: palette.surfaceBackground }}>
+                          Enable mobile load-in animations
+                          <input
+                            type="checkbox"
+                            checked={solarMkononiEditor.impact?.mobileAnimationEnabled !== false}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, mobileAnimationEnabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile Animation Style
+                          <select
+                            value={solarMkononiEditor.impact?.mobileAnimationStyle || "fade-up"}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, mobileAnimationStyle: e.target.value } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                          >
+                            <option value="fade-up">Fade Up</option>
+                            <option value="fade-down">Fade Down</option>
+                            <option value="fade-left">Fade Left</option>
+                            <option value="fade-right">Fade Right</option>
+                            <option value="scale-up">Scale Up</option>
+                            <option value="scale-down">Scale Down</option>
+                            <option value="slide-up">Slide Up</option>
+                            <option value="slide-down">Slide Down</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.impact?.mobileAnimationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, impact: { ...solarMkononiEditor.impact, mobileAnimationDelay: parseInt(e.target.value) || 100 } })}
                             className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
                             style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
                             min="0"

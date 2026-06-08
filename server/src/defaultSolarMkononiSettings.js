@@ -13,6 +13,7 @@ export const defaultSolarMkononiSettings = {
     backgroundUrl: "",
     backgroundUrlMobile: "",
     overlayOpacity: 0.5,
+    useDesktopOnMobile: false,
     videoUrl: "",
     enabled: true
   },
@@ -35,6 +36,9 @@ export const defaultSolarMkononiSettings = {
     animationEnabled: true,
     animationStyle: "fade-up",
     animationDelay: 100,
+    mobileAnimationEnabled: true,
+    mobileAnimationStyle: "fade-up",
+    mobileAnimationDelay: 100,
     cards: [
       {
         title: "Solar Suppliers",
@@ -104,6 +108,9 @@ export const defaultSolarMkononiSettings = {
     animationEnabled: true,
     animationStyle: "fade-up",
     animationDelay: 100,
+    mobileAnimationEnabled: true,
+    mobileAnimationStyle: "fade-up",
+    mobileAnimationDelay: 100,
     instructions: [
       "Open your phone's dialer",
       "Enter *789*788#",
@@ -121,6 +128,9 @@ export const defaultSolarMkononiSettings = {
     animationEnabled: true,
     animationStyle: "fade-up",
     animationDelay: 100,
+    mobileAnimationEnabled: true,
+    mobileAnimationStyle: "fade-up",
+    mobileAnimationDelay: 100,
     items: [
       {
         title: "Solar Pumps",
@@ -155,6 +165,9 @@ export const defaultSolarMkononiSettings = {
     animationEnabled: true,
     animationStyle: "fade-up",
     animationDelay: 100,
+    mobileAnimationEnabled: true,
+    mobileAnimationStyle: "fade-up",
+    mobileAnimationDelay: 100,
     stories: [
       {
         title: "Lighting Up Rural Kenya",

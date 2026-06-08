@@ -127,7 +127,14 @@ const HeroSection = ({ settings, theme }) => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const backgroundUrl = isMobile && hero.backgroundUrlMobile ? hero.backgroundUrlMobile : hero.backgroundUrl;
+  const useDesktopOnMobile = hero.useDesktopOnMobile !== false;
+  let backgroundUrl;
+  if (isMobile) {
+    backgroundUrl = hero.backgroundUrlMobile || (useDesktopOnMobile ? hero.backgroundUrl : null);
+  } else {
+    backgroundUrl = hero.backgroundUrl;
+  }
+
   const heroStyle = {
     backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : undefined,
     backgroundColor: backgroundUrl ? undefined : theme.primaryColor || "#059669",
@@ -175,6 +182,15 @@ const HeroSection = ({ settings, theme }) => {
 const StatsSection = ({ settings, theme }) => {
   const stats = settings.stats || {};
   const items = stats.items || [];
+  const isOdd = items.length % 2 !== 0;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   return (
     <section className="py-20 px-4" style={{ backgroundColor: theme.surfaceBackground || "#ffffff" }}>
@@ -182,8 +198,14 @@ const StatsSection = ({ settings, theme }) => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {items.map((item, index) => {
             const [count, ref] = useCountUp(item.value);
+            const isLastItem = index === items.length - 1;
             return (
-              <div key={index} className="text-center" ref={ref}>
+              <div
+                key={index}
+                className="text-center"
+                ref={ref}
+                style={isMobile && isOdd && isLastItem ? { gridColumn: "1 / -1", maxWidth: "50%", margin: "0 auto" } : {}}
+              >
                 <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: theme.primaryColor || "#059669" }}>
                   {count}
                 </div>
@@ -204,6 +226,15 @@ const ServicesSection = ({ settings, theme }) => {
   const cards = services.cards || [];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const carouselRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+  const [translateX, setTranslateX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const cardWidth = useRef(0);
+
+  // Duplicate cards for infinite scrolling
+  const duplicatedCards = [...cards, ...cards];
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -212,18 +243,82 @@ const ServicesSection = ({ settings, theme }) => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  useEffect(() => {
+    if (carouselRef.current && isMobile) {
+      cardWidth.current = carouselRef.current.offsetWidth;
+    }
+  }, [isMobile, cards]);
+
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % cards.length);
+    if (isMobile) {
+      setTranslateX((prev) => {
+        const newTranslate = prev - cardWidth.current;
+        // If we've scrolled past the original cards, reset to the beginning
+        if (newTranslate <= -cardWidth.current * cards.length) {
+          return 0;
+        }
+        return newTranslate;
+      });
+    } else {
+      if (currentIndex < cards.length - 1) {
+        setCurrentIndex((prev) => prev + 1);
+      }
+    }
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length);
+    if (isMobile) {
+      setTranslateX((prev) => {
+        const newTranslate = prev + cardWidth.current;
+        // If we've scrolled before the start, reset to the end
+        if (newTranslate > 0) {
+          return -cardWidth.current * cards.length;
+        }
+        return newTranslate;
+      });
+    } else {
+      if (currentIndex > 0) {
+        setCurrentIndex((prev) => prev - 1);
+      }
+    }
+  };
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    touchEndX.current = e.touches[0].clientX;
+    const diff = touchStartX.current - touchEndX.current;
+    setTranslateX((prev) => prev - diff);
+    touchStartX.current = touchEndX.current;
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    const diff = touchStartX.current - touchEndX.current;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    } else {
+      // Snap to nearest card
+      const currentCardIndex = Math.round(Math.abs(translateX) / cardWidth.current);
+      setTranslateX(-currentCardIndex * cardWidth.current);
+    }
   };
 
   const getAnimationStyle = (index) => {
-    if (!services.animationEnabled) return {};
-    const style = services.animationStyle || "fade-up";
-    const delay = index * (services.animationDelay || 100);
+    const animationEnabled = isMobile ? services.mobileAnimationEnabled : services.animationEnabled;
+    if (!animationEnabled) return {};
+    const animationStyle = isMobile ? services.mobileAnimationStyle : services.animationStyle;
+    const animationDelay = isMobile ? services.mobileAnimationDelay : services.animationDelay;
+    const style = animationStyle || "fade-up";
+    const delay = index * (animationDelay || 100);
     const animations = {
       "fade-up": { opacity: 0, transform: "translateY(30px)", animation: `fadeInUp 0.6s ease-out ${delay}ms forwards` },
       "fade-down": { opacity: 0, transform: "translateY(-30px)", animation: `fadeInDown 0.6s ease-out ${delay}ms forwards` },
@@ -259,19 +354,28 @@ const ServicesSection = ({ settings, theme }) => {
 
         {isMobile ? (
           <div className="relative">
-            <div className="overflow-hidden">
+            <div
+              ref={carouselRef}
+              className="overflow-hidden"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               <div
-                className="flex transition-transform duration-300 ease-in-out"
-                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+                className="flex"
+                style={{
+                  transform: `translateX(${translateX}px)`,
+                  transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+                }}
               >
-                {cards.map((card, index) => (
+                {duplicatedCards.map((card, index) => (
                   <div key={index} className="w-full flex-shrink-0 px-4">
                     <div
                       className="p-6 rounded-2xl"
                       style={{
                         backgroundColor: theme.surfaceBackground || "#ffffff",
                         border: `1px solid ${theme.borderColor || "#a7f3d0"}`,
-                        ...getAnimationStyle(index)
+                        ...getAnimationStyle(index % cards.length)
                       }}
                     >
                       <div className="text-4xl mb-4">🌟</div>
@@ -293,16 +397,19 @@ const ServicesSection = ({ settings, theme }) => {
                 ←
               </button>
               <div className="flex items-center gap-2">
-                {cards.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentIndex(index)}
-                    className={`w-3 h-3 rounded-full transition ${index === currentIndex ? "scale-125" : ""}`}
-                    style={{
-                      backgroundColor: index === currentIndex ? theme.primaryColor || "#059669" : theme.borderColor || "#a7f3d0"
-                    }}
-                  />
-                ))}
+                {cards.map((_, index) => {
+                  const currentCardIndex = Math.round(Math.abs(translateX) / cardWidth.current) % cards.length;
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setTranslateX(-index * cardWidth.current)}
+                      className={`w-3 h-3 rounded-full transition ${index === currentCardIndex ? "scale-125" : ""}`}
+                      style={{
+                        backgroundColor: index === currentCardIndex ? theme.primaryColor || "#059669" : theme.borderColor || "#a7f3d0"
+                      }}
+                    />
+                  );
+                })}
               </div>
               <button
                 onClick={nextSlide}
@@ -376,11 +483,22 @@ const HowItWorksSection = ({ settings, theme }) => {
 const USSDSection = ({ settings, theme }) => {
   const ussd = settings.ussd || {};
   const backgroundColor = ussd.backgroundColor || theme.primaryColor || "#059669";
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const getAnimationStyle = (index) => {
-    if (!ussd.animationEnabled) return {};
-    const style = ussd.animationStyle || "fade-up";
-    const delay = index * (ussd.animationDelay || 100);
+    const animationEnabled = isMobile ? ussd.mobileAnimationEnabled : ussd.animationEnabled;
+    if (!animationEnabled) return {};
+    const animationStyle = isMobile ? ussd.mobileAnimationStyle : ussd.animationStyle;
+    const animationDelay = isMobile ? ussd.mobileAnimationDelay : ussd.animationDelay;
+    const style = animationStyle || "fade-up";
+    const delay = index * (animationDelay || 100);
     const animations = {
       "fade-up": { opacity: 0, transform: "translateY(30px)", animation: `fadeInUp 0.6s ease-out ${delay}ms forwards` },
       "fade-down": { opacity: 0, transform: "translateY(-30px)", animation: `fadeInDown 0.6s ease-out ${delay}ms forwards` },
@@ -438,11 +556,22 @@ const USSDSection = ({ settings, theme }) => {
 const PAYGOSection = ({ settings, theme }) => {
   const paygo = settings.paygo || {};
   const items = paygo.items || [];
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const getAnimationStyle = (index) => {
-    if (!paygo.animationEnabled) return {};
-    const style = paygo.animationStyle || "fade-up";
-    const delay = index * (paygo.animationDelay || 100);
+    const animationEnabled = isMobile ? paygo.mobileAnimationEnabled : paygo.animationEnabled;
+    if (!animationEnabled) return {};
+    const animationStyle = isMobile ? paygo.mobileAnimationStyle : paygo.animationStyle;
+    const animationDelay = isMobile ? paygo.mobileAnimationDelay : paygo.animationDelay;
+    const style = animationStyle || "fade-up";
+    const delay = index * (animationDelay || 100);
     const animations = {
       "fade-up": { opacity: 0, transform: "translateY(30px)", animation: `fadeInUp 0.6s ease-out ${delay}ms forwards` },
       "fade-down": { opacity: 0, transform: "translateY(-30px)", animation: `fadeInDown 0.6s ease-out ${delay}ms forwards` },
@@ -553,11 +682,22 @@ const ResourceLibrarySection = ({ settings, theme }) => {
 const ImpactSection = ({ settings, theme }) => {
   const impact = settings.impact || {};
   const stories = impact.stories || [];
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const getAnimationStyle = (index) => {
-    if (!impact.animationEnabled) return {};
-    const style = impact.animationStyle || "fade-up";
-    const delay = index * (impact.animationDelay || 100);
+    const animationEnabled = isMobile ? impact.mobileAnimationEnabled : impact.animationEnabled;
+    if (!animationEnabled) return {};
+    const animationStyle = isMobile ? impact.mobileAnimationStyle : impact.animationStyle;
+    const animationDelay = isMobile ? impact.mobileAnimationDelay : impact.animationDelay;
+    const style = animationStyle || "fade-up";
+    const delay = index * (animationDelay || 100);
     const animations = {
       "fade-up": { opacity: 0, transform: "translateY(30px)", animation: `fadeInUp 0.6s ease-out ${delay}ms forwards` },
       "fade-down": { opacity: 0, transform: "translateY(-30px)", animation: `fadeInDown 0.6s ease-out ${delay}ms forwards` },
