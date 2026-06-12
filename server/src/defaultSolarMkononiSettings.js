@@ -80,6 +80,7 @@ export const defaultSolarMkononiSettings = {
     title: "How It Works",
     backgroundColor: "#ffffff",
     backgroundPattern: "none",
+    animationDelay: 100,
     steps: [
       {
         title: "Access Platform",
@@ -164,6 +165,7 @@ export const defaultSolarMkononiSettings = {
     description: "Access policies, best practices, and sector guides",
     backgroundColor: "#f0fdf4",
     backgroundPattern: "none",
+    animationDelay: 100,
     resources: []
   },
 
@@ -204,6 +206,7 @@ export const defaultSolarMkononiSettings = {
     description: "Working together to accelerate renewable energy adoption",
     backgroundColor: "#ffffff",
     backgroundPattern: "none",
+    animationDelay: 100,
     logos: []
   },
 
@@ -217,7 +220,8 @@ export const defaultSolarMkononiSettings = {
     formEnabled: true,
     recipientEmail: "info@solarmkononi.org",
     backgroundColor: "#f0fdf4",
-    backgroundPattern: "none"
+    backgroundPattern: "none",
+    animationDelay: 100
   },
 
   footer: {
@@ -232,7 +236,8 @@ export const defaultSolarMkononiSettings = {
     socialLinks: [],
     copyright: "© 2026 Solar Mkononi. All rights reserved.",
     backgroundColor: "#064e3b",
-    backgroundPattern: "none"
+    backgroundPattern: "none",
+    animationDelay: 100
   },
 
   registration: {
@@ -242,7 +247,8 @@ export const defaultSolarMkononiSettings = {
     buttonText: "Register Now",
     link: "https://ussd.kerea.org",
     backgroundColor: "#059669",
-    backgroundPattern: "wave"
+    backgroundPattern: "wave",
+    animationDelay: 100
   },
 
   branding: {

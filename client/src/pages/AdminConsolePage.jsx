@@ -2539,6 +2539,18 @@ const AdminConsolePage = () => {
                             onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, howItWorks: { ...solarMkononiEditor.howItWorks, enabled: e.target.checked } })}
                           />
                         </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.howItWorks?.animationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, howItWorks: { ...solarMkononiEditor.howItWorks, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
                         <div className="space-y-3">
                           {solarMkononiEditor.howItWorks?.steps?.map((step, index) => (
                             <div key={index} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
@@ -3192,6 +3204,18 @@ const AdminConsolePage = () => {
                           />
                         </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.contact?.animationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, contact: { ...solarMkononiEditor.contact, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
                           Form Recipient Email
                           <input
                             type="email"
@@ -3372,6 +3396,18 @@ const AdminConsolePage = () => {
                             onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, resourceLibrary: { ...solarMkononiEditor.resourceLibrary, enabled: e.target.checked } })}
                           />
                         </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.resourceLibrary?.animationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, resourceLibrary: { ...solarMkononiEditor.resourceLibrary, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
                         <div className="space-y-3">
                           {solarMkononiEditor.resourceLibrary?.resources?.map((resource, index) => (
                             <div key={index} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
@@ -3493,6 +3529,18 @@ const AdminConsolePage = () => {
                             onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, partners: { ...solarMkononiEditor.partners, enabled: e.target.checked } })}
                           />
                         </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.partners?.animationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, partners: { ...solarMkononiEditor.partners, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
+                          />
+                        </label>
                         <div className="space-y-3">
                           {solarMkononiEditor.partners?.logos?.map((logo, index) => (
                             <div key={index} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
@@ -3597,6 +3645,18 @@ const AdminConsolePage = () => {
                             type="checkbox"
                             checked={solarMkononiEditor.footer?.enabled !== false}
                             onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, footer: { ...solarMkononiEditor.footer, enabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.footer?.animationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, footer: { ...solarMkononiEditor.footer, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
                           />
                         </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
@@ -3791,6 +3851,18 @@ const AdminConsolePage = () => {
                             type="checkbox"
                             checked={solarMkononiEditor.registration?.enabled !== false}
                             onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, registration: { ...solarMkononiEditor.registration, enabled: e.target.checked } })}
+                          />
+                        </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Animation Delay (ms)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.registration?.animationDelay || 100}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, registration: { ...solarMkononiEditor.registration, animationDelay: parseInt(e.target.value) || 100 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="0"
+                            step="50"
                           />
                         </label>
                         <label className="block text-sm font-medium" style={{ color: palette.textColor }}>

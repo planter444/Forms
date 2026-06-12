@@ -273,6 +273,10 @@ const ServicesSection = ({ settings, theme }) => {
     if (isMobile) {
       setTranslateX((prev) => {
         const newTranslate = prev - cardWidth.current;
+        // Loop back to start when reaching the end
+        if (newTranslate <= -cardWidth.current * cards.length) {
+          return 0;
+        }
         return newTranslate;
       });
     } else {
@@ -286,6 +290,10 @@ const ServicesSection = ({ settings, theme }) => {
     if (isMobile) {
       setTranslateX((prev) => {
         const newTranslate = prev + cardWidth.current;
+        // Loop to end when going back from start
+        if (newTranslate > 0) {
+          return -cardWidth.current * (cards.length - 1);
+        }
         return newTranslate;
       });
     } else {
@@ -318,18 +326,18 @@ const ServicesSection = ({ settings, theme }) => {
         prevSlide();
       }
     } else {
-      // Snap to nearest card
+      // Snap to nearest card with smooth transition
       const currentCardIndex = Math.round(Math.abs(translateX) / cardWidth.current);
-      const snappedTranslate = -currentCardIndex * cardWidth.current;
+      let snappedTranslate = -currentCardIndex * cardWidth.current;
       
-      // Reset position if we've gone beyond the original cards
+      // Loop back to start if at the end
       if (snappedTranslate <= -cardWidth.current * cards.length) {
-        setTranslateX(0);
+        snappedTranslate = 0;
       } else if (snappedTranslate > 0) {
-        setTranslateX(-cardWidth.current * (cards.length - 1));
-      } else {
-        setTranslateX(snappedTranslate);
+        snappedTranslate = -cardWidth.current * (cards.length - 1);
       }
+      
+      setTranslateX(snappedTranslate);
     }
   };
 
