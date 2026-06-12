@@ -39,6 +39,8 @@ export const defaultSolarMkononiSettings = {
     mobileAnimationEnabled: true,
     mobileAnimationStyle: "fade-up",
     mobileAnimationDelay: 100,
+    backgroundColor: "#f0fdf4",
+    backgroundPattern: "none",
     cards: [
       {
         title: "Solar Suppliers",
@@ -76,6 +78,8 @@ export const defaultSolarMkononiSettings = {
   howItWorks: {
     enabled: true,
     title: "How It Works",
+    backgroundColor: "#ffffff",
+    backgroundPattern: "none",
     steps: [
       {
         title: "Access Platform",
@@ -118,7 +122,8 @@ export const defaultSolarMkononiSettings = {
       "Follow the menu prompts"
     ],
     screenshotUrl: "",
-    backgroundColor: "#059669"
+    backgroundColor: "#059669",
+    backgroundPattern: "none"
   },
 
   paygo: {
@@ -131,6 +136,8 @@ export const defaultSolarMkononiSettings = {
     mobileAnimationEnabled: true,
     mobileAnimationStyle: "fade-up",
     mobileAnimationDelay: 100,
+    backgroundColor: "#f0fdf4",
+    backgroundPattern: "none",
     items: [
       {
         title: "Solar Pumps",
@@ -155,6 +162,8 @@ export const defaultSolarMkononiSettings = {
     enabled: true,
     title: "Resource Library",
     description: "Access policies, best practices, and sector guides",
+    backgroundColor: "#f0fdf4",
+    backgroundPattern: "none",
     resources: []
   },
 
@@ -168,6 +177,8 @@ export const defaultSolarMkononiSettings = {
     mobileAnimationEnabled: true,
     mobileAnimationStyle: "fade-up",
     mobileAnimationDelay: 100,
+    backgroundColor: "#ffffff",
+    backgroundPattern: "none",
     stories: [
       {
         title: "Lighting Up Rural Kenya",
@@ -191,6 +202,8 @@ export const defaultSolarMkononiSettings = {
     enabled: true,
     title: "Our Partners",
     description: "Working together to accelerate renewable energy adoption",
+    backgroundColor: "#ffffff",
+    backgroundPattern: "none",
     logos: []
   },
 
@@ -202,7 +215,9 @@ export const defaultSolarMkononiSettings = {
     phone: "+254 700 000 000",
     address: "Nairobi, Kenya",
     formEnabled: true,
-    recipientEmail: "info@solarmkononi.org"
+    recipientEmail: "info@solarmkononi.org",
+    backgroundColor: "#f0fdf4",
+    backgroundPattern: "none"
   },
 
   footer: {
@@ -215,7 +230,19 @@ export const defaultSolarMkononiSettings = {
       { label: "Contact", href: "#contact" }
     ],
     socialLinks: [],
-    copyright: "© 2026 Solar Mkononi. All rights reserved."
+    copyright: "© 2026 Solar Mkononi. All rights reserved.",
+    backgroundColor: "#064e3b",
+    backgroundPattern: "none"
+  },
+
+  registration: {
+    enabled: true,
+    title: "Register as a Stakeholder",
+    description: "Join our network of renewable energy providers and partners",
+    buttonText: "Register Now",
+    link: "https://ussd.kerea.org",
+    backgroundColor: "#059669",
+    backgroundPattern: "wave"
   },
 
   branding: {
@@ -243,6 +270,7 @@ export const defaultSolarMkononiSettings = {
     hero: true,
     stats: true,
     services: true,
+    registration: true,
     howItWorks: true,
     ussd: true,
     paygo: true,

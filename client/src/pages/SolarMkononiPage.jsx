@@ -103,6 +103,7 @@ const SolarMkononiPage = () => {
       {sections.hero !== false && <HeroSection settings={settings} theme={theme} />}
       {sections.stats !== false && <StatsSection settings={settings} theme={theme} />}
       {sections.services !== false && <ServicesSection settings={settings} theme={theme} />}
+      {sections.registration !== false && <RegistrationSection settings={settings} theme={theme} />}
       {sections.howItWorks !== false && <HowItWorksSection settings={settings} theme={theme} />}
       {sections.ussd !== false && <USSDSection settings={settings} theme={theme} />}
       {sections.paygo !== false && <PAYGOSection settings={settings} theme={theme} />}
@@ -232,6 +233,8 @@ const ServicesSection = ({ settings, theme }) => {
   const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const cardWidth = useRef(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const sectionRef = useRef(null);
 
   // Duplicate cards for infinite scrolling
   const duplicatedCards = [...cards, ...cards];
@@ -249,14 +252,27 @@ const ServicesSection = ({ settings, theme }) => {
     }
   }, [isMobile, cards]);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasAnimated]);
+
   const nextSlide = () => {
     if (isMobile) {
       setTranslateX((prev) => {
         const newTranslate = prev - cardWidth.current;
-        // If we've scrolled past the original cards, reset to the beginning
-        if (newTranslate <= -cardWidth.current * cards.length) {
-          return 0;
-        }
         return newTranslate;
       });
     } else {
@@ -270,10 +286,6 @@ const ServicesSection = ({ settings, theme }) => {
     if (isMobile) {
       setTranslateX((prev) => {
         const newTranslate = prev + cardWidth.current;
-        // If we've scrolled before the start, reset to the end
-        if (newTranslate > 0) {
-          return -cardWidth.current * cards.length;
-        }
         return newTranslate;
       });
     } else {
@@ -308,13 +320,22 @@ const ServicesSection = ({ settings, theme }) => {
     } else {
       // Snap to nearest card
       const currentCardIndex = Math.round(Math.abs(translateX) / cardWidth.current);
-      setTranslateX(-currentCardIndex * cardWidth.current);
+      const snappedTranslate = -currentCardIndex * cardWidth.current;
+      
+      // Reset position if we've gone beyond the original cards
+      if (snappedTranslate <= -cardWidth.current * cards.length) {
+        setTranslateX(0);
+      } else if (snappedTranslate > 0) {
+        setTranslateX(-cardWidth.current * (cards.length - 1));
+      } else {
+        setTranslateX(snappedTranslate);
+      }
     }
   };
 
   const getAnimationStyle = (index) => {
     const animationEnabled = isMobile ? services.mobileAnimationEnabled : services.animationEnabled;
-    if (!animationEnabled) return {};
+    if (!animationEnabled || !hasAnimated) return {};
     const animationStyle = isMobile ? services.mobileAnimationStyle : services.animationStyle;
     const animationDelay = isMobile ? services.mobileAnimationDelay : services.animationDelay;
     const style = animationStyle || "fade-up";
@@ -333,7 +354,7 @@ const ServicesSection = ({ settings, theme }) => {
   };
 
   return (
-    <section id="services" className="py-20 px-4" style={{ backgroundColor: theme.backgroundColor || "#f0fdf4" }}>
+    <section id="services" ref={sectionRef} className="py-20 px-4" style={{ backgroundColor: services.backgroundColor || theme.backgroundColor || "#f0fdf4" }}>
       <style>{`
         @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInDown { to { opacity: 1; transform: translateY(0); } }
@@ -446,12 +467,104 @@ const ServicesSection = ({ settings, theme }) => {
   );
 };
 
+const RegistrationSection = ({ settings, theme }) => {
+  const registration = settings.registration || {};
+  const backgroundColor = registration.backgroundColor || "#059669";
+  const backgroundPattern = registration.backgroundPattern || "none";
+
+  const getPatternStyle = () => {
+    switch (backgroundPattern) {
+      case "wave":
+        return {
+          backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 50%)`,
+          backgroundSize: "60px 60px",
+          animation: "wavePattern 3s ease-in-out infinite"
+        };
+      case "web":
+        return {
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: "30px 30px",
+          animation: "webPattern 2s linear infinite"
+        };
+      case "dots":
+        return {
+          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.2) 2px, transparent 2px)`,
+          backgroundSize: "20px 20px",
+          animation: "dotsPattern 1.5s ease-in-out infinite"
+        };
+      case "grid":
+        return {
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,0.1) 2px, transparent 2px)`,
+          backgroundSize: "40px 40px",
+          animation: "gridPattern 3s linear infinite"
+        };
+      case "zigzag":
+        return {
+          backgroundImage: `repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0, rgba(255,255,255,0.1) 10px, transparent 10px, transparent 20px)`,
+          backgroundSize: "40px 40px",
+          animation: "zigzagPattern 2s linear infinite"
+        };
+      default:
+        return {};
+    }
+  };
+
+  return (
+    <>
+      <style>
+        {`
+          @keyframes wavePattern {
+            0%, 100% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+          }
+          @keyframes webPattern {
+            0% { background-position: 0 0; }
+            100% { background-position: 30px 30px; }
+          }
+          @keyframes dotsPattern {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+          @keyframes gridPattern {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+          }
+          @keyframes zigzagPattern {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+          }
+        `}
+      </style>
+      <section className="py-20 px-4 relative overflow-hidden" style={{ backgroundColor, ...getPatternStyle() }}>
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#ffffff" }}>
+            {registration.title || "Register as a Stakeholder"}
+          </h2>
+          <p className="text-lg mb-8 max-w-2xl mx-auto" style={{ color: "rgba(255,255,255,0.9)" }}>
+            {registration.description || "Join our network of solar suppliers, installers, financing institutions, biogas suppliers, and more. Register today to become part of Kenya's renewable energy ecosystem."}
+          </p>
+          <a
+            href={registration.link || "https://ussd.kerea.org"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block px-8 py-4 rounded-full text-lg font-bold text-white transition hover:scale-105 hover:shadow-lg"
+            style={{ backgroundColor: "#ffffff", color: backgroundColor }}
+          >
+            {registration.buttonText || "Register Now"}
+          </a>
+        </div>
+      </section>
+    </>
+  );
+};
+
 const HowItWorksSection = ({ settings, theme }) => {
   const howItWorks = settings.howItWorks || {};
   const steps = howItWorks.steps || [];
+  const backgroundColor = howItWorks.backgroundColor || "#ffffff";
 
   return (
-    <section className="py-20 px-4" style={{ backgroundColor: theme.surfaceBackground || "#ffffff" }}>
+    <section className="py-20 px-4" style={{ backgroundColor }}>
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12" style={{ color: theme.textColor || "#064e3b" }}>
           {howItWorks.title || "How It Works"}
@@ -530,10 +643,14 @@ const USSDSection = ({ settings, theme }) => {
           {ussd.description || "No internet? No problem. Access our platform directly from your mobile phone"}
         </p>
         <div className="inline-block bg-white rounded-2xl p-8 mb-8">
-          <div className="text-5xl md:text-6xl font-bold mb-4" style={{ color: backgroundColor }}>
+          <a
+            href={`tel:${ussd.dialCode || "*789*788#"}`}
+            className="text-5xl md:text-6xl font-bold mb-4 block cursor-pointer hover:scale-105 transition-transform"
+            style={{ color: backgroundColor }}
+          >
             {ussd.dialCode || "*789*788#"}
-          </div>
-          <p className="text-gray-600">Dial this code from any mobile phone</p>
+          </a>
+          <p className="text-gray-600">Tap to dial this code from any mobile phone</p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
@@ -556,6 +673,7 @@ const USSDSection = ({ settings, theme }) => {
 const PAYGOSection = ({ settings, theme }) => {
   const paygo = settings.paygo || {};
   const items = paygo.items || [];
+  const backgroundColor = paygo.backgroundColor || "#f0fdf4";
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -586,7 +704,7 @@ const PAYGOSection = ({ settings, theme }) => {
   };
 
   return (
-    <section className="py-20 px-4" style={{ backgroundColor: theme.backgroundColor || "#f0fdf4" }}>
+    <section className="py-20 px-4" style={{ backgroundColor }}>
       <style>{`
         @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInDown { to { opacity: 1; transform: translateY(0); } }
@@ -633,9 +751,10 @@ const PAYGOSection = ({ settings, theme }) => {
 const ResourceLibrarySection = ({ settings, theme }) => {
   const resourceLibrary = settings.resourceLibrary || {};
   const resources = resourceLibrary.resources || [];
+  const backgroundColor = resourceLibrary.backgroundColor || "#f0fdf4";
 
   return (
-    <section className="py-20 px-4" style={{ backgroundColor: theme.surfaceBackground || "#ffffff" }}>
+    <section className="py-20 px-4" style={{ backgroundColor }}>
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4" style={{ color: theme.textColor || "#064e3b" }}>
           {resourceLibrary.title || "Resource Library"}
@@ -682,6 +801,7 @@ const ResourceLibrarySection = ({ settings, theme }) => {
 const ImpactSection = ({ settings, theme }) => {
   const impact = settings.impact || {};
   const stories = impact.stories || [];
+  const backgroundColor = impact.backgroundColor || "#ffffff";
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -712,7 +832,7 @@ const ImpactSection = ({ settings, theme }) => {
   };
 
   return (
-    <section className="py-20 px-4" style={{ backgroundColor: theme.backgroundColor || "#f0fdf4" }}>
+    <section className="py-20 px-4" style={{ backgroundColor }}>
       <style>{`
         @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInDown { to { opacity: 1; transform: translateY(0); } }
@@ -763,9 +883,10 @@ const ImpactSection = ({ settings, theme }) => {
 const PartnersSection = ({ settings, theme }) => {
   const partners = settings.partners || {};
   const logos = partners.logos || [];
+  const backgroundColor = partners.backgroundColor || "#ffffff";
 
   return (
-    <section className="py-20 px-4" style={{ backgroundColor: theme.surfaceBackground || "#ffffff" }}>
+    <section className="py-20 px-4" style={{ backgroundColor }}>
       <div className="max-w-6xl mx-auto text-center">
         <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: theme.textColor || "#064e3b" }}>
           {partners.title || "Our Partners"}
@@ -789,9 +910,10 @@ const PartnersSection = ({ settings, theme }) => {
 
 const ContactSection = ({ settings, theme }) => {
   const contact = settings.contact || {};
+  const backgroundColor = contact.backgroundColor || "#f0fdf4";
 
   return (
-    <section id="contact" className="py-20 px-4" style={{ backgroundColor: theme.backgroundColor || "#f0fdf4" }}>
+    <section id="contact" className="py-20 px-4" style={{ backgroundColor }}>
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4" style={{ color: theme.textColor || "#064e3b" }}>
           {contact.title || "Get in Touch"}
@@ -877,9 +999,10 @@ const ContactSection = ({ settings, theme }) => {
 const FooterSection = ({ settings, theme }) => {
   const footer = settings.footer || {};
   const branding = settings.branding || {};
+  const backgroundColor = footer.backgroundColor || "#064e3b";
 
   return (
-    <footer className="py-12 px-4" style={{ backgroundColor: theme.surfaceBackground || "#ffffff", borderTop: `1px solid ${theme.borderColor || "#a7f3d0"}` }}>
+    <footer className="py-12 px-4" style={{ backgroundColor, borderTop: `1px solid ${theme.borderColor || "#a7f3d0"}` }}>
       <div className="max-w-6xl mx-auto">
         <div className="grid md:grid-cols-3 gap-8 mb-8">
           <div>
