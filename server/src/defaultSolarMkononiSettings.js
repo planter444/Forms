@@ -176,7 +176,13 @@ export const defaultSolarMkononiSettings = {
       description: "Search verified playbooks, policy briefs, financial toolkits, and implementation guides maintained by KEREA's working groups.",
       primaryCta: "Start exploring",
       primaryHref: "#library-feed",
-      searchPlaceholder: "Search policies, toolkits, best practices..."
+      searchPlaceholder: "Search policies, toolkits, best practices...",
+      backgroundImageUrl: "",
+      overlayOpacity: 0.5
+    },
+    nav: {
+      opacity: 0.85,
+      slideDirection: "left"
     },
     stats: {
       tagline: "Powered by Kenya Renewable Energy Association",
@@ -359,7 +365,9 @@ export const defaultSolarMkononiSettings = {
     mutedTextColor: "#475569",
     borderColor: "#a7f3d0",
     surfaceBackground: "#ffffff",
-    surfaceMuted: "#f0fdf4"
+    surfaceMuted: "#f0fdf4",
+    navOpacity: 0.85,
+    navSlideDirection: "left"
   },
 
   sections: {

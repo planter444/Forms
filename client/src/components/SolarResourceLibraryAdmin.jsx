@@ -7,8 +7,10 @@ import {
   adminListResources,
   adminUpdateCategory,
   adminUpdateResource,
-  fetchLibraryCategories
+  fetchLibraryCategories,
+  fetchLibraryOverview
 } from "../lib/resourceLibraryApi.js";
+import { getSolarMkononiSettings, updateSolarMkononiSettings } from "../lib/api.js";
 
 const defaultCategoryForm = {
   name: "",
@@ -55,6 +57,15 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
   const [resourceFile, setResourceFile] = useState(null);
   const [resourceSubmitting, setResourceSubmitting] = useState(false);
   const [loadingResources, setLoadingResources] = useState(false);
+  const [librarySettings, setLibrarySettings] = useState(null);
+  const [settingsForm, setSettingsForm] = useState({
+    heroBg: "",
+    heroOverlay: 0.5,
+    ctaEmail: "",
+    navOpacity: 0.85,
+    navSlideDirection: "left"
+  });
+  const [settingsSaving, setSettingsSaving] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -62,6 +73,30 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
     }
 
     loadCategories();
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    const loadSettings = async () => {
+      try {
+        const data = await fetchLibraryOverview();
+        const s = data.settings || {};
+        setLibrarySettings(s);
+        setSettingsForm({
+          heroBg: s.hero?.backgroundImageUrl || "",
+          heroOverlay: s.hero?.overlayOpacity !== undefined ? s.hero.overlayOpacity : 0.5,
+          ctaEmail: s.cta?.primaryHref || "",
+          navOpacity: s.nav?.opacity !== undefined ? s.nav.opacity : 0.85,
+          navSlideDirection: s.nav?.slideDirection || "left"
+        });
+      } catch {
+        // settings are optional
+      }
+    };
+    loadSettings();
   }, [token]);
 
   useEffect(() => {
@@ -261,6 +296,37 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
       loadResources(resourcePage, resourceFilters);
     } catch (error) {
       setError(error.message || "Unable to delete resource.");
+    }
+  };
+
+  const handleSettingsSave = async () => {
+    setSettingsSaving(true);
+    setError("");
+    try {
+      const current = await getSolarMkononiSettings();
+      const currentLib = current.settings?.solarResourceLibrary || {};
+      const merged = {
+        ...currentLib,
+        hero: {
+          ...currentLib.hero,
+          backgroundImageUrl: settingsForm.heroBg,
+          overlayOpacity: Number(settingsForm.heroOverlay)
+        },
+        nav: {
+          opacity: Number(settingsForm.navOpacity),
+          slideDirection: settingsForm.navSlideDirection
+        },
+        cta: {
+          ...currentLib.cta,
+          primaryHref: settingsForm.ctaEmail
+        }
+      };
+      await updateSolarMkononiSettings(token, { solarResourceLibrary: merged });
+      setNotice("Library settings saved.");
+    } catch (error) {
+      setError(error.message || "Unable to save settings.");
+    } finally {
+      setSettingsSaving(false);
     }
   };
 
@@ -641,6 +707,87 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+        <div className="border-b pb-4" style={{ borderColor: palette.borderColor }}>
+          <p className="text-sm font-semibold" style={{ color: palette.textColor }}>Library Landing Page Settings</p>
+          <p className="text-sm" style={{ color: palette.mutedTextColor }}>Customize the hero background, overlay, CTA email, and navigation.</p>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+            Hero background image URL
+            <input
+              type="url"
+              className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+              style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              value={settingsForm.heroBg}
+              onChange={(event) => setSettingsForm((prev) => ({ ...prev, heroBg: event.target.value }))}
+              placeholder="https://..."
+            />
+          </label>
+
+          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+            Overlay opacity ({Math.round(settingsForm.heroOverlay * 100)}%)
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              className="mt-3 w-full"
+              value={settingsForm.heroOverlay}
+              onChange={(event) => setSettingsForm((prev) => ({ ...prev, heroOverlay: Number(event.target.value) }))}
+            />
+          </label>
+
+          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+            Request support email / URL
+            <input
+              type="text"
+              className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+              style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              value={settingsForm.ctaEmail}
+              onChange={(event) => setSettingsForm((prev) => ({ ...prev, ctaEmail: event.target.value }))}
+              placeholder="mailto:support@solarmkononi.org"
+            />
+          </label>
+
+          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+            Nav transparency ({Math.round(settingsForm.navOpacity * 100)}%)
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              className="mt-3 w-full"
+              value={settingsForm.navOpacity}
+              onChange={(event) => setSettingsForm((prev) => ({ ...prev, navOpacity: Number(event.target.value) }))}
+            />
+          </label>
+
+          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+            Mobile menu slide direction
+            <select
+              className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+              style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              value={settingsForm.navSlideDirection}
+              onChange={(event) => setSettingsForm((prev) => ({ ...prev, navSlideDirection: event.target.value }))}
+            >
+              <option value="left">Slide from left</option>
+              <option value="right">Slide from right</option>
+            </select>
+          </label>
+        </div>
+
+        <button
+          type="button"
+          disabled={settingsSaving}
+          onClick={handleSettingsSave}
+          className="mt-6 w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {settingsSaving ? "Saving..." : "Save library settings"}
+        </button>
       </div>
 
       <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>

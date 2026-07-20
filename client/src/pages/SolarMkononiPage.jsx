@@ -63,6 +63,8 @@ const SolarMkononiNav = ({ settings, theme }) => {
   const textColor = theme.textColor || "#064e3b";
   const backgroundColor = theme.backgroundColor || "#f0fdf4";
   const borderColor = theme.borderColor || "#a7f3d0";
+  const navOpacity = theme.navOpacity !== undefined ? theme.navOpacity : 0.85;
+  const slideDirection = theme.navSlideDirection || "left";
 
   const navItems = [
     { label: "Home", href: "#top", to: null },
@@ -83,103 +85,157 @@ const SolarMkononiNav = ({ settings, theme }) => {
     }
   };
 
+  const glassStyle = {
+    backgroundColor: `${backgroundColor}${Math.round(navOpacity * 255).toString(16).padStart(2, "0")}`,
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    borderColor
+  };
+
   return (
-    <header
-      id="top"
-      className="sticky top-0 z-50 border-b backdrop-blur-xl"
-      style={{ backgroundColor: `${backgroundColor}f2`, borderColor }}
-    >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-        <a
-          href="#top"
-          onClick={(e) => {
-            e.preventDefault();
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          className="text-lg font-bold"
-          style={{ color: primaryColor }}
+    <>
+      <style>{`
+        @keyframes navSlideInLeft {
+          from { transform: translateX(-100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes navSlideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes navFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
+      <div className="sticky top-3 z-50 px-4">
+        <header
+          id="top"
+          className="mx-auto max-w-5xl rounded-2xl border shadow-lg"
+          style={glassStyle}
         >
-          Solar Mkononi
-        </a>
+          <div className="flex items-center justify-between px-4 py-3 sm:px-6">
+            <a
+              href="#top"
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="text-lg font-bold"
+              style={{ color: primaryColor }}
+            >
+              Solar Mkononi
+            </a>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {navItems.map((item) =>
-            item.to ? (
-              <Link
-                key={item.label}
-                to={item.to}
-                className="rounded-full px-4 py-2 text-sm font-medium transition hover:opacity-80"
-                style={{ color: textColor }}
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <a
-                key={item.label}
-                href={item.href}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleClick(item);
-                }}
-                className="rounded-full px-4 py-2 text-sm font-medium transition hover:opacity-80"
-                style={{ color: textColor }}
-              >
-                {item.label}
-              </a>
-            )
-          )}
-        </nav>
+            <nav className="hidden items-center gap-1 md:flex">
+              {navItems.map((item) =>
+                item.to ? (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    className="rounded-full px-4 py-2 text-sm font-medium transition hover:opacity-80"
+                    style={{ color: textColor }}
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleClick(item);
+                    }}
+                    className="rounded-full px-4 py-2 text-sm font-medium transition hover:opacity-80"
+                    style={{ color: textColor }}
+                  >
+                    {item.label}
+                  </a>
+                )
+              )}
+            </nav>
 
-        <button
-          type="button"
-          className="rounded-xl border p-2 md:hidden"
-          style={{ borderColor, color: textColor }}
-          onClick={() => setMenuOpen((prev) => !prev)}
-          aria-label="Toggle navigation"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            {menuOpen ? (
-              <path d="M6 6l12 12M6 18L18 6" />
-            ) : (
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            )}
-          </svg>
-        </button>
-      </div>
-
-      {menuOpen ? (
-        <nav className="border-t px-4 py-3 md:hidden" style={{ borderColor }}>
-          <div className="flex flex-col gap-1">
-            {navItems.map((item) =>
-              item.to ? (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-xl px-4 py-3 text-sm font-medium"
-                  style={{ color: textColor }}
-                >
-                  {item.label}
-                </Link>
-              ) : (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleClick(item);
-                  }}
-                  className="rounded-xl px-4 py-3 text-sm font-medium"
-                  style={{ color: textColor }}
-                >
-                  {item.label}
-                </a>
-              )
-            )}
+            <button
+              type="button"
+              className="rounded-xl border p-2 md:hidden"
+              style={{ borderColor, color: textColor }}
+              onClick={() => setMenuOpen((prev) => !prev)}
+              aria-label="Toggle navigation"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                {menuOpen ? (
+                  <path d="M6 6l12 12M6 18L18 6" />
+                ) : (
+                  <path d="M4 7h16M4 12h16M4 17h16" />
+                )}
+              </svg>
+            </button>
           </div>
-        </nav>
-      ) : null}
-    </header>
+        </header>
+
+        {menuOpen ? (
+          <>
+            <div
+              className="fixed inset-0 z-40 md:hidden"
+              style={{ backgroundColor: "rgba(0,0,0,0.3)", animation: "navFadeIn 0.2s ease-out" }}
+              onClick={() => setMenuOpen(false)}
+            />
+            <nav
+              className="fixed top-0 z-50 h-full w-72 border-r shadow-2xl md:hidden"
+              style={{
+                backgroundColor,
+                borderColor,
+                [slideDirection === "left" ? "left" : "right"]: 0,
+                animation: `${slideDirection === "left" ? "navSlideInLeft" : "navSlideInRight"} 0.3s ease-out`
+              }}
+            >
+              <div className="flex items-center justify-between border-b px-4 py-4" style={{ borderColor }}>
+                <span className="text-lg font-bold" style={{ color: primaryColor }}>Menu</span>
+                <button
+                  type="button"
+                  className="rounded-xl border p-2"
+                  style={{ borderColor, color: textColor }}
+                  onClick={() => setMenuOpen(false)}
+                  aria-label="Close menu"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 6l12 12M6 18L18 6" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex flex-col gap-1 p-4">
+                {navItems.map((item) =>
+                  item.to ? (
+                    <Link
+                      key={item.label}
+                      to={item.to}
+                      onClick={() => setMenuOpen(false)}
+                      className="rounded-xl px-4 py-3 text-sm font-medium transition hover:opacity-80"
+                      style={{ color: textColor }}
+                    >
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleClick(item);
+                      }}
+                      className="rounded-xl px-4 py-3 text-sm font-medium transition hover:opacity-80"
+                      style={{ color: textColor }}
+                    >
+                      {item.label}
+                    </a>
+                  )
+                )}
+              </div>
+            </nav>
+          </>
+        ) : null}
+      </div>
+    </>
   );
 };
 
@@ -277,27 +333,27 @@ const HeroSection = ({ settings, theme }) => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4" style={heroStyle}>
+    <section className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden" style={heroStyle}>
       <div className="absolute inset-0" style={overlayStyle} />
-      <div className="relative z-10 max-w-6xl mx-auto text-center text-white">
+      <div className="relative z-10 max-w-4xl mx-auto text-center text-white">
         {branding.logoUrl && (
           <img src={branding.logoUrl} alt={branding.logoAlt || "Solar Mkononi"} className="h-20 mx-auto mb-8" />
         )}
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">{hero.headline || "Renewable Energy at Your Fingertips"}</h1>
-        <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+        <h1 className="text-4xl md:text-6xl font-bold mb-6 drop-shadow-lg">{hero.headline || "Renewable Energy at Your Fingertips"}</h1>
+        <p className="text-xl md:text-2xl mb-10 max-w-3xl mx-auto drop-shadow-md">
           {hero.description || "Connect with verified renewable energy suppliers, technicians, financial institutions, and innovative clean energy solutions through Solar Mkononi."}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
             href={hero.primaryCtaHref || "#services"}
-            className="px-8 py-4 rounded-full font-bold text-white transition hover:scale-105"
+            className="px-8 py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
             style={{ backgroundColor: theme.primaryColor || "#059669" }}
           >
             {hero.primaryCta || "Explore Services"}
           </a>
           <a
             href={hero.secondaryCtaHref || "#ussd"}
-            className="px-8 py-4 rounded-full font-bold border-2 border-white text-white transition hover:scale-105"
+            className="px-8 py-4 rounded-full font-bold border-2 border-white text-white transition hover:scale-105 backdrop-blur-sm"
           >
             {hero.secondaryCta || "Access USSD Platform"}
           </a>
@@ -321,9 +377,9 @@ const StatsSection = ({ settings, theme }) => {
   }, []);
 
   return (
-    <section className="py-20 px-4" style={{ backgroundColor: theme.surfaceBackground || "#ffffff" }}>
+    <section className="py-16 px-4" style={{ backgroundColor: theme.surfaceBackground || "#ffffff" }}>
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-8">
           {items.map((item, index) => {
             const [count, ref] = useCountUp(item.value);
             const isLastItem = index === items.length - 1;
@@ -489,7 +545,7 @@ const ServicesSection = ({ settings, theme }) => {
   };
 
   return (
-    <section id="services" ref={sectionRef} className="py-20 px-4" style={{ backgroundColor: services.backgroundColor || theme.backgroundColor || "#f0fdf4" }}>
+    <section id="services" ref={sectionRef} className="py-16 px-4" style={{ backgroundColor: services.backgroundColor || theme.backgroundColor || "#f0fdf4" }}>
       <style>{`
         @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInDown { to { opacity: 1; transform: translateY(0); } }
@@ -504,7 +560,7 @@ const ServicesSection = ({ settings, theme }) => {
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4" style={{ color: theme.textColor || "#064e3b" }}>
           {services.title || "Our Services"}
         </h2>
-        <p className="text-center mb-12 max-w-2xl mx-auto" style={{ color: theme.mutedTextColor || "#475569" }}>
+        <p className="text-center mb-12 max-w-2xl mx-auto text-lg" style={{ color: theme.mutedTextColor || "#475569" }}>
           {services.description || "Comprehensive renewable energy solutions for Kenya"}
         </p>
 
@@ -592,7 +648,7 @@ const ServicesSection = ({ settings, theme }) => {
                 <h3 className="text-xl font-bold mb-2" style={{ color: theme.textColor || "#064e3b" }}>
                   {card.title}
                 </h3>
-                <p style={{ color: theme.mutedTextColor || "#475569" }}>{card.description}</p>
+                <p className="text-sm" style={{ color: theme.mutedTextColor || "#475569" }}>{card.description}</p>
               </div>
             ))}
           </div>

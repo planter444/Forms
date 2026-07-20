@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchLibraryOverview, fetchPublicResources } from "../lib/resourceLibraryApi.js";
+import { getSolarMkononiSettings } from "../lib/api.js";
 
 const formatBytes = (bytes) => {
   if (!bytes || Number.isNaN(bytes)) {
@@ -78,6 +79,19 @@ const defaultFilters = {
   tag: ""
 };
 
+const cardColors = [
+  { bg: "#f0fdf4", border: "#bbf7d0" },
+  { bg: "#eff6ff", border: "#bfdbfe" },
+  { bg: "#fefce8", border: "#fde68a" },
+  { bg: "#fdf2f8", border: "#fbcfe8" },
+  { bg: "#f5f3ff", border: "#ddd6fe" },
+  { bg: "#fff7ed", border: "#fed7aa" },
+  { bg: "#ecfeff", border: "#a5f3fc" },
+  { bg: "#f0fdfa", border: "#99f6e4" }
+];
+
+const getCardColor = (index) => cardColors[index % cardColors.length];
+
 const SolarResourceLibraryPage = () => {
   const [overview, setOverview] = useState(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
@@ -89,6 +103,8 @@ const SolarResourceLibraryPage = () => {
   const [resourcesLoading, setResourcesLoading] = useState(true);
   const [resourcesError, setResourcesError] = useState("");
   const [page, setPage] = useState(1);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [solarSettings, setSolarSettings] = useState(null);
   const feedRef = useRef(null);
 
   useEffect(() => {
@@ -113,6 +129,18 @@ const SolarResourceLibraryPage = () => {
     };
 
     loadOverview();
+  }, []);
+
+  useEffect(() => {
+    const loadSolarSettings = async () => {
+      try {
+        const data = await getSolarMkononiSettings();
+        setSolarSettings(data.settings);
+      } catch {
+        // footer is optional
+      }
+    };
+    loadSolarSettings();
   }, []);
 
   useEffect(() => {
@@ -175,8 +203,7 @@ const SolarResourceLibraryPage = () => {
     scrollToFeed();
   };
 
-  const handleTagSubmit = (event) => {
-    event?.preventDefault();
+  const handleApplyFilters = () => {
     setFilters((prev) => ({ ...prev, tag: tagInput.trim() }));
     setPage(1);
     scrollToFeed();
@@ -229,10 +256,17 @@ const SolarResourceLibraryPage = () => {
   const cta = librarySettings.cta || {};
   const emptyState = librarySettings.emptyState || {};
 
+  const heroBg = hero.backgroundImageUrl || "";
+  const heroOverlay = hero.overlayOpacity !== undefined ? hero.overlayOpacity : 0.5;
+
+  const heroStyle = heroBg
+    ? { backgroundImage: `url(${heroBg})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }
+    : { background: "linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)" };
+
   return (
     <div className="min-h-screen bg-[#f6fbf8]">
-      <header className="relative overflow-hidden bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-700 text-white">
-        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(circle at top, rgba(255,255,255,0.3), transparent 45%)" }} />
+      <header className="relative overflow-hidden text-white" style={heroStyle}>
+        {heroBg ? <div className="absolute inset-0" style={{ backgroundColor: `rgba(4, 78, 56, ${heroOverlay})` }} /> : null}
         <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-10 px-4 py-16 lg:flex-row lg:items-end">
           <div className="flex-1">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-200">{hero.eyebrow || "Solar Mkononi"}</p>
@@ -364,14 +398,24 @@ const SolarResourceLibraryPage = () => {
                         <span>{resource.category?.name || "Uncategorized"}</span>
                         <span>{formatDate(resource.publishedAt)}</span>
                       </div>
-                      <a
-                        href={resource.downloadUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
-                      >
-                        Access resource →
-                      </a>
+                      <div className="mt-4 flex gap-2">
+                        {(resource.previewUrl || resource.externalUrl || resource.fileUrl) ? (
+                          <a
+                            href={resource.previewUrl || resource.externalUrl || resource.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 inline-flex items-center justify-center rounded-2xl border border-emerald-300 bg-white/60 px-4 py-2 text-sm font-semibold text-emerald-700"
+                          >
+                            View
+                          </a>
+                        ) : null}
+                        <a
+                          href={resource.downloadUrl}
+                          className="flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
+                        >
+                          Download
+                        </a>
+                      </div>
                     </article>
                   ))}
                 </div>
@@ -381,100 +425,108 @@ const SolarResourceLibraryPage = () => {
         )}
 
         <section ref={feedRef} id="library-feed" className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-soft">
-          <div className="flex flex-col gap-6 lg:flex-row">
-            <aside className="lg:w-64">
-              <div className="sticky top-6 rounded-3xl border border-emerald-50 bg-emerald-50/70 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">Refine results</p>
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Category</label>
-                    <select
-                      className="mt-2 w-full rounded-2xl border border-emerald-200 px-3 py-2 text-sm"
-                      value={filters.category}
-                      onChange={(event) => handleCategoryChange(event.target.value)}
-                    >
-                      <option value="all">All categories</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.slug}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {fileTypes.length ? (
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">File type</label>
-                      <select
-                        className="mt-2 w-full rounded-2xl border border-emerald-200 px-3 py-2 text-sm"
-                        value={filters.fileType}
-                        onChange={(event) => handleFileTypeChange(event.target.value)}
-                      >
-                        <option value="all">All file types</option>
-                        {fileTypes.map((type) => (
-                          <option key={type} value={type}>
-                            {(librarySettings.filters?.fileTypeLabels?.[type] || type || "").toUpperCase()}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : null}
-                  <div>
-                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Sort by</label>
-                    <select
-                      className="mt-2 w-full rounded-2xl border border-emerald-200 px-3 py-2 text-sm"
-                      value={filters.sort}
-                      onChange={(event) => handleSortChange(event.target.value)}
-                    >
-                      {sortOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <form onSubmit={handleTagSubmit}>
-                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Tag contains</label>
-                    <div className="mt-2 flex gap-2">
-                      <input
-                        type="text"
-                        value={tagInput}
-                        onChange={(event) => setTagInput(event.target.value)}
-                        placeholder="e.g. paygo"
-                        className="flex-1 rounded-2xl border border-emerald-200 px-3 py-2 text-sm"
-                      />
-                      <button type="submit" className="rounded-2xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white">
-                        Apply
-                      </button>
-                    </div>
-                  </form>
-                </div>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">Resource feed</p>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {activeCategory ? activeCategory.name : "All resources"}
+                </h2>
+                <p className="text-sm text-slate-500">
+                  {resourceState.total} resource{resourceState.total === 1 ? "" : "s"} available
+                </p>
               </div>
-            </aside>
+            </div>
 
-            <div className="flex-1">
-              <div className="flex flex-col gap-3 border-b border-slate-100 pb-6 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">Resource feed</p>
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    {activeCategory ? activeCategory.name : "All resources"}
-                  </h2>
-                  <p className="text-sm text-slate-500">
-                    {resourceState.total} resource{resourceState.total === 1 ? "" : "s"} available
-                  </p>
-                </div>
-                <form onSubmit={handleSearchSubmit} className="flex w-full gap-2 sm:w-auto">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <form onSubmit={handleSearchSubmit} className="flex w-full flex-1 gap-2">
+                <input
+                  type="search"
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Search library"
+                  className="flex-1 rounded-2xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-emerald-400"
+                />
+                <button type="submit" className="rounded-2xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+                  Go
+                </button>
+              </form>
+              <button
+                type="button"
+                onClick={() => setShowMoreFilters((prev) => !prev)}
+                className="rounded-2xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+              >
+                {showMoreFilters ? "Hide filters" : "More filters"}
+              </button>
+            </div>
+
+            {showMoreFilters ? (
+              <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-emerald-50 bg-emerald-50/40 p-4">
+                <label className="block text-sm">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Category</span>
+                  <select
+                    className="mt-1 rounded-xl border border-emerald-200 px-3 py-2 text-sm"
+                    value={filters.category}
+                    onChange={(event) => handleCategoryChange(event.target.value)}
+                  >
+                    <option value="all">All categories</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.slug}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {fileTypes.length ? (
+                  <label className="block text-sm">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">File type</span>
+                    <select
+                      className="mt-1 rounded-xl border border-emerald-200 px-3 py-2 text-sm"
+                      value={filters.fileType}
+                      onChange={(event) => handleFileTypeChange(event.target.value)}
+                    >
+                      <option value="all">All file types</option>
+                      {fileTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {(librarySettings.filters?.fileTypeLabels?.[type] || type || "").toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                <label className="block text-sm">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Sort by</span>
+                  <select
+                    className="mt-1 rounded-xl border border-emerald-200 px-3 py-2 text-sm"
+                    value={filters.sort}
+                    onChange={(event) => handleSortChange(event.target.value)}
+                  >
+                    {sortOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-sm">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Tag contains</span>
                   <input
-                    type="search"
-                    value={searchInput}
-                    onChange={(event) => setSearchInput(event.target.value)}
-                    placeholder="Search library"
-                    className="flex-1 rounded-2xl border border-slate-200 px-3 py-2 text-sm"
+                    type="text"
+                    value={tagInput}
+                    onChange={(event) => setTagInput(event.target.value)}
+                    placeholder="e.g. paygo"
+                    className="mt-1 rounded-xl border border-emerald-200 px-3 py-2 text-sm"
                   />
-                  <button type="submit" className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">
-                    Go
-                  </button>
-                </form>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleApplyFilters}
+                  className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  Apply
+                </button>
               </div>
+            ) : null}
 
               {resourcesError ? (
                 <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">{resourcesError}</div>
@@ -488,11 +540,12 @@ const SolarResourceLibraryPage = () => {
                 </div>
               ) : resourceState.resources.length ? (
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  {resourceState.resources.map((resource) => (
+                  {resourceState.resources.map((resource, index) => (
                     <ResourceCard
                       key={resource.id}
                       resource={resource}
                       fileTypeLabels={librarySettings.filters?.fileTypeLabels}
+                      cardIndex={index}
                     />
                   ))}
                 </div>
@@ -534,7 +587,6 @@ const SolarResourceLibraryPage = () => {
                   </button>
                 </div>
               ) : null}
-            </div>
           </div>
         </section>
 
@@ -576,6 +628,10 @@ const SolarResourceLibraryPage = () => {
             </div>
           </div>
         </section>
+
+        {solarSettings ? (
+          <SolarMkononiFooter settings={solarSettings} />
+        ) : null}
       </main>
     </div>
   );
@@ -590,16 +646,19 @@ const FileBadge = ({ resource, fileTypeLabels }) => {
   );
 };
 
-const ResourceCard = ({ resource, fileTypeLabels }) => {
+const ResourceCard = ({ resource, fileTypeLabels, cardIndex = 0 }) => {
   const badge = getFileBadge(resource, fileTypeLabels);
   const chips = resource.tags || [];
-  const downloadLabel = resource.allowDownloads === false ? "Preview resource" : "Download";
-  const linkTarget = resource.downloadUrl || resource.externalUrl || resource.fileUrl || "#";
+  const colors = getCardColor(cardIndex);
+  const downloadUrl = resource.downloadUrl || "#";
+  const viewUrl = resource.previewUrl || resource.externalUrl || resource.fileUrl || (resource.filePath ? downloadUrl : "#");
+  const canDownload = resource.allowDownloads !== false && downloadUrl !== "#";
+  const canView = viewUrl !== "#";
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+    <article className="flex h-full flex-col rounded-3xl border p-5 shadow-sm transition hover:shadow-md" style={{ backgroundColor: colors.bg, borderColor: colors.border }}>
       <div className="flex items-center justify-between">
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+        <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-3 py-1 text-xs font-semibold text-emerald-800">
           {resource.category?.name || "Uncategorized"}
         </div>
         <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: badge.background, color: badge.color }}>
@@ -629,21 +688,87 @@ const ResourceCard = ({ resource, fileTypeLabels }) => {
       {chips.length ? (
         <div className="mt-4 flex flex-wrap gap-2">
           {chips.map((tag) => (
-            <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
+            <span key={tag} className="rounded-full bg-white/50 px-3 py-1 text-xs text-slate-600">
               {tag}
             </span>
           ))}
         </div>
       ) : null}
-      <a
-        href={linkTarget}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-5 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
-      >
-        {downloadLabel} →
-      </a>
+      <div className="mt-5 flex gap-2">
+        {canView ? (
+          <a
+            href={viewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 inline-flex items-center justify-center rounded-2xl border border-emerald-300 bg-white/60 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-white"
+          >
+            View
+          </a>
+        ) : null}
+        {canDownload ? (
+          <a
+            href={downloadUrl}
+            className="flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            Download
+          </a>
+        ) : null}
+      </div>
     </article>
+  );
+};
+
+const SolarMkononiFooter = ({ settings }) => {
+  const footer = settings.footer || {};
+  const branding = settings.branding || {};
+  const theme = settings.theme || {};
+  const backgroundColor = footer.backgroundColor || "#064e3b";
+
+  return (
+    <footer className="mt-12 py-12 px-4" style={{ backgroundColor, borderTop: `1px solid ${theme.borderColor || "#a7f3d0"}` }}>
+      <div className="max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 mb-8">
+          <div>
+            {branding.logoUrl ? (
+              <img src={branding.logoUrl} alt={branding.logoAlt || "Solar Mkononi"} className="h-12 mb-4" />
+            ) : null}
+            <h3 className="text-xl font-bold mb-2" style={{ color: theme.textColor || "#064e3b" }}>
+              {footer.title || "Solar Mkononi"}
+            </h3>
+            <p className="text-sm" style={{ color: theme.mutedTextColor || "#475569" }}>
+              {footer.body || "Empowering Kenya with accessible renewable energy solutions"}
+            </p>
+          </div>
+          <div>
+            <h4 className="font-bold mb-4" style={{ color: theme.textColor || "#064e3b" }}>Quick Links</h4>
+            <ul className="space-y-2">
+              {(footer.links || []).map((link, index) => (
+                <li key={index}>
+                  <a href={link.href} className="hover:underline text-sm" style={{ color: theme.mutedTextColor || "#475569" }}>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold mb-4" style={{ color: theme.textColor || "#064e3b" }}>Connect</h4>
+            <div className="flex gap-4">
+              {(footer.socialLinks || []).map((social, index) => (
+                <a key={index} href={social.url} target="_blank" rel="noopener noreferrer" className="text-2xl">
+                  {social.icon}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="text-center pt-8" style={{ borderTop: `1px solid ${theme.borderColor || "#a7f3d0"}` }}>
+          <p className="text-sm" style={{ color: theme.mutedTextColor || "#475569" }}>
+            {footer.copyright || "© 2026 Solar Mkononi. All rights reserved."}
+          </p>
+        </div>
+      </div>
+    </footer>
   );
 };
 

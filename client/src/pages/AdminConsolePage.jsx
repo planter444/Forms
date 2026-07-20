@@ -3385,6 +3385,33 @@ const AdminConsolePage = () => {
                             </div>
                           </label>
                         </div>
+
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                            Navbar transparency ({Math.round((solarMkononiEditor.theme?.navOpacity ?? 0.85) * 100)}%)
+                            <input
+                              type="range"
+                              min="0"
+                              max="1"
+                              step="0.05"
+                              className="mt-3 w-full"
+                              value={solarMkononiEditor.theme?.navOpacity ?? 0.85}
+                              onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, theme: { ...solarMkononiEditor.theme, navOpacity: Number(e.target.value) } })}
+                            />
+                          </label>
+                          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                            Mobile menu slide direction
+                            <select
+                              className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                              value={solarMkononiEditor.theme?.navSlideDirection || "left"}
+                              onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, theme: { ...solarMkononiEditor.theme, navSlideDirection: e.target.value } })}
+                            >
+                              <option value="left">Slide from left</option>
+                              <option value="right">Slide from right</option>
+                            </select>
+                          </label>
+                        </div>
                       </div>
                       )}
 
