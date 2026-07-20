@@ -20,6 +20,8 @@ export const defaultSolarMkononiSettings = {
 
   stats: {
     enabled: true,
+    gradientColor: "#059669",
+    gradientEnd: "#86efac",
     items: [
       { label: "Verified Suppliers", value: "500+" },
       { label: "Solar Installers", value: "200+" },
@@ -80,7 +82,12 @@ export const defaultSolarMkononiSettings = {
     title: "How It Works",
     backgroundColor: "#ffffff",
     backgroundPattern: "none",
+    animationEnabled: true,
+    animationStyle: "fade-up",
     animationDelay: 100,
+    mobileAnimationEnabled: true,
+    mobileAnimationStyle: "fade-up",
+    mobileAnimationDelay: 100,
     steps: [
       {
         title: "Access Platform",
@@ -123,7 +130,7 @@ export const defaultSolarMkononiSettings = {
       "Follow the menu prompts"
     ],
     screenshotUrl: "",
-    backgroundColor: "#059669",
+    backgroundColor: "#15803d",
     backgroundPattern: "none"
   },
 
@@ -163,9 +170,14 @@ export const defaultSolarMkononiSettings = {
     enabled: true,
     title: "Resource Library",
     description: "Access policies, best practices, and sector guides",
-    backgroundColor: "#f0fdf4",
+    backgroundColor: "#eff6ff",
     backgroundPattern: "none",
+    animationEnabled: true,
+    animationStyle: "fade-up",
     animationDelay: 100,
+    mobileAnimationEnabled: true,
+    mobileAnimationStyle: "fade-up",
+    mobileAnimationDelay: 100,
     resources: []
   },
 
@@ -221,6 +233,9 @@ export const defaultSolarMkononiSettings = {
     featured: {
       title: "Featured resources",
       description: "Timely releases handpicked by the Solar Mkononi secretariat."
+    },
+    feed: {
+      columns: 2
     },
     filters: {
       sortOptions: [
@@ -317,7 +332,13 @@ export const defaultSolarMkononiSettings = {
     recipientEmail: "info@solarmkononi.org",
     backgroundColor: "#f0fdf4",
     backgroundPattern: "none",
-    animationDelay: 100
+    animationEnabled: true,
+    animationStyle: "fade-up",
+    animationDelay: 100,
+    mobileAnimationEnabled: true,
+    mobileAnimationStyle: "fade-up",
+    mobileAnimationDelay: 100,
+    phoneRingEnabled: true
   },
 
   footer: {
@@ -342,7 +363,7 @@ export const defaultSolarMkononiSettings = {
     description: "Join our network of renewable energy providers and partners",
     buttonText: "Register Now",
     link: "https://ussd.kerea.org",
-    backgroundColor: "#059669",
+    backgroundColor: "#15803d",
     backgroundPattern: "wave",
     animationDelay: 100
   },
@@ -367,7 +388,8 @@ export const defaultSolarMkononiSettings = {
     surfaceBackground: "#ffffff",
     surfaceMuted: "#f0fdf4",
     navOpacity: 0.85,
-    navSlideDirection: "left"
+    navSlideDirection: "left",
+    desktopHomepageSize: 0.9
   },
 
   sections: {

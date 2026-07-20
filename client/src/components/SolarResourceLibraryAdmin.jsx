@@ -63,7 +63,8 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
     heroOverlay: 0.5,
     ctaEmail: "",
     navOpacity: 0.85,
-    navSlideDirection: "left"
+    navSlideDirection: "left",
+    feedColumns: 2
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
 
@@ -90,7 +91,8 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
           heroOverlay: s.hero?.overlayOpacity !== undefined ? s.hero.overlayOpacity : 0.5,
           ctaEmail: s.cta?.primaryHref || "",
           navOpacity: s.nav?.opacity !== undefined ? s.nav.opacity : 0.85,
-          navSlideDirection: s.nav?.slideDirection || "left"
+          navSlideDirection: s.nav?.slideDirection || "left",
+          feedColumns: s.feed?.columns || 2
         });
       } catch {
         // settings are optional
@@ -319,6 +321,10 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
         cta: {
           ...currentLib.cta,
           primaryHref: settingsForm.ctaEmail
+        },
+        feed: {
+          ...currentLib.feed,
+          columns: Number(settingsForm.feedColumns) || 2
         }
       };
       await updateSolarMkononiSettings(token, { solarResourceLibrary: merged });
@@ -776,6 +782,21 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
             >
               <option value="left">Slide from left</option>
               <option value="right">Slide from right</option>
+            </select>
+          </label>
+
+          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+            Resources per row (big screens)
+            <select
+              className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+              style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              value={settingsForm.feedColumns}
+              onChange={(event) => setSettingsForm((prev) => ({ ...prev, feedColumns: Number(event.target.value) }))}
+            >
+              <option value={2}>2 per row</option>
+              <option value={3}>3 per row</option>
+              <option value={4}>4 per row</option>
+              <option value={5}>5 per row</option>
             </select>
           </label>
         </div>

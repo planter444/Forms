@@ -169,15 +169,17 @@ router.get("/resources/:id/download", async (request, response) => {
     try {
       const fileInfo = await stat(fullPath);
       response.setHeader("Content-Type", resource.mimeType || "application/octet-stream");
-      response.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${encodeURIComponent(resource.fileName || resource.title)}"`
-      );
+      if (request.query.view !== "1") {
+        response.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${encodeURIComponent(resource.fileName || resource.title)}"`
+        );
+      }
       response.setHeader("Content-Length", fileInfo.size);
       const stream = createReadStream(fullPath);
       stream.pipe(response);
       await recordDownload(resource.id, {
-        source: "public",
+        source: request.query.view === "1" ? "public-view" : "public",
         ipAddress: request.ip,
         userAgent: request.get("user-agent")
       });

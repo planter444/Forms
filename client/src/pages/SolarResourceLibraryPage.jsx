@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchLibraryOverview, fetchPublicResources } from "../lib/resourceLibraryApi.js";
+import { API_URL, fetchLibraryOverview, fetchPublicResources } from "../lib/resourceLibraryApi.js";
 import { getSolarMkononiSettings } from "../lib/api.js";
 
 const formatBytes = (bytes) => {
@@ -255,6 +255,14 @@ const SolarResourceLibraryPage = () => {
   const hero = librarySettings.hero || {};
   const cta = librarySettings.cta || {};
   const emptyState = librarySettings.emptyState || {};
+  const feedColumns = librarySettings.feed?.columns || 2;
+  const columnClasses = {
+    2: "md:grid-cols-2",
+    3: "md:grid-cols-2 lg:grid-cols-3",
+    4: "md:grid-cols-2 lg:grid-cols-4",
+    5: "md:grid-cols-2 lg:grid-cols-5"
+  };
+  const feedGridClass = columnClasses[feedColumns] || columnClasses[2];
 
   const heroBg = hero.backgroundImageUrl || "";
   const heroOverlay = hero.overlayOpacity !== undefined ? hero.overlayOpacity : 0.5;
@@ -399,22 +407,36 @@ const SolarResourceLibraryPage = () => {
                         <span>{formatDate(resource.publishedAt)}</span>
                       </div>
                       <div className="mt-4 flex gap-2">
-                        {(resource.previewUrl || resource.externalUrl || resource.fileUrl) ? (
-                          <a
-                            href={resource.previewUrl || resource.externalUrl || resource.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 inline-flex items-center justify-center rounded-2xl border border-emerald-300 bg-white/60 px-4 py-2 text-sm font-semibold text-emerald-700"
-                          >
-                            View
-                          </a>
-                        ) : null}
-                        <a
-                          href={resource.downloadUrl}
-                          className="flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
-                        >
-                          Download
-                        </a>
+                        {(() => {
+                          const localDownload = resource.filePath ? `/api/solar-library/resources/${resource.id}/download` : "";
+                          const localView = resource.filePath ? `/api/solar-library/resources/${resource.id}/download?view=1` : "";
+                          const view = resource.previewUrl || resource.externalUrl || resource.fileUrl || localView || localDownload || "#";
+                          const download = resource.downloadUrl || localDownload || resource.fileUrl || resource.externalUrl || "#";
+                          return (
+                            <>
+                              {view !== "#" ? (
+                                <a
+                                  href={toAbsoluteUrl(view)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 inline-flex items-center justify-center rounded-2xl border border-emerald-300 bg-white/60 px-4 py-2 text-sm font-semibold text-emerald-700"
+                                >
+                                  View
+                                </a>
+                              ) : null}
+                              {download !== "#" ? (
+                                <a
+                                  href={toAbsoluteUrl(download)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
+                                >
+                                  Download
+                                </a>
+                              ) : null}
+                            </>
+                          );
+                        })()}
                       </div>
                     </article>
                   ))}
@@ -533,13 +555,13 @@ const SolarResourceLibraryPage = () => {
               ) : null}
 
               {resourcesLoading ? (
-                <div className="mt-8 grid gap-4 md:grid-cols-2">
+                <div className={`mt-8 grid gap-4 ${feedGridClass}`}>
                   {Array.from({ length: 4 }).map((_, index) => (
                     <div key={index} className="h-48 animate-pulse rounded-3xl bg-slate-100" />
                   ))}
                 </div>
               ) : resourceState.resources.length ? (
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div className={`mt-6 grid gap-4 ${feedGridClass}`}>
                   {resourceState.resources.map((resource, index) => (
                     <ResourceCard
                       key={resource.id}
@@ -646,14 +668,29 @@ const FileBadge = ({ resource, fileTypeLabels }) => {
   );
 };
 
+const toAbsoluteUrl = (url) => {
+  if (!url || url === "#") {
+    return "#";
+  }
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("mailto:")) {
+    return url;
+  }
+  return `${API_URL}${url}`;
+};
+
 const ResourceCard = ({ resource, fileTypeLabels, cardIndex = 0 }) => {
   const badge = getFileBadge(resource, fileTypeLabels);
   const chips = resource.tags || [];
   const colors = getCardColor(cardIndex);
-  const downloadUrl = resource.downloadUrl || "#";
-  const viewUrl = resource.previewUrl || resource.externalUrl || resource.fileUrl || (resource.filePath ? downloadUrl : "#");
+  const localDownloadPath = resource.filePath ? `/api/solar-library/resources/${resource.id}/download` : "";
+  const localViewPath = resource.filePath ? `/api/solar-library/resources/${resource.id}/download?view=1` : "";
+  const downloadUrl = resource.downloadUrl && resource.downloadUrl !== "#" ? resource.downloadUrl : localDownloadPath || resource.fileUrl || resource.externalUrl || "#";
+  const viewUrl = resource.previewUrl || resource.externalUrl || resource.fileUrl || localViewPath || downloadUrl || "#";
   const canDownload = resource.allowDownloads !== false && downloadUrl !== "#";
   const canView = viewUrl !== "#";
+
+  const absoluteDownloadUrl = toAbsoluteUrl(downloadUrl);
+  const absoluteViewUrl = toAbsoluteUrl(viewUrl);
 
   return (
     <article className="flex h-full flex-col rounded-3xl border p-5 shadow-sm transition hover:shadow-md" style={{ backgroundColor: colors.bg, borderColor: colors.border }}>
@@ -697,7 +734,7 @@ const ResourceCard = ({ resource, fileTypeLabels, cardIndex = 0 }) => {
       <div className="mt-5 flex gap-2">
         {canView ? (
           <a
-            href={viewUrl}
+            href={absoluteViewUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 inline-flex items-center justify-center rounded-2xl border border-emerald-300 bg-white/60 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-white"
@@ -707,7 +744,9 @@ const ResourceCard = ({ resource, fileTypeLabels, cardIndex = 0 }) => {
         ) : null}
         {canDownload ? (
           <a
-            href={downloadUrl}
+            href={absoluteDownloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
           >
             Download
