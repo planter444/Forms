@@ -108,6 +108,10 @@ const SolarResourceLibraryPage = () => {
   const feedRef = useRef(null);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     const loadOverview = async () => {
       setLoadingOverview(true);
       setOverviewError("");
@@ -273,9 +277,9 @@ const SolarResourceLibraryPage = () => {
 
   return (
     <div className="min-h-screen bg-[#f6fbf8]">
-      <header className="relative overflow-hidden text-white" style={heroStyle}>
+      <header className="relative flex min-h-screen flex-col justify-center overflow-hidden text-white" style={heroStyle}>
         {heroBg ? <div className="absolute inset-0" style={{ backgroundColor: `rgba(4, 78, 56, ${heroOverlay})` }} /> : null}
-        <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-10 px-4 py-16 lg:flex-row lg:items-end">
+        <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-6 px-4 py-12 lg:flex-row lg:items-end">
           <div className="flex-1">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-200">{hero.eyebrow || "Solar Mkononi"}</p>
             <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">{hero.headline || "Solar Mkononi Resource Library"}</h1>

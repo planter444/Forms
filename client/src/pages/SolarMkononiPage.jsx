@@ -175,13 +175,13 @@ const SolarMkononiNav = ({ settings, theme, overHero = false }) => {
         }
       `}</style>
       <div
-        className={`left-0 right-0 z-50 px-4 transition-transform duration-300 ${overHero ? "absolute" : "sticky"} ${overHero ? "top-0" : "top-0"}`}
-        style={{ transform: navHidden ? "translateY(-120%)" : "translateY(0)", paddingTop: overHero ? undefined : "0.5rem" }}
+        className={`left-0 right-0 z-50 px-4 ${overHero ? "absolute" : "sticky"} top-3 md:top-0`}
+        style={{ paddingTop: overHero ? undefined : "0.5rem" }}
       >
         <header
           id="top"
-          className={`mx-auto ${overHero ? "max-w-6xl" : "max-w-5xl"} rounded-2xl border shadow-lg ${overHero ? "md:mt-3 lg:mt-4" : ""}`}
-          style={glassStyle}
+          className={`mx-auto ${overHero ? "max-w-6xl" : "max-w-5xl"} rounded-2xl border shadow-lg transition-transform duration-300 ${overHero ? "md:mt-3 lg:mt-4" : ""}`}
+          style={{ ...glassStyle, transform: navHidden ? "translateY(-150%)" : "translateY(0)" }}
         >
           <div className="flex items-center justify-between px-4 py-3 sm:px-6">
             <a
@@ -263,24 +263,26 @@ const SolarMkononiNav = ({ settings, theme, overHero = false }) => {
           <>
             <div
               className="fixed inset-0 z-40 md:hidden"
-              style={{ backgroundColor: "rgba(0,0,0,0.3)", animation: "navFadeIn 0.2s ease-out" }}
+              style={{ backgroundColor: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", animation: "navFadeIn 0.2s ease-out" }}
               onClick={() => setMenuOpen(false)}
             />
             <nav
-              className="fixed top-0 z-50 h-full w-72 border-r shadow-2xl md:hidden"
+              className="fixed top-0 z-50 h-screen w-72 border-r shadow-2xl md:hidden"
               style={{
-                backgroundColor: overHero ? "#111827" : backgroundColor,
-                borderColor,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                backdropFilter: "blur(22px)",
+                WebkitBackdropFilter: "blur(22px)",
+                borderColor: "rgba(255,255,255,0.18)",
                 [slideDirection === "left" ? "left" : "right"]: 0,
                 animation: `${slideDirection === "left" ? "navSlideInLeft" : "navSlideInRight"} 0.3s ease-out`
               }}
             >
-              <div className="flex items-center justify-between border-b px-4 py-4" style={{ borderColor }}>
-                <span className="text-lg font-bold" style={{ color: primaryColor }}>Menu</span>
+              <div className="flex items-center justify-between border-b px-4 py-4" style={{ borderColor: "rgba(255,255,255,0.15)" }}>
+                <span className="text-lg font-bold" style={{ color: "#ffffff" }}>Menu</span>
                 <button
                   type="button"
                   className="rounded-xl border p-2"
-                  style={{ borderColor, color: textColor }}
+                  style={{ borderColor: "rgba(255,255,255,0.3)", color: "#ffffff" }}
                   onClick={() => setMenuOpen(false)}
                   aria-label="Close menu"
                 >
@@ -297,7 +299,7 @@ const SolarMkononiNav = ({ settings, theme, overHero = false }) => {
                       to={item.to}
                       onClick={() => setMenuOpen(false)}
                       className="rounded-xl px-4 py-3 text-sm font-medium transition hover:opacity-80"
-                      style={{ color: textColor }}
+                      style={{ color: "#ffffff" }}
                     >
                       {item.label}
                     </Link>
@@ -310,7 +312,7 @@ const SolarMkononiNav = ({ settings, theme, overHero = false }) => {
                         handleClick(item);
                       }}
                       className="rounded-xl px-4 py-3 text-sm font-medium transition hover:opacity-80"
-                      style={{ color: textColor }}
+                      style={{ color: "#ffffff" }}
                     >
                       {item.label}
                     </a>
@@ -765,7 +767,7 @@ const ServicesSection = ({ settings, theme }) => {
                 className="flex"
                 style={{
                   transform: `translateX(${translateX}px)`,
-                  transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+                  transition: isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
                 }}
               >
                 {duplicatedCards.map((card, index) => {
@@ -1024,11 +1026,11 @@ const HowItWorksSection = ({ settings, theme }) => {
             return (
               <div key={index} className="text-center" style={getAnimationStyle(index)}>
                 <div
-                  className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 text-lg md:text-2xl font-bold shadow-sm"
+                  className={`w-12 h-12 md:w-16 md:h-16 flex items-center justify-center mx-auto mb-3 md:mb-4 text-lg md:text-2xl font-bold shadow-sm ${isMobile ? "rounded-bl-xl border-l-2 border-b-2" : "rounded-full border-2"}`}
                   style={{
                     backgroundColor: color.bg,
                     color: color.text,
-                    border: `2px solid ${color.border}`,
+                    borderColor: color.border,
                     transform: isActive ? "scale(1.25)" : "scale(1)",
                     transition: "transform 0.3s cubic-bezier(.68,-0.55,.27,1.55), background-color 0.3s, color 0.3s"
                   }}
@@ -1135,7 +1137,7 @@ const USSDSection = ({ settings, theme }) => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-5xl mx-auto">
           {instructions.map((instruction, index) => {
             const shapes = [
               { borderRadius: "20px 40px 20px 40px", minHeight: "140px" },
@@ -1149,20 +1151,21 @@ const USSDSection = ({ settings, theme }) => {
             return (
               <div
                 key={index}
-                className="p-5 flex flex-col items-center justify-center text-center font-semibold"
+                className="p-3 md:p-5 flex flex-col items-center justify-center text-center font-semibold"
                 style={{
                   ...baseStyle,
                   ...shape,
                   backgroundColor: fill.bg,
                   color: fill.text,
                   border: `2px solid ${fill.border}`,
+                  minHeight: isMobile ? "100px" : shape.minHeight,
                   animation: baseStyle.animation
                     ? `${baseStyle.animation}, ussdShake ${1.5 + (index % 4) * 0.3}s ease-in-out ${index * 0.2}s infinite`
                     : `ussdShake ${1.5 + (index % 4) * 0.3}s ease-in-out ${index * 0.2}s infinite`
                 }}
               >
-                <div className="text-3xl mb-2">{index + 1}</div>
-                <p className="text-sm leading-snug">{instruction}</p>
+                <div className="text-2xl md:text-3xl mb-1 md:mb-2">{index + 1}</div>
+                <p className="text-xs md:text-sm leading-snug">{instruction}</p>
               </div>
             );
           })}
@@ -1246,7 +1249,7 @@ const PAYGOSection = ({ settings, theme }) => {
                   ...getAnimationStyle(index)
                 }}
               >
-                <div className="mb-4" style={{ color: color.text }}>{getIcon(item.icon, item.title)}</div>
+                <div className="mb-4 flex" style={{ color: color.text, justifyContent: isMobile ? (index % 2 === 0 ? "flex-start" : "flex-end") : "center" }}>{getIcon(item.icon, item.title)}</div>
                 <h3 className="text-lg font-bold mb-2" style={{ color: color.text }}>
                   {item.title}
                 </h3>
@@ -1583,7 +1586,7 @@ const ContactSection = ({ settings, theme }) => {
           {contact.description || "Have questions? We're here to help"}
         </p>
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="mx-auto max-w-sm rounded-[2.5rem] p-3 shadow-2xl relative" style={{ backgroundColor: "#1f2937", border: "4px solid #374151", animation: phoneRingEnabled ? "ringShake 0.25s ease-in-out infinite" : undefined }}>
+          <div className="mx-auto max-w-[21.6rem] lg:max-w-[26.4rem] rounded-[2.5rem] p-3 lg:p-2 shadow-2xl relative" style={{ backgroundColor: "#1f2937", border: "4px solid #374151", animation: phoneRingEnabled ? "ringShake 0.25s ease-in-out infinite" : undefined }}>
             {phoneRingEnabled && (
               <>
                 <div className="absolute -inset-2 rounded-[2.5rem] pointer-events-none" style={{ border: `2px solid ${primaryColor}`, opacity: 0.55, animation: "ringPulse 2s ease-out infinite" }} />
@@ -1593,11 +1596,11 @@ const ContactSection = ({ settings, theme }) => {
             )}
             <div className="relative rounded-[2rem] overflow-hidden h-full flex flex-col" style={{ backgroundColor: theme.surfaceBackground || "#ffffff" }}>
               <div className="absolute top-0 left-1/2 -translate-x-1/2 h-5 w-28 rounded-b-xl" style={{ backgroundColor: "#1f2937" }} />
-              <div className="pt-8 pb-4 px-6 text-center border-b" style={{ borderColor: theme.borderColor || "#e5e7eb" }}>
+              <div className="pt-8 pb-4 px-6 lg:pt-6 lg:pb-3 lg:px-6 text-center border-b" style={{ borderColor: theme.borderColor || "#e5e7eb" }}>
                 <div className="mx-auto h-1.5 w-12 rounded-full mb-2" style={{ backgroundColor: "#9ca3af" }} />
                 <h3 className="text-lg font-bold" style={{ color: theme.textColor || "#064e3b" }}>Contact</h3>
               </div>
-              <div className="p-6 space-y-4 flex-1">
+              <div className="p-6 space-y-4 lg:p-5 lg:space-y-3 flex-1">
                 <a href={`mailto:${contact.email}`} className="flex items-center gap-3 p-3 rounded-xl transition hover:scale-105" style={{ backgroundColor: theme.surfaceMuted || "#f0fdf4" }}>
                   <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primaryColor || "#059669" }}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                   <div className="min-w-0">
@@ -1619,7 +1622,7 @@ const ContactSection = ({ settings, theme }) => {
                     <p className="text-sm">{contact.address}</p>
                   </div>
                 </div>
-                <div className="pt-4 flex-1 flex flex-col items-center justify-center text-center opacity-80">
+                <div className="pt-4 lg:pt-2 flex-1 flex flex-col items-center justify-center text-center opacity-80">
                   <div className="text-xs font-semibold mb-3" style={{ color: theme.mutedTextColor || "#6b7280" }}>Tap an option to reach us</div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: theme.primaryColor || "#059669" }}>
                     <span>email</span>
@@ -1629,7 +1632,7 @@ const ContactSection = ({ settings, theme }) => {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-center py-3" style={{ backgroundColor: theme.surfaceBackground || "#ffffff" }}>
+              <div className="flex justify-center py-3 lg:py-2" style={{ backgroundColor: theme.surfaceBackground || "#ffffff" }}>
                 <div className="h-1 w-24 rounded-full" style={{ backgroundColor: "#d1d5db" }} />
               </div>
             </div>

@@ -64,3 +64,58 @@ export const deleteResourceFile = async (relativePath) => {
 
 export const resolveResourceFilePath = (relativePath) =>
   relativePath ? path.resolve(resourceLibraryRoot, relativePath) : "";
+
+const coverDirectory = path.join(resourceLibraryRoot, "covers");
+
+export const saveCoverImage = async ({ buffer, originalName, mimeType }) => {
+  if (!buffer?.length) {
+    throw new Error("Uploaded cover image buffer is empty.");
+  }
+
+  await mkdir(coverDirectory, { recursive: true });
+
+  const ext = `${path.extname(originalName || "").toLowerCase()}` || ".jpg";
+  const base = normalizeSegment(path.basename(originalName || "cover", ext)) || "cover";
+  const fileName = `${base}-${randomSuffix()}${ext}`;
+  const filePath = path.join(coverDirectory, fileName);
+  await writeFile(filePath, buffer);
+
+  return {
+    fileName,
+    relativePath: path.relative(resourceLibraryRoot, filePath).replace(/\\/g, "/"),
+    absolutePath: filePath,
+    mimeType: mimeType || "image/jpeg",
+    extension: ext.replace(/^\./, ""),
+    byteSize: buffer.length
+  };
+};
+
+export const deleteCoverImage = async (fileName) => {
+  if (!fileName) {
+    return;
+  }
+
+  const safeName = path.basename(fileName);
+  if (!safeName || safeName.includes("..")) {
+    return;
+  }
+
+  const absolutePath = path.join(coverDirectory, safeName);
+
+  try {
+    await rm(absolutePath);
+  } catch {}
+};
+
+export const resolveCoverImagePath = (fileName) => {
+  if (!fileName) {
+    return "";
+  }
+
+  const safeName = path.basename(fileName);
+  if (!safeName || safeName.includes("..")) {
+    return "";
+  }
+
+  return path.join(coverDirectory, safeName);
+};

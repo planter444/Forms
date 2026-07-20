@@ -111,7 +111,7 @@ export const adminDeleteCategory = (token, id) =>
     token
   });
 
-const buildResourceFormData = (payload = {}, file) => {
+const buildResourceFormData = (payload = {}, file, coverImageFile) => {
   const formData = new FormData();
 
   const append = (key, value) => {
@@ -147,21 +147,25 @@ const buildResourceFormData = (payload = {}, file) => {
     formData.append("file", file);
   }
 
+  if (coverImageFile) {
+    formData.append("coverImage", coverImageFile);
+  }
+
   return formData;
 };
 
-export const adminCreateResource = (token, payload, file) =>
+export const adminCreateResource = (token, payload, file, coverImageFile) =>
   requestFormData("/api/solar-library/admin/resources", {
     method: "POST",
     token,
-    formData: buildResourceFormData(payload, file)
+    formData: buildResourceFormData(payload, file, coverImageFile)
   });
 
-export const adminUpdateResource = (token, id, payload, file) =>
+export const adminUpdateResource = (token, id, payload, file, coverImageFile) =>
   requestFormData(`/api/solar-library/admin/resources/${id}`, {
     method: "PUT",
     token,
-    formData: buildResourceFormData(payload, file)
+    formData: buildResourceFormData(payload, file, coverImageFile)
   });
 
 export const adminDeleteResource = (token, id) =>

@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
+import path from "node:path";
 import {
   ensureDefaultCategories,
   listCategories,
@@ -24,6 +25,9 @@ import {
   saveResourceFile,
   deleteResourceFile,
   resolveResourceFilePath,
+  saveCoverImage,
+  deleteCoverImage,
+  resolveCoverImagePath,
   ensureResourceLibraryRoot
 } from "./resourceLibraryStorage.js";
 
@@ -186,11 +190,18 @@ router.get("/resources/:id/download", async (request, response) => {
       return;
     } catch (error) {
       console.error("Resource download error", error);
+      const fallbackUrl = resource.previewUrl || resource.externalUrl || resource.fileUrl;
+      if (error.code === "ENOENT" && fallbackUrl) {
+        return response.redirect(302, fallbackUrl);
+      }
+      if (error.code === "ENOENT") {
+        return response.status(404).json({ message: "Resource file not found." });
+      }
       return response.status(500).json({ message: "Unable to download resource file." });
     }
   }
 
-  const redirectUrl = resource.externalUrl || resource.fileUrl;
+  const redirectUrl = resource.previewUrl || resource.externalUrl || resource.fileUrl;
 
   if (!redirectUrl) {
     return response.status(404).json({ message: "Resource file is unavailable." });
@@ -202,6 +213,40 @@ router.get("/resources/:id/download", async (request, response) => {
     userAgent: request.get("user-agent")
   });
   return response.redirect(302, redirectUrl);
+});
+
+const getCoverImageContentType = (fileName) => {
+  const ext = path.extname(fileName).toLowerCase();
+  switch (ext) {
+    case ".png": return "image/png";
+    case ".jpg":
+    case ".jpeg": return "image/jpeg";
+    case ".webp": return "image/webp";
+    case ".gif": return "image/gif";
+    case ".svg": return "image/svg+xml";
+    default: return "application/octet-stream";
+  }
+};
+
+router.get("/covers/:filename", async (request, response) => {
+  const fileName = request.params.filename;
+  const fullPath = resolveCoverImagePath(fileName);
+
+  if (!fullPath) {
+    return response.status(400).json({ message: "Invalid cover filename." });
+  }
+
+  try {
+    const fileInfo = await stat(fullPath);
+    response.setHeader("Content-Type", getCoverImageContentType(fileName));
+    response.setHeader("Content-Length", fileInfo.size);
+    const stream = createReadStream(fullPath);
+    stream.pipe(response);
+    return;
+  } catch (error) {
+    console.error("Cover image serve error", error);
+    return response.status(404).json({ message: "Cover image not found." });
+  }
 });
 
 router.use("/admin", requireAdmin);
@@ -306,8 +351,30 @@ const validateFile = (file) => {
   }
 };
 
-router.post("/admin/resources", upload.single("file"), async (request, response) => {
-  const file = request.file;
+const ALLOWED_COVER_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml"
+]);
+
+const validateCoverImage = (file) => {
+  if (!file) {
+    return;
+  }
+
+  if (!ALLOWED_COVER_MIME_TYPES.has(file.mimetype)) {
+    const error = new Error("Unsupported cover image type. Use PNG, JPG, WEBP, GIF, or SVG.");
+    error.statusCode = 400;
+    throw error;
+  }
+};
+
+router.post("/admin/resources", upload.fields([{ name: "file", maxCount: 1 }, { name: "coverImage", maxCount: 1 }]), async (request, response) => {
+  const file = request.files?.file?.[0];
+  const coverImage = request.files?.coverImage?.[0];
 
   if (!request.body.title) {
     return response.status(400).json({ message: "Resource title is required." });
@@ -315,11 +382,13 @@ router.post("/admin/resources", upload.single("file"), async (request, response)
 
   try {
     validateFile(file);
+    validateCoverImage(coverImage);
   } catch (error) {
     return response.status(error.statusCode || 400).json({ message: error.message });
   }
 
   let fileMetadata = {};
+  let coverImageUrl = request.body.coverImageUrl || "";
 
   if (file) {
     try {
@@ -343,30 +412,48 @@ router.post("/admin/resources", upload.single("file"), async (request, response)
     }
   }
 
+  if (coverImage) {
+    try {
+      const saved = await saveCoverImage({
+        buffer: coverImage.buffer,
+        originalName: request.body.coverImageFileName || coverImage.originalname,
+        mimeType: coverImage.mimetype
+      });
+      coverImageUrl = `/api/solar-library/covers/${saved.fileName}`;
+    } catch (error) {
+      console.error("Unable to store cover image", error);
+      return response.status(500).json({ message: "Unable to store cover image." });
+    }
+  }
+
   const resource = await createResource({
     ...parseResourcePayload(request, file),
-    ...fileMetadata
+    ...fileMetadata,
+    coverImageUrl
   });
 
   response.status(201).json({ resource: serializeResource(resource) });
 });
 
-router.put("/admin/resources/:id", upload.single("file"), async (request, response) => {
+router.put("/admin/resources/:id", upload.fields([{ name: "file", maxCount: 1 }, { name: "coverImage", maxCount: 1 }]), async (request, response) => {
   const resource = await getResourceById(request.params.id);
 
   if (!resource) {
     return response.status(404).json({ message: "Resource not found." });
   }
 
-  const file = request.file;
+  const file = request.files?.file?.[0];
+  const coverImage = request.files?.coverImage?.[0];
 
   try {
     validateFile(file);
+    validateCoverImage(coverImage);
   } catch (error) {
     return response.status(error.statusCode || 400).json({ message: error.message });
   }
 
   let fileMetadata = {};
+  let coverImageUrl = request.body.coverImageUrl || "";
 
   if (file) {
     try {
@@ -394,9 +481,30 @@ router.put("/admin/resources/:id", upload.single("file"), async (request, respon
     }
   }
 
+  if (coverImage) {
+    try {
+      const saved = await saveCoverImage({
+        buffer: coverImage.buffer,
+        originalName: request.body.coverImageFileName || coverImage.originalname,
+        mimeType: coverImage.mimetype
+      });
+      coverImageUrl = `/api/solar-library/covers/${saved.fileName}`;
+
+      if (resource.coverImageUrl) {
+        await deleteCoverImage(resource.coverImageUrl.split("/").pop());
+      }
+    } catch (error) {
+      console.error("Unable to update cover image", error);
+      return response.status(500).json({ message: "Unable to store cover image." });
+    }
+  } else if (!coverImageUrl && resource.coverImageUrl) {
+    await deleteCoverImage(resource.coverImageUrl.split("/").pop());
+  }
+
   const updated = await updateResource(request.params.id, {
     ...parseResourcePayload(request, file),
-    ...fileMetadata
+    ...fileMetadata,
+    coverImageUrl
   });
 
   response.json({ resource: serializeResource(updated) });

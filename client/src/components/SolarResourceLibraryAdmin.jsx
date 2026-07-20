@@ -55,6 +55,7 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
   const [resourceForm, setResourceForm] = useState(defaultResourceForm);
   const [editingResourceId, setEditingResourceId] = useState(null);
   const [resourceFile, setResourceFile] = useState(null);
+  const [coverImageFile, setCoverImageFile] = useState(null);
   const [resourceSubmitting, setResourceSubmitting] = useState(false);
   const [loadingResources, setLoadingResources] = useState(false);
   const [librarySettings, setLibrarySettings] = useState(null);
@@ -243,16 +244,17 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
       }
 
       if (editingResourceId) {
-        await adminUpdateResource(token, editingResourceId, payload, resourceFile);
+        await adminUpdateResource(token, editingResourceId, payload, resourceFile, coverImageFile);
         setNotice("Resource updated.");
       } else {
-        await adminCreateResource(token, payload, resourceFile);
+        await adminCreateResource(token, payload, resourceFile, coverImageFile);
         setNotice("Resource created.");
       }
 
       setResourceForm(defaultResourceForm);
       setEditingResourceId(null);
       setResourceFile(null);
+      setCoverImageFile(null);
       setResourcePage(1);
       loadResources(1, resourceFilters);
     } catch (error) {
@@ -283,6 +285,7 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
       isPublished: resource.isPublished
     });
     setResourceFile(null);
+    setCoverImageFile(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -463,15 +466,15 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
 
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-                External preview URL
+                Cover image file (optional)
                 <input
-                  type="url"
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/svg+xml"
                   className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
                   style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
-                  value={resourceForm.externalUrl}
-                  onChange={(event) => setResourceForm((prev) => ({ ...prev, externalUrl: event.target.value }))}
-                  placeholder="https://..."
+                  onChange={(event) => setCoverImageFile(event.target.files?.[0] || null)}
                 />
+                {coverImageFile ? <p className="mt-1 text-xs" style={{ color: palette.mutedTextColor }}>{coverImageFile.name}</p> : null}
               </label>
               <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
                 Cover image URL (optional)
@@ -481,6 +484,21 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
                   style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
                   value={resourceForm.coverImageUrl}
                   onChange={(event) => setResourceForm((prev) => ({ ...prev, coverImageUrl: event.target.value }))}
+                  placeholder="https://..."
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-1">
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                External preview URL
+                <input
+                  type="url"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                  value={resourceForm.externalUrl}
+                  onChange={(event) => setResourceForm((prev) => ({ ...prev, externalUrl: event.target.value }))}
+                  placeholder="https://..."
                 />
               </label>
             </div>
