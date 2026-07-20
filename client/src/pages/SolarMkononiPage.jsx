@@ -57,6 +57,132 @@ const useCountUp = (endValue, duration = 2000) => {
   return [count, elementRef];
 };
 
+const SolarMkononiNav = ({ settings, theme }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const primaryColor = theme.primaryColor || "#059669";
+  const textColor = theme.textColor || "#064e3b";
+  const backgroundColor = theme.backgroundColor || "#f0fdf4";
+  const borderColor = theme.borderColor || "#a7f3d0";
+
+  const navItems = [
+    { label: "Home", href: "#top", to: null },
+    { label: "Services", href: "#services", to: null },
+    { label: "How It Works", href: "#how-it-works", to: null },
+    { label: "PAYGO", href: "#paygo", to: null },
+    { label: "Resources", href: null, to: "/solar/resource-library" },
+    { label: "Contact", href: "#contact", to: null }
+  ];
+
+  const handleClick = (item) => {
+    setMenuOpen(false);
+    if (item.href) {
+      const el = document.querySelector(item.href);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
+  return (
+    <header
+      id="top"
+      className="sticky top-0 z-50 border-b backdrop-blur-xl"
+      style={{ backgroundColor: `${backgroundColor}f2`, borderColor }}
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+        <a
+          href="#top"
+          onClick={(e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="text-lg font-bold"
+          style={{ color: primaryColor }}
+        >
+          Solar Mkononi
+        </a>
+
+        <nav className="hidden items-center gap-1 md:flex">
+          {navItems.map((item) =>
+            item.to ? (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="rounded-full px-4 py-2 text-sm font-medium transition hover:opacity-80"
+                style={{ color: textColor }}
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <a
+                key={item.label}
+                href={item.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleClick(item);
+                }}
+                className="rounded-full px-4 py-2 text-sm font-medium transition hover:opacity-80"
+                style={{ color: textColor }}
+              >
+                {item.label}
+              </a>
+            )
+          )}
+        </nav>
+
+        <button
+          type="button"
+          className="rounded-xl border p-2 md:hidden"
+          style={{ borderColor, color: textColor }}
+          onClick={() => setMenuOpen((prev) => !prev)}
+          aria-label="Toggle navigation"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {menuOpen ? (
+              <path d="M6 6l12 12M6 18L18 6" />
+            ) : (
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            )}
+          </svg>
+        </button>
+      </div>
+
+      {menuOpen ? (
+        <nav className="border-t px-4 py-3 md:hidden" style={{ borderColor }}>
+          <div className="flex flex-col gap-1">
+            {navItems.map((item) =>
+              item.to ? (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-4 py-3 text-sm font-medium"
+                  style={{ color: textColor }}
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleClick(item);
+                  }}
+                  className="rounded-xl px-4 py-3 text-sm font-medium"
+                  style={{ color: textColor }}
+                >
+                  {item.label}
+                </a>
+              )
+            )}
+          </div>
+        </nav>
+      ) : null}
+    </header>
+  );
+};
+
 const SolarMkononiPage = () => {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -100,6 +226,7 @@ const SolarMkononiPage = () => {
 
   return (
     <div style={{ backgroundColor: theme.backgroundColor || "#f0fdf4", color: theme.textColor || "#064e3b" }}>
+      <SolarMkononiNav settings={settings} theme={theme} />
       {sections.hero !== false && <HeroSection settings={settings} theme={theme} />}
       {sections.stats !== false && <StatsSection settings={settings} theme={theme} />}
       {sections.services !== false && <ServicesSection settings={settings} theme={theme} />}
@@ -572,7 +699,7 @@ const HowItWorksSection = ({ settings, theme }) => {
   const backgroundColor = howItWorks.backgroundColor || "#ffffff";
 
   return (
-    <section className="py-20 px-4" style={{ backgroundColor }}>
+    <section id="how-it-works" className="py-20 px-4" style={{ backgroundColor }}>
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12" style={{ color: theme.textColor || "#064e3b" }}>
           {howItWorks.title || "How It Works"}
@@ -712,7 +839,7 @@ const PAYGOSection = ({ settings, theme }) => {
   };
 
   return (
-    <section className="py-20 px-4" style={{ backgroundColor }}>
+    <section id="paygo" className="py-20 px-4" style={{ backgroundColor }}>
       <style>{`
         @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInDown { to { opacity: 1; transform: translateY(0); } }
@@ -795,18 +922,25 @@ const ResourceLibrarySection = ({ settings, theme }) => {
                 </a>
               </div>
             ))}
-            <Link
-              to="/solar/resource-library"
-              className="md:col-span-2 lg:col-span-3 mt-8 inline-flex items-center justify-center rounded-full border border-emerald-200 px-6 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
-            >
-              Explore the full Solar Resource Library →
-            </Link>
           </div>
         ) : (
-          <p className="text-center" style={{ color: theme.mutedTextColor || "#475569" }}>
-            Resources coming soon...
+          <p className="text-center mb-8" style={{ color: theme.mutedTextColor || "#475569" }}>
+            Browse our growing collection of curated resources.
           </p>
         )}
+        <div className="text-center mt-8">
+          <Link
+            to="/solar/resource-library"
+            className="inline-flex items-center justify-center rounded-full border px-8 py-3 text-sm font-semibold transition hover:scale-105"
+            style={{
+              borderColor: theme.primaryColor || "#059669",
+              color: theme.primaryColor || "#059669",
+              backgroundColor: theme.surfaceMuted || "#f0fdf4"
+            }}
+          >
+            Explore the full Resource Library →
+          </Link>
+        </div>
       </div>
     </section>
   );
