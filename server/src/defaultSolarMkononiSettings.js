@@ -169,6 +169,96 @@ export const defaultSolarMkononiSettings = {
     resources: []
   },
 
+  solarResourceLibrary: {
+    hero: {
+      eyebrow: "Solar Mkononi Resource Library",
+      headline: "Curated knowledge for Kenya's clean energy leaders",
+      description: "Search verified playbooks, policy briefs, financial toolkits, and implementation guides maintained by KEREA's working groups.",
+      primaryCta: "Start exploring",
+      primaryHref: "#library-feed",
+      searchPlaceholder: "Search policies, toolkits, best practices..."
+    },
+    stats: {
+      tagline: "Powered by Kenya Renewable Energy Association",
+      cards: [
+        { label: "Resources curated", value: "150+" },
+        { label: "Categories covered", value: "5" },
+        { label: "Partners contributing", value: "25+" }
+      ]
+    },
+    quickLinks: [
+      {
+        label: "Policy & Regulation",
+        description: "Licensing guides, compliance templates, policy briefs",
+        categorySlug: "policy-regulations",
+        accentColor: "#0f766e"
+      },
+      {
+        label: "Technical Guides",
+        description: "Installation manuals, QA/QC checklists, safety posters",
+        categorySlug: "technical-guides",
+        accentColor: "#2563eb"
+      },
+      {
+        label: "Business & Finance",
+        description: "Investment decks, PAYGO models, business cases",
+        categorySlug: "business-finance",
+        accentColor: "#c2410c"
+      },
+      {
+        label: "Training & Toolkits",
+        description: "Curriculum, facilitator resources, cohort exercises",
+        categorySlug: "training-toolkits",
+        accentColor: "#7c3aed"
+      }
+    ],
+    featured: {
+      title: "Featured resources",
+      description: "Timely releases handpicked by the Solar Mkononi secretariat."
+    },
+    filters: {
+      sortOptions: [
+        { value: "featured", label: "Featured first" },
+        { value: "newest", label: "Newest" },
+        { value: "popular", label: "Most downloaded" },
+        { value: "alpha", label: "A → Z" }
+      ],
+      fileTypeLabels: {
+        pdf: "PDF",
+        doc: "Word Doc",
+        docx: "Word Doc",
+        xls: "Spreadsheet",
+        xlsx: "Spreadsheet",
+        csv: "Data",
+        ppt: "Slide deck",
+        pptx: "Slide deck",
+        mp4: "Video",
+        mp3: "Audio",
+        zip: "Toolkit",
+        json: "Dataset",
+        txt: "Notes"
+      }
+    },
+    emptyState: {
+      title: "Resources are being curated",
+      description: "Check back soon or reach out to the KEREA policy desk if you need a custom information pack.",
+      actionLabel: "Contact KEREA",
+      actionHref: "mailto:info@kerea.org"
+    },
+    cta: {
+      title: "Can't find what you need?",
+      body: "Our policy and technical working groups can help curate bespoke kits for counties, utilities, and enterprises.",
+      primaryText: "Request support",
+      primaryHref: "mailto:info@kerea.org",
+      secondaryText: "Visit Solar Mkononi",
+      secondaryHref: "/solar-mkononi"
+    },
+    seo: {
+      title: "Solar Mkononi Resource Library | KEREA",
+      description: "Download policies, business playbooks, training decks, and verified clean energy resources curated by KEREA."
+    }
+  },
+
   impact: {
     enabled: true,
     title: "Our Impact",

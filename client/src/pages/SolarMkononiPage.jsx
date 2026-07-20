@@ -795,6 +795,12 @@ const ResourceLibrarySection = ({ settings, theme }) => {
                 </a>
               </div>
             ))}
+            <Link
+              to="/solar/resource-library"
+              className="md:col-span-2 lg:col-span-3 mt-8 inline-flex items-center justify-center rounded-full border border-emerald-200 px-6 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
+            >
+              Explore the full Solar Resource Library →
+            </Link>
           </div>
         ) : (
           <p className="text-center" style={{ color: theme.mutedTextColor || "#475569" }}>

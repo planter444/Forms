@@ -107,6 +107,84 @@ export const initializeDatabase = async () => {
       );
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS resource_library_categories (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        slug TEXT NOT NULL UNIQUE,
+        description TEXT DEFAULT '',
+        icon TEXT DEFAULT '',
+        accent_color TEXT DEFAULT '#0f766e',
+        resource_count INTEGER NOT NULL DEFAULT 0,
+        is_featured BOOLEAN NOT NULL DEFAULT false,
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        display_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS resource_library_resources (
+        id SERIAL PRIMARY KEY,
+        category_id INTEGER REFERENCES resource_library_categories(id) ON DELETE SET NULL,
+        title TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        summary TEXT DEFAULT '',
+        file_name TEXT DEFAULT '',
+        file_url TEXT DEFAULT '',
+        file_path TEXT DEFAULT '',
+        file_extension TEXT DEFAULT '',
+        mime_type TEXT DEFAULT '',
+        file_size BIGINT NOT NULL DEFAULT 0,
+        storage_provider TEXT DEFAULT 'local',
+        download_count INTEGER NOT NULL DEFAULT 0,
+        is_featured BOOLEAN NOT NULL DEFAULT false,
+        is_published BOOLEAN NOT NULL DEFAULT true,
+        allow_downloads BOOLEAN NOT NULL DEFAULT true,
+        cover_image_url TEXT DEFAULT '',
+        preview_url TEXT DEFAULT '',
+        external_url TEXT DEFAULT '',
+        resource_type TEXT DEFAULT '',
+        tags TEXT[] NOT NULL DEFAULT '{}',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        published_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS resource_library_downloads (
+        id SERIAL PRIMARY KEY,
+        resource_id INTEGER NOT NULL REFERENCES resource_library_resources(id) ON DELETE CASCADE,
+        download_source TEXT DEFAULT 'public',
+        ip_address TEXT,
+        user_agent TEXT,
+        downloaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS resource_library_categories_featured_index
+        ON resource_library_categories (is_featured, display_order);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS resource_library_resources_category_index
+        ON resource_library_resources (category_id, is_published, is_featured);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS resource_library_resources_tags_index
+        ON resource_library_resources USING GIN (tags);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS resource_library_downloads_resource_index
+        ON resource_library_downloads (resource_id, downloaded_at);
+    `);
+
     await pool.query(`ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_email_key;`);
     await pool.query(`DROP INDEX IF EXISTS submissions_phone_number_unique;`);
     await pool.query(`CREATE INDEX IF NOT EXISTS submissions_email_index ON submissions (email);`);

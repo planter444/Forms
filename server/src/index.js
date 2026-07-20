@@ -11,7 +11,12 @@ import { databaseState, initializeDatabase, markDatabaseUnavailable, pool } from
 import { requireAdmin, issueAdminToken } from "./auth.js";
 import { categories, counties } from "./constants.js";
 import { getSiteSettings, resetSiteSettings, updateSiteSettings } from "./siteSettingsStore.js";
-import { getSolarMkononiSettings, resetSolarMkononiSettings, updateSolarMkononiSettings } from "./solarMkononiSettingsStore.js";
+import {
+  getSolarMkononiSettings,
+  resetSolarMkononiSettings,
+  updateSolarMkononiSettings
+} from "./solarMkononiSettingsStore.js";
+import resourceLibraryRouter from "./resourceLibraryRoutes.js";
 import { escapeCsvValue, sanitizeSubmissionInput, validateSubmission } from "./validators.js";
 
 dotenv.config();
@@ -222,6 +227,8 @@ app.post("/api/admin/media", requireAdmin, upload.single("file"), async (request
     });
   }
 });
+
+app.use("/api/solar-library", resourceLibraryRouter);
 
 app.post("/api/submissions", submissionLimiter, async (request, response) => {
   if (!requireDatabase(response)) {

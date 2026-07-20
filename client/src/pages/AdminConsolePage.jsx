@@ -29,6 +29,7 @@ import {
   serializeLocationHierarchy
 } from "../lib/locationHierarchyText.js";
 import BrandLogo from "../components/BrandLogo.jsx";
+import SolarResourceLibraryAdmin from "../components/SolarResourceLibraryAdmin.jsx";
 import { categories } from "../data/formOptions.js";
 import {
   downloadSubmissionsJson,
@@ -271,7 +272,8 @@ const tabs = [
   { id: "locations", label: "Locations" },
   { id: "appearance", label: "Appearance" },
   { id: "responses", label: "Responses" },
-  { id: "solar-mkononi", label: "Solar Mkononi" }
+  { id: "solar-mkononi", label: "Solar Mkononi" },
+  { id: "resource-library", label: "Resource library" }
 ];
 
 const cardClass = "rounded-[28px] border p-5 shadow-sm";
@@ -1067,6 +1069,10 @@ const AdminConsolePage = () => {
                   </div>
                 </div>
               </section>
+            ) : null}
+
+            {activeTab === "resource-library" ? (
+              <SolarResourceLibraryAdmin token={token} palette={palette} setNotice={setNotice} setError={setError} />
             ) : null}
 
             {activeTab === "content" ? (
