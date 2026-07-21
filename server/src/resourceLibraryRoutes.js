@@ -509,7 +509,7 @@ router.put("/admin/resources/:id", upload.fields([{ name: "file", maxCount: 1 },
   }
 
   try {
-    const updated = await updateResource(request.params.id, {
+    const updated = await updateResource(Number(request.params.id), {
       ...parseResourcePayload(request, file),
       ...fileMetadata,
       coverImageUrl

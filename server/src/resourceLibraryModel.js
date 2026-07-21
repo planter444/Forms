@@ -8,6 +8,8 @@ const slugify = (value = "") =>
     .replace(/-{2,}/g, "-")
     .slice(0, 80);
 
+const isValidDate = (value) => value instanceof Date && !isNaN(value.getTime());
+
 const mapCategoryRow = (row) => ({
   id: row.id,
   name: row.name,
@@ -500,7 +502,7 @@ export const createResource = async (payload) => {
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+        $11, $12, $13, $14, $15, $16, $17, $18, $19::text[], $20, $21
       )
       RETURNING *
     `,
@@ -525,7 +527,7 @@ export const createResource = async (payload) => {
       payload.resourceType || payload.fileExtension || "",
       normalizeTags(payload.tags),
       parseInteger(payload.sortOrder, 0),
-      payload.publishedAt || new Date()
+      isValidDate(payload.publishedAt) ? payload.publishedAt : new Date()
     ]
   );
 
@@ -540,8 +542,8 @@ export const updateResource = async (id, payload) => {
   const fields = [];
   const values = [];
 
-  const assign = (expression, value) => {
-    fields.push(`${expression} = $${fields.length + 1}`);
+  const assign = (expression, value, cast = "") => {
+    fields.push(`${expression} = $${fields.length + 1}${cast ? `::${cast}` : ""}`);
     values.push(value);
   };
 
@@ -606,7 +608,7 @@ export const updateResource = async (id, payload) => {
   }
 
   if (payload.tags !== undefined) {
-    assign("tags", normalizeTags(payload.tags));
+    assign("tags", normalizeTags(payload.tags), "text[]");
   }
 
   if (payload.sortOrder !== undefined) {
@@ -614,7 +616,7 @@ export const updateResource = async (id, payload) => {
   }
 
   if (payload.publishedAt !== undefined) {
-    assign("published_at", payload.publishedAt || null);
+    assign("published_at", isValidDate(payload.publishedAt) ? payload.publishedAt : null);
   }
 
   if (payload.isFeatured !== undefined) {

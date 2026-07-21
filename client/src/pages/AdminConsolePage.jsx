@@ -532,6 +532,42 @@ const AdminConsolePage = () => {
       reader.readAsDataURL(file);
     });
 
+  const handlePartnerLogoUpload = async (index, event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const applyUrl = (url) => {
+      const newLogos = [...(solarMkononiEditor.partners?.logos || [])];
+      newLogos[index] = { ...newLogos[index], url };
+      setSolarMkononiEditor({
+        ...solarMkononiEditor,
+        partners: { ...solarMkononiEditor.partners, logos: newLogos }
+      });
+    };
+
+    try {
+      if (token) {
+        const uploadResult = await uploadAdminMedia(token, file);
+        applyUrl(uploadResult.url);
+        setNotice("Logo uploaded to Cloudinary.");
+      } else {
+        const dataUrl = await readImageAsDataUrl(file);
+        applyUrl(dataUrl);
+      }
+    } catch (uploadError) {
+      try {
+        const dataUrl = await readImageAsDataUrl(file);
+        applyUrl(dataUrl);
+        setError(`${uploadError.message || "Cloudinary upload failed."} Using a local preview until Cloudinary is configured.`);
+      } catch {
+        setError(uploadError.message || "Unable to read the logo file.");
+      }
+    }
+  };
+
   const handleImageUpload = async (field, event) => {
     const file = event.target.files?.[0];
 
@@ -3841,6 +3877,15 @@ const AdminConsolePage = () => {
                                   }}
                                   className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
                                   style={{ borderColor: palette.borderColor }}
+                                />
+                              </label>
+                              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                                Upload logo file
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handlePartnerLogoUpload(index, e)}
+                                  className="mt-2 block w-full text-sm"
                                 />
                               </label>
                               <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
