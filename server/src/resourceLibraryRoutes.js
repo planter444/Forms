@@ -192,9 +192,11 @@ router.get("/resources/:id/download", async (request, response) => {
       console.error("Resource download error", error);
       const fallbackUrl = resource.previewUrl || resource.externalUrl || resource.fileUrl;
       if (error.code === "ENOENT" && fallbackUrl) {
+        console.warn(`Redirecting to fallback because file is missing: ${fullPath}`);
         return response.redirect(302, fallbackUrl);
       }
       if (error.code === "ENOENT") {
+        console.error(`Resource file not found on disk: ${fullPath} (filePath: ${resource.filePath})`);
         return response.status(404).json({ message: "Resource file not found." });
       }
       return response.status(500).json({ message: "Unable to download resource file." });
