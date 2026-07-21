@@ -428,13 +428,18 @@ router.post("/admin/resources", upload.fields([{ name: "file", maxCount: 1 }, { 
     }
   }
 
-  const resource = await createResource({
-    ...parseResourcePayload(request, file),
-    ...fileMetadata,
-    coverImageUrl
-  });
+  try {
+    const resource = await createResource({
+      ...parseResourcePayload(request, file),
+      ...fileMetadata,
+      coverImageUrl
+    });
 
-  response.status(201).json({ resource: serializeResource(resource) });
+    response.status(201).json({ resource: serializeResource(resource) });
+  } catch (error) {
+    console.error("Create resource failed", error);
+    return response.status(500).json({ message: error.message || "Unable to create resource." });
+  }
 });
 
 router.put("/admin/resources/:id", upload.fields([{ name: "file", maxCount: 1 }, { name: "coverImage", maxCount: 1 }]), async (request, response) => {
@@ -503,13 +508,18 @@ router.put("/admin/resources/:id", upload.fields([{ name: "file", maxCount: 1 },
     await deleteCoverImage(resource.coverImageUrl.split("/").pop());
   }
 
-  const updated = await updateResource(request.params.id, {
-    ...parseResourcePayload(request, file),
-    ...fileMetadata,
-    coverImageUrl
-  });
+  try {
+    const updated = await updateResource(request.params.id, {
+      ...parseResourcePayload(request, file),
+      ...fileMetadata,
+      coverImageUrl
+    });
 
-  response.json({ resource: serializeResource(updated) });
+    response.json({ resource: serializeResource(updated) });
+  } catch (error) {
+    console.error("Update resource failed", error);
+    return response.status(500).json({ message: error.message || "Unable to update resource." });
+  }
 });
 
 router.delete("/admin/resources/:id", async (request, response) => {
@@ -524,6 +534,18 @@ router.delete("/admin/resources/:id", async (request, response) => {
   }
 
   response.json({ success: true });
+});
+
+router.use((error, request, response, _next) => {
+  console.error("Resource library router error", error);
+
+  if (error?.name === "MulterError") {
+    return response.status(400).json({ message: `Upload error: ${error.message}` });
+  }
+
+  return response.status(error?.statusCode || 500).json({
+    message: error?.message || "An unexpected error occurred."
+  });
 });
 
 export default router;
