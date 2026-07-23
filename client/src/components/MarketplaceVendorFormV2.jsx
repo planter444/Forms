@@ -593,7 +593,12 @@ const MarketplaceVendorForm = ({ onStepChange }) => {
         replace: true,
         state: {
           email: formValues.email.trim(),
-          consent: true
+          consent: true,
+          source: "marketplace",
+          title: "Thank you for joining the KEREA Marketplace",
+          body: "Your information has been listed for review. We'll verify your details and publish your listing once approved.",
+          homePath: "/marketplace",
+          anotherPath: "/marketplace/apply"
         }
       });
     } catch (error) {

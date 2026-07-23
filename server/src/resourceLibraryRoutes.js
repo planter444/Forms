@@ -190,7 +190,7 @@ router.get("/resources/:id/download", async (request, response) => {
       return;
     } catch (error) {
       console.error("Resource download error", error);
-      const fallbackUrl = resource.previewUrl || resource.externalUrl || resource.fileUrl;
+      const fallbackUrl = resource.fileUrl || resource.previewUrl || resource.externalUrl;
       if (error.code === "ENOENT" && fallbackUrl) {
         console.warn(`Redirecting to fallback because file is missing: ${fullPath}`);
         return response.redirect(302, fallbackUrl);
@@ -203,7 +203,7 @@ router.get("/resources/:id/download", async (request, response) => {
     }
   }
 
-  const redirectUrl = resource.previewUrl || resource.externalUrl || resource.fileUrl;
+  const redirectUrl = resource.fileUrl || resource.previewUrl || resource.externalUrl;
 
   if (!redirectUrl) {
     return response.status(404).json({ message: "Resource file is unavailable." });
@@ -400,13 +400,13 @@ router.post("/admin/resources", upload.fields([{ name: "file", maxCount: 1 }, { 
         mimeType: file.mimetype
       });
       fileMetadata = {
-        fileName: request.body.fileName || file.originalname,
-        filePath: saved.relativePath,
-        fileUrl: "",
-        fileExtension: saved.extension,
+        fileName: saved.fileName,
+        filePath: saved.relativePath || "",
+        fileUrl: saved.fileUrl || "",
+        fileExtension: saved.fileExtension,
         mimeType: saved.mimeType,
-        fileSize: saved.byteSize,
-        storageProvider: "local"
+        fileSize: saved.fileSize,
+        storageProvider: saved.storageProvider || "cloudinary"
       };
     } catch (error) {
       console.error("Unable to store resource file", error);
@@ -421,7 +421,7 @@ router.post("/admin/resources", upload.fields([{ name: "file", maxCount: 1 }, { 
         originalName: request.body.coverImageFileName || coverImage.originalname,
         mimeType: coverImage.mimetype
       });
-      coverImageUrl = `/api/solar-library/covers/${saved.fileName}`;
+      coverImageUrl = saved.coverImageUrl || coverImageUrl;
     } catch (error) {
       console.error("Unable to store cover image", error);
       return response.status(500).json({ message: "Unable to store cover image." });
@@ -470,13 +470,13 @@ router.put("/admin/resources/:id", upload.fields([{ name: "file", maxCount: 1 },
         mimeType: file.mimetype
       });
       fileMetadata = {
-        fileName: request.body.fileName || file.originalname,
-        filePath: saved.relativePath,
-        fileUrl: "",
-        fileExtension: saved.extension,
+        fileName: saved.fileName,
+        filePath: saved.relativePath || "",
+        fileUrl: saved.fileUrl || "",
+        fileExtension: saved.fileExtension,
         mimeType: saved.mimeType,
-        fileSize: saved.byteSize,
-        storageProvider: "local"
+        fileSize: saved.fileSize,
+        storageProvider: saved.storageProvider || "cloudinary"
       };
 
       if (resource.filePath) {
@@ -495,7 +495,7 @@ router.put("/admin/resources/:id", upload.fields([{ name: "file", maxCount: 1 },
         originalName: request.body.coverImageFileName || coverImage.originalname,
         mimeType: coverImage.mimetype
       });
-      coverImageUrl = `/api/solar-library/covers/${saved.fileName}`;
+      coverImageUrl = saved.coverImageUrl || coverImageUrl;
 
       if (resource.coverImageUrl) {
         await deleteCoverImage(resource.coverImageUrl.split("/").pop());

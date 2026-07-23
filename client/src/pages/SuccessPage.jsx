@@ -7,8 +7,14 @@ import { useSiteSettings } from "../context/SiteSettingsContext.jsx";
 const SuccessPage = () => {
   const location = useLocation();
   const { palette, settings } = useSiteSettings();
-  const consent = location.state?.consent;
-  const email = location.state?.email;
+  const state = location.state || {};
+  const consent = state.consent;
+  const email = state.email;
+
+  const successTitle = state.title || settings.successTitle;
+  const successBody = state.body || (consent ? settings.successBodyConsented : settings.successBodyDeclined);
+  const homePath = state.homePath || "/";
+  const anotherPath = state.anotherPath || "/form";
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -37,11 +43,11 @@ const SuccessPage = () => {
           </div>
 
           <h1 className="success-pop-delay mt-3 text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: palette.textColor }}>
-            {settings.successTitle}
+            {successTitle}
           </h1>
 
           <p className="mx-auto mt-4 max-w-md text-sm leading-7 sm:text-base" style={{ color: palette.mutedTextColor }}>
-            {consent ? settings.successBodyConsented : settings.successBodyDeclined}
+            {successBody}
           </p>
 
           {email ? (
@@ -70,14 +76,14 @@ const SuccessPage = () => {
 
           <div className="mt-8 flex flex-row items-center justify-center gap-3">
             <Link
-              to="/"
+              to={homePath}
               className="inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5"
               style={{ backgroundColor: palette.primary }}
             >
               Return home
             </Link>
             <Link
-              to="/form"
+              to={anotherPath}
               className="inline-flex items-center justify-center rounded-2xl border-2 px-5 py-3 text-sm font-semibold transition hover:bg-slate-50"
               style={{ borderColor: palette.borderColor, color: palette.textColor }}
             >

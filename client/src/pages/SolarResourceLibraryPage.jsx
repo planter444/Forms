@@ -697,65 +697,59 @@ const ResourceCard = ({ resource, fileTypeLabels, cardIndex = 0 }) => {
   const absoluteViewUrl = toAbsoluteUrl(viewUrl);
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border p-5 shadow-sm transition hover:shadow-md" style={{ backgroundColor: colors.bg, borderColor: colors.border }}>
-      <div className="flex items-center justify-between">
-        <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-3 py-1 text-xs font-semibold text-emerald-800">
-          {resource.category?.name || "Uncategorized"}
-        </div>
-        <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: badge.background, color: badge.color }}>
-          {badge.label}
-        </span>
-      </div>
-      <h3 className="mt-4 text-xl font-semibold text-slate-900">{resource.title}</h3>
-      <p className="mt-2 flex-1 text-sm text-slate-600 line-clamp-3">{resource.summary || resource.description}</p>
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-500">
-        <div>
-          <dt className="font-semibold text-slate-400">Published</dt>
-          <dd>{formatDate(resource.publishedAt)}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-slate-400">File size</dt>
-          <dd>{formatBytes(resource.fileSize)}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-slate-400">Downloads</dt>
-          <dd>{resource.downloadCount || 0}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-slate-400">Status</dt>
-          <dd>{resource.allowDownloads === false ? "Preview only" : "Downloadable"}</dd>
-        </div>
-      </dl>
-      {chips.length ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {chips.map((tag) => (
-            <span key={tag} className="rounded-full bg-white/50 px-3 py-1 text-xs text-slate-600">
-              {tag}
+    <article className="grid h-40 grid-cols-2 overflow-hidden rounded-3xl border shadow-sm transition hover:shadow-md sm:h-48" style={{ backgroundColor: colors.bg, borderColor: colors.border }}>
+      <div className="relative h-full w-full">
+        {resource.coverImageUrl ? (
+          <img src={toAbsoluteUrl(resource.coverImageUrl)} alt={resource.title} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center" style={{ backgroundColor: colors.bg }}>
+            <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: badge.background, color: badge.color }}>
+              {badge.label}
             </span>
-          ))}
+          </div>
+        )}
+      </div>
+      <div className="flex h-full flex-col justify-between overflow-hidden bg-white/80 p-3">
+        <div className="min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate rounded-full bg-white/60 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+              {resource.category?.name || "Uncategorized"}
+            </span>
+            {resource.coverImageUrl ? (
+              <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: badge.background, color: badge.color }}>
+                {badge.label}
+              </span>
+            ) : null}
+          </div>
+          <h3 className="mt-2 text-sm font-semibold leading-tight text-slate-900 line-clamp-1">{resource.title}</h3>
+          <p className="mt-1 text-xs text-slate-600 line-clamp-2">{resource.summary || resource.description}</p>
         </div>
-      ) : null}
-      <div className="mt-5 flex gap-2">
-        {canView ? (
-          <a
-            href={absoluteViewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 inline-flex items-center justify-center rounded-2xl border border-emerald-300 bg-white/60 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-white"
-          >
-            View
-          </a>
-        ) : null}
-        {canDownload ? (
-          <a
-            href={absoluteDownloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
-          >
-            Download
-          </a>
-        ) : null}
+        <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500">
+          <span>{formatDate(resource.publishedAt)}</span>
+          <span>{formatBytes(resource.fileSize)}</span>
+        </div>
+        <div className="mt-2 flex gap-2">
+          {canView ? (
+            <a
+              href={absoluteViewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 inline-flex items-center justify-center rounded-xl border border-emerald-300 bg-white/60 px-2 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-white"
+            >
+              View
+            </a>
+          ) : null}
+          {canDownload ? (
+            <a
+              href={absoluteDownloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+            >
+              Download
+            </a>
+          ) : null}
+        </div>
       </div>
     </article>
   );

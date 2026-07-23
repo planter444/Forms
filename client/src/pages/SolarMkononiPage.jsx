@@ -1328,29 +1328,47 @@ const ResourceLibrarySection = ({ settings, theme }) => {
         </p>
         {resources.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {resources.map((resource, index) => (
-              <div
-                key={index}
-                className="p-6 rounded-2xl transition hover:scale-105"
-                style={{ backgroundColor: theme.surfaceMuted || "#f0fdf4", border: `1px solid ${theme.borderColor || "#a7f3d0"}` }}
-              >
-                <h3 className="text-lg font-bold mb-2" style={{ color: theme.textColor || "#064e3b" }}>
-                  {resource.title}
-                </h3>
-                <p className="text-sm mb-4" style={{ color: theme.mutedTextColor || "#475569" }}>
-                  {resource.description}
-                </p>
-                <a
-                  href={resource.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block px-4 py-2 rounded-lg font-bold text-white text-sm"
-                  style={{ backgroundColor: theme.primaryColor || "#059669" }}
+            {resources.map((resource, index) => {
+              const downloadUrl = resource.downloadUrl || resource.fileUrl || resource.externalUrl || resource.url || "";
+              return (
+                <div
+                  key={index}
+                  className="grid h-40 grid-cols-2 overflow-hidden rounded-2xl transition hover:scale-105 sm:h-48"
+                  style={{ backgroundColor: theme.surfaceMuted || "#f0fdf4", border: `1px solid ${theme.borderColor || "#a7f3d0"}` }}
                 >
-                  Download
-                </a>
-              </div>
-            ))}
+                  <div className="h-full w-full">
+                    {resource.coverImageUrl ? (
+                      <img src={resource.coverImageUrl} alt={resource.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center" style={{ backgroundColor: theme.surfaceMuted || "#f0fdf4" }}>
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: theme.mutedTextColor || "#475569" }}>{resource.resourceType || "Resource"}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex h-full flex-col justify-between overflow-hidden bg-white/80 p-3">
+                    <div>
+                      <h3 className="text-sm font-semibold leading-tight line-clamp-1" style={{ color: theme.textColor || "#064e3b" }}>
+                        {resource.title}
+                      </h3>
+                      <p className="mt-1 text-xs line-clamp-3" style={{ color: theme.mutedTextColor || "#475569" }}>
+                        {resource.description || resource.summary}
+                      </p>
+                    </div>
+                    {downloadUrl ? (
+                      <a
+                        href={downloadUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold text-white"
+                        style={{ backgroundColor: theme.primaryColor || "#059669" }}
+                      >
+                        Download
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="text-center mb-8" style={{ color: theme.mutedTextColor || "#475569" }}>

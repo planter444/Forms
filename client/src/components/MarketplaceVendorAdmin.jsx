@@ -339,6 +339,32 @@ const MarketplaceVendorAdmin = ({ token }) => {
     });
   }, [submissions, search, countyFilter, categoryFilter]);
 
+  const stats = useMemo(() => {
+    const total = submissions.length;
+    const filtered = filteredSubmissions.length;
+    const uniqueCounties = new Set();
+    let coverageCount = 0;
+    let productCategoryCount = 0;
+
+    submissions.forEach((item) => {
+      (item.coverageEntries || []).forEach((entry) => {
+        if (entry?.county) {
+          uniqueCounties.add(entry.county);
+        }
+        coverageCount += 1;
+      });
+      productCategoryCount += (item.productCategories || []).length;
+    });
+
+    return {
+      total,
+      filtered,
+      uniqueCounties: uniqueCounties.size,
+      coverageCount,
+      productCategoryCount
+    };
+  }, [submissions, filteredSubmissions]);
+
   const handleExport = async () => {
     try {
       const blob = await exportMarketplaceSubmissions(token);
@@ -545,6 +571,25 @@ const MarketplaceVendorAdmin = ({ token }) => {
             Export PDF
           </button>
         </div>
+      </div>
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {[
+          { label: "Total submissions", value: stats.total },
+          { label: "Filtered", value: stats.filtered },
+          { label: "Counties covered", value: stats.uniqueCounties },
+          { label: "Coverage entries", value: stats.coverageCount },
+          { label: "Product category selections", value: stats.productCategoryCount }
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-2xl border p-4"
+            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+          >
+            <div className="text-2xl font-bold" style={{ color: palette.textColor }}>{stat.value}</div>
+            <div className="mt-1 text-xs font-medium uppercase tracking-wider" style={{ color: palette.mutedTextColor }}>{stat.label}</div>
+          </div>
+        ))}
       </div>
 
       {error ? <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
