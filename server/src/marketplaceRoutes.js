@@ -7,16 +7,24 @@ import { escapeCsvValue } from "./validators.js";
 
 const router = express.Router();
 
-const requireDatabase = (response) => {
-  if (databaseState.ready) {
-    return true;
+const requireDatabase = async (response) => {
+  if (!databaseState.ready) {
+    try {
+      await pool.query("SELECT 1");
+      databaseState.ready = true;
+      databaseState.lastError = "";
+    } catch (error) {
+      console.error("Database recovery ping failed", error);
+      markDatabaseUnavailable(error);
+      response.status(503).json({
+        message: "Database is not available right now.",
+        detail: databaseState.lastError
+      });
+      return false;
+    }
   }
 
-  response.status(503).json({
-    message: "Database is not available right now.",
-    detail: databaseState.lastError
-  });
-  return false;
+  return true;
 };
 
 const marketplaceLimiter = rateLimit({
@@ -171,7 +179,7 @@ const mapRow = (row) => ({
 });
 
 router.post("/submissions", marketplaceLimiter, async (request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
@@ -242,7 +250,7 @@ router.post("/submissions", marketplaceLimiter, async (request, response) => {
 });
 
 router.get("/submissions", requireAdmin, async (_request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
@@ -269,7 +277,7 @@ router.get("/submissions", requireAdmin, async (_request, response) => {
 });
 
 router.get("/submissions/:id", requireAdmin, async (request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
@@ -301,7 +309,7 @@ router.get("/submissions/:id", requireAdmin, async (request, response) => {
 });
 
 router.put("/submissions/:id", requireAdmin, async (request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
@@ -386,7 +394,7 @@ router.put("/submissions/:id", requireAdmin, async (request, response) => {
 });
 
 router.delete("/submissions/:id", requireAdmin, async (request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
@@ -409,7 +417,7 @@ router.delete("/submissions/:id", requireAdmin, async (request, response) => {
 });
 
 router.get("/submissions/export", requireAdmin, async (_request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
@@ -490,7 +498,7 @@ router.get("/submissions/export", requireAdmin, async (_request, response) => {
 });
 
 router.get("/settings", async (request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
@@ -506,7 +514,7 @@ router.get("/settings", async (request, response) => {
 });
 
 router.put("/settings", requireAdmin, async (request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
