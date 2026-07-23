@@ -103,16 +103,24 @@ const authLimiter = rateLimit({
   }
 });
 
-const requireDatabase = (response) => {
-  if (databaseState.ready) {
-    return true;
+const requireDatabase = async (response) => {
+  if (!databaseState.ready) {
+    try {
+      await pool.query("SELECT 1");
+      databaseState.ready = true;
+      databaseState.lastError = "";
+    } catch (error) {
+      console.error("Database recovery ping failed", error);
+      markDatabaseUnavailable(error);
+      response.status(503).json({
+        message: "Database is not available right now.",
+        detail: databaseState.lastError
+      });
+      return false;
+    }
   }
 
-  response.status(503).json({
-    message: "Database is not available right now.",
-    detail: databaseState.lastError
-  });
-  return false;
+  return true;
 };
 
 app.get("/api/health", async (_request, response) => {
@@ -233,7 +241,7 @@ app.use("/api/solar-library", resourceLibraryRouter);
 app.use("/api/marketplace", marketplaceRouter);
 
 app.post("/api/submissions", submissionLimiter, async (request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
@@ -356,7 +364,7 @@ app.post("/api/submissions", submissionLimiter, async (request, response) => {
 });
 
 app.get("/api/submissions", requireAdmin, async (_request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
@@ -376,7 +384,7 @@ app.get("/api/submissions", requireAdmin, async (_request, response) => {
 });
 
 app.delete("/api/submissions/:id", requireAdmin, async (request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
@@ -397,7 +405,7 @@ app.delete("/api/submissions/:id", requireAdmin, async (request, response) => {
 });
 
 app.get("/api/submissions/export", requireAdmin, async (_request, response) => {
-  if (!requireDatabase(response)) {
+  if (!(await requireDatabase(response))) {
     return;
   }
 
