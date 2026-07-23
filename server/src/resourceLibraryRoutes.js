@@ -3,6 +3,8 @@ import multer from "multer";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import path from "node:path";
+import http from "node:http";
+import https from "node:https";
 import {
   ensureDefaultCategories,
   listCategories,
@@ -155,6 +157,48 @@ router.get("/resources", async (request, response) => {
   });
 });
 
+const proxyRemoteFile = (url, resource, request, response, isView) => {
+  const protocol = url.startsWith("https:") ? https : http;
+
+  protocol
+    .get(url, { headers: { "User-Agent": request.get("user-agent") || "kerea-portal" } }, (remote) => {
+      if (remote.statusCode >= 300 && remote.statusCode < 400 && remote.headers.location) {
+        return proxyRemoteFile(remote.headers.location, resource, request, response, isView);
+      }
+
+      if (remote.statusCode >= 400) {
+        console.error(`Remote resource returned ${remote.statusCode}: ${url}`);
+        return response.status(404).json({ message: "Resource file unavailable." });
+      }
+
+      const safeName = (resource.fileName || resource.title || "resource").replace(/[\r\n"]/g, "");
+      const dispositionType = isView ? "inline" : "attachment";
+      const fallbackExt = resource.fileExtension ? `.${resource.fileExtension}` : "";
+      const fileName = safeName.includes(".") ? safeName : `${safeName}${fallbackExt}`;
+
+      response.setHeader("Content-Type", resource.mimeType || remote.headers["content-type"] || "application/octet-stream");
+      response.setHeader(
+        "Content-Disposition",
+        `${dispositionType}; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
+      );
+
+      if (remote.headers["content-length"]) {
+        response.setHeader("Content-Length", remote.headers["content-length"]);
+      }
+
+      remote.pipe(response);
+      recordDownload(resource.id, {
+        source: isView ? "public-view" : "public",
+        ipAddress: request.ip,
+        userAgent: request.get("user-agent")
+      }).catch((error) => console.error("Unable to record download", error));
+    })
+    .on("error", (error) => {
+      console.error("Remote resource proxy error", error);
+      response.status(500).json({ message: "Unable to serve resource file." });
+    });
+};
+
 router.get("/resources/:id/download", async (request, response) => {
   await ensureBaseState();
   const resource = await getResourceById(request.params.id);
@@ -173,12 +217,10 @@ router.get("/resources/:id/download", async (request, response) => {
     try {
       const fileInfo = await stat(fullPath);
       response.setHeader("Content-Type", resource.mimeType || "application/octet-stream");
-      if (request.query.view !== "1") {
-        response.setHeader(
-          "Content-Disposition",
-          `attachment; filename="${encodeURIComponent(resource.fileName || resource.title)}"`
-        );
-      }
+      response.setHeader(
+        "Content-Disposition",
+        `${request.query.view === "1" ? "inline" : "attachment"}; filename="${resource.fileName || resource.title || "resource"}"`
+      );
       response.setHeader("Content-Length", fileInfo.size);
       const stream = createReadStream(fullPath);
       stream.pipe(response);
@@ -192,8 +234,8 @@ router.get("/resources/:id/download", async (request, response) => {
       console.error("Resource download error", error);
       const fallbackUrl = resource.fileUrl || resource.previewUrl || resource.externalUrl;
       if (error.code === "ENOENT" && fallbackUrl) {
-        console.warn(`Redirecting to fallback because file is missing: ${fullPath}`);
-        return response.redirect(302, fallbackUrl);
+        console.warn(`Falling back to remote file because local file is missing: ${fullPath}`);
+        return proxyRemoteFile(fallbackUrl, resource, request, response, request.query.view === "1");
       }
       if (error.code === "ENOENT") {
         console.error(`Resource file not found on disk: ${fullPath} (filePath: ${resource.filePath})`);
@@ -203,18 +245,13 @@ router.get("/resources/:id/download", async (request, response) => {
     }
   }
 
-  const redirectUrl = resource.fileUrl || resource.previewUrl || resource.externalUrl;
+  const remoteUrl = resource.fileUrl || resource.previewUrl || resource.externalUrl;
 
-  if (!redirectUrl) {
+  if (!remoteUrl) {
     return response.status(404).json({ message: "Resource file is unavailable." });
   }
 
-  await recordDownload(resource.id, {
-    source: "public-redirect",
-    ipAddress: request.ip,
-    userAgent: request.get("user-agent")
-  });
-  return response.redirect(302, redirectUrl);
+  return proxyRemoteFile(remoteUrl, resource, request, response, request.query.view === "1");
 });
 
 const getCoverImageContentType = (fileName) => {
@@ -519,6 +556,31 @@ router.put("/admin/resources/:id", upload.fields([{ name: "file", maxCount: 1 },
   } catch (error) {
     console.error("Update resource failed", error);
     return response.status(500).json({ message: error.message || "Unable to update resource." });
+  }
+});
+
+router.post("/admin/hero-image", requireAdmin, upload.single("heroImage"), async (request, response) => {
+  const file = request.file;
+
+  if (!file) {
+    return response.status(400).json({ message: "No image file was provided." });
+  }
+
+  if (!file.mimetype || !file.mimetype.startsWith("image/")) {
+    return response.status(400).json({ message: "Only image files are allowed for the hero background." });
+  }
+
+  try {
+    const saved = await saveCoverImage({
+      buffer: file.buffer,
+      originalName: file.originalname,
+      mimeType: file.mimetype
+    });
+
+    return response.json({ imageUrl: saved.coverImageUrl });
+  } catch (error) {
+    console.error("Unable to store hero image", error);
+    return response.status(500).json({ message: "Unable to store hero background image." });
   }
 });
 

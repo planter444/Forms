@@ -58,6 +58,17 @@ const requestJson = async (path, { method = "GET", token, body, query } = {}) =>
   return parseResponse(response);
 };
 
+export const adminUploadHeroImage = (token, file) => {
+  const formData = new FormData();
+  formData.append("heroImage", file);
+
+  return requestFormData("/api/solar-library/admin/hero-image", {
+    method: "POST",
+    token,
+    formData
+  });
+};
+
 const requestFormData = async (path, { method = "POST", token, query, formData }) => {
   const qs = buildQueryString(query);
   const response = await fetch(`${API_URL}${path}${qs}`, {

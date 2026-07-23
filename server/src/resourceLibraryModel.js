@@ -99,18 +99,18 @@ const defaultCategories = [
 ];
 
 const normalizeTags = (value) => {
-  if (Array.isArray(value)) {
-    return [...new Set(value.map((item) => `${item || ""}`.trim()).filter(Boolean))];
-  }
+  let tags = [];
 
-  if (typeof value === "string") {
-    return value
+  if (Array.isArray(value)) {
+    tags = [...new Set(value.map((item) => `${item || ""}`.trim()).filter(Boolean))];
+  } else if (typeof value === "string") {
+    tags = value
       .split(/,|\n/g)
       .map((item) => item.trim())
       .filter(Boolean);
   }
 
-  return [];
+  return tags.length ? tags : null;
 };
 
 const coerceBoolean = (value, fallback = false) => {

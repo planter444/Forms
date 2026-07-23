@@ -7,6 +7,7 @@ import {
   adminListResources,
   adminUpdateCategory,
   adminUpdateResource,
+  adminUploadHeroImage,
   fetchLibraryCategories,
   fetchLibraryOverview
 } from "../lib/resourceLibraryApi.js";
@@ -68,6 +69,7 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
     feedColumns: 2
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const [heroImageUploading, setHeroImageUploading] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -301,6 +303,27 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
       loadResources(resourcePage, resourceFilters);
     } catch (error) {
       setError(error.message || "Unable to delete resource.");
+    }
+  };
+
+  const handleHeroImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setHeroImageUploading(true);
+    setError("");
+
+    try {
+      const { imageUrl } = await adminUploadHeroImage(token, file);
+      setSettingsForm((prev) => ({ ...prev, heroBg: imageUrl }));
+      setNotice("Hero background image uploaded.");
+    } catch (error) {
+      setError(error.message || "Unable to upload hero background image.");
+    } finally {
+      setHeroImageUploading(false);
+      event.target.value = "";
     }
   };
 
@@ -741,7 +764,7 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-            Hero background image URL
+            Hero background image
             <input
               type="url"
               className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
@@ -750,6 +773,20 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
               onChange={(event) => setSettingsForm((prev) => ({ ...prev, heroBg: event.target.value }))}
               placeholder="https://..."
             />
+            <span className="mt-1 block text-xs" style={{ color: palette.mutedTextColor }}>Or upload an image from your computer</span>
+            <input
+              type="file"
+              accept="image/*"
+              disabled={heroImageUploading}
+              className="mt-2 w-full text-sm file:mr-3 file:rounded-2xl file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              onChange={handleHeroImageUpload}
+            />
+            {heroImageUploading ? (
+              <span className="mt-1 block text-xs" style={{ color: palette.mutedTextColor }}>Uploading...</span>
+            ) : null}
+            {settingsForm.heroBg ? (
+              <img src={settingsForm.heroBg} alt="Hero preview" className="mt-2 h-24 w-full rounded-2xl object-cover" />
+            ) : null}
           </label>
 
           <label className="block text-sm font-medium" style={{ color: palette.textColor }}>

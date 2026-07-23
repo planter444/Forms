@@ -1327,16 +1327,16 @@ const ResourceLibrarySection = ({ settings, theme }) => {
           {resourceLibrary.description || "Access policies, best practices, and sector guides"}
         </p>
         {resources.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={`grid gap-6 ${resources.length === 1 ? "grid-cols-1 justify-items-center" : "md:grid-cols-2 lg:grid-cols-3"}`}>
             {resources.map((resource, index) => {
               const downloadUrl = resource.downloadUrl || resource.fileUrl || resource.externalUrl || resource.url || "";
               return (
                 <div
                   key={index}
-                  className="grid h-40 grid-cols-2 overflow-hidden rounded-2xl transition hover:scale-105 sm:h-48"
+                  className={`flex h-64 flex-col overflow-hidden rounded-2xl transition hover:scale-105 sm:h-72 ${resources.length === 1 ? "w-full max-w-sm" : ""}`}
                   style={{ backgroundColor: theme.surfaceMuted || "#f0fdf4", border: `1px solid ${theme.borderColor || "#a7f3d0"}` }}
                 >
-                  <div className="h-full w-full">
+                  <div className="h-28 w-full shrink-0 sm:h-32">
                     {resource.coverImageUrl ? (
                       <img src={resource.coverImageUrl} alt={resource.title} className="h-full w-full object-cover" />
                     ) : (
@@ -1345,7 +1345,7 @@ const ResourceLibrarySection = ({ settings, theme }) => {
                       </div>
                     )}
                   </div>
-                  <div className="flex h-full flex-col justify-between overflow-hidden bg-white/80 p-3">
+                  <div className="flex flex-1 flex-col overflow-hidden bg-white/80 p-4">
                     <div>
                       <h3 className="text-sm font-semibold leading-tight line-clamp-1" style={{ color: theme.textColor || "#064e3b" }}>
                         {resource.title}
@@ -1359,7 +1359,7 @@ const ResourceLibrarySection = ({ settings, theme }) => {
                         href={downloadUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold text-white"
+                        className="mt-auto inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-bold text-white"
                         style={{ backgroundColor: theme.primaryColor || "#059669" }}
                       >
                         Download
