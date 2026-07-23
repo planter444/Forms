@@ -200,11 +200,26 @@ const SolarResourceLibraryPage = () => {
     setTagInput(filters.tag);
   }, [filters.tag]);
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const trimmed = searchInput.trim();
+      if (trimmed !== filters.search) {
+        setFilters((prev) => ({ ...prev, search: trimmed }));
+        setPage(1);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
+
   const handleSearchSubmit = (event) => {
     event?.preventDefault();
-    setFilters((prev) => ({ ...prev, search: searchInput.trim() }));
-    setPage(1);
-    scrollToFeed();
+    const trimmed = searchInput.trim();
+    if (trimmed !== filters.search) {
+      setFilters((prev) => ({ ...prev, search: trimmed }));
+      setPage(1);
+      scrollToFeed();
+    }
   };
 
   const handleApplyFilters = () => {
@@ -268,17 +283,35 @@ const SolarResourceLibraryPage = () => {
   };
   const feedGridClass = columnClasses[feedColumns] || columnClasses[2];
 
-  const heroBg = hero.backgroundImageUrl || "";
   const heroOverlay = hero.overlayOpacity !== undefined ? hero.overlayOpacity : 0.5;
+  const desktopBg = hero.desktopBackgroundImageUrl || hero.backgroundImageUrl || "";
+  const mobileBg = hero.mobileBackgroundImageUrl || hero.backgroundImageUrl || "";
+  const hasHeroImage = Boolean(hero.backgroundImageUrl || hero.desktopBackgroundImageUrl || hero.mobileBackgroundImageUrl);
 
-  const heroStyle = heroBg
-    ? { backgroundImage: `url(${heroBg})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }
-    : { background: "linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)" };
+  const heroBackgroundCss = `
+    .resource-hero-bg {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    ${mobileBg ? `@media (max-width: 768px) { .resource-hero-bg { background-image: url(${mobileBg}); } }` : ""}
+    ${desktopBg ? `@media (min-width: 769px) { .resource-hero-bg { background-image: url(${desktopBg}); } }` : ""}
+  `;
+
+  const mobileAnimation = librarySettings.mobileAnimation || { enabled: false };
 
   return (
     <div className="min-h-screen bg-[#f6fbf8]">
-      <header className="relative flex min-h-screen flex-col justify-center overflow-hidden text-white" style={heroStyle}>
-        {heroBg ? <div className="absolute inset-0" style={{ backgroundColor: `rgba(4, 78, 56, ${heroOverlay})` }} /> : null}
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        ${heroBackgroundCss}
+      `}</style>
+      <header className="resource-hero-bg relative flex min-h-screen flex-col justify-center overflow-hidden text-white">
+        {hasHeroImage ? <div className="absolute inset-0" style={{ backgroundColor: `rgba(4, 78, 56, ${heroOverlay})` }} /> : null}
         <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-6 px-4 py-12 lg:flex-row lg:items-end">
           <div className="flex-1">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-200">{hero.eyebrow || "Solar Mkononi"}</p>
@@ -395,54 +428,15 @@ const SolarResourceLibraryPage = () => {
                     Jump to library ↓
                   </button>
                 </div>
-                <div className="flex gap-4 overflow-x-auto pb-4">
-                  {featuredResources.map((resource) => (
-                    <article key={resource.id} className="min-w-[260px] flex-1 rounded-3xl border border-white bg-white/80 p-5 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                          Featured
-                        </div>
-                        <FileBadge resource={resource} fileTypeLabels={librarySettings.filters?.fileTypeLabels} />
-                      </div>
-                      <h3 className="mt-4 text-lg font-semibold text-emerald-900">{resource.title}</h3>
-                      <p className="mt-2 text-sm text-slate-600 line-clamp-3">{resource.summary || resource.description}</p>
-                      <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
-                        <span>{resource.category?.name || "Uncategorized"}</span>
-                        <span>{formatDate(resource.publishedAt)}</span>
-                      </div>
-                      <div className="mt-4 flex gap-2">
-                        {(() => {
-                          const localDownload = resource.filePath ? `/api/solar-library/resources/${resource.id}/download` : "";
-                          const localView = resource.filePath ? `/api/solar-library/resources/${resource.id}/download?view=1` : "";
-                          const view = resource.previewUrl || resource.externalUrl || resource.fileUrl || localView || localDownload || "#";
-                          const download = resource.downloadUrl || localDownload || resource.fileUrl || resource.externalUrl || "#";
-                          return (
-                            <>
-                              {view !== "#" ? (
-                                <a
-                                  href={toAbsoluteUrl(view)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex-1 inline-flex items-center justify-center rounded-2xl border border-emerald-300 bg-white/60 px-4 py-2 text-sm font-semibold text-emerald-700"
-                                >
-                                  View
-                                </a>
-                              ) : null}
-                              {download !== "#" ? (
-                                <a
-                                  href={toAbsoluteUrl(download)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
-                                >
-                                  Download
-                                </a>
-                              ) : null}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </article>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {featuredResources.map((resource, index) => (
+                    <ResourceCard
+                      key={resource.id}
+                      resource={resource}
+                      fileTypeLabels={librarySettings.filters?.fileTypeLabels}
+                      cardIndex={index}
+                      mobileAnimation={mobileAnimation}
+                    />
                   ))}
                 </div>
               </section>
@@ -572,6 +566,7 @@ const SolarResourceLibraryPage = () => {
                       resource={resource}
                       fileTypeLabels={librarySettings.filters?.fileTypeLabels}
                       cardIndex={index}
+                      mobileAnimation={mobileAnimation}
                     />
                   ))}
                 </div>
@@ -646,10 +641,9 @@ const SolarResourceLibraryPage = () => {
             <div className="rounded-3xl border border-white/10 bg-white/10 p-6 text-white">
               <h3 className="text-xl font-semibold">Library focus areas</h3>
               <ul className="mt-4 space-y-3 text-sm text-emerald-100">
-                <li>• Policies and regulations for Kenya's renewable energy landscape</li>
-                <li>• Technical implementation guides for PAYGO, solar, and biodigesters</li>
-                <li>• Business playbooks, financing toolkits, and investment decks</li>
-                <li>• Facilitator toolkits, training curricula, and cohort exercises</li>
+                {(librarySettings.focusAreas || []).map((area, index) => (
+                  <li key={index}>• {area}</li>
+                ))}
               </ul>
             </div>
           </div>
@@ -682,20 +676,26 @@ const toAbsoluteUrl = (url) => {
   return `${API_URL}${url}`;
 };
 
-const ResourceCard = ({ resource, fileTypeLabels, cardIndex = 0 }) => {
+const ResourceCard = ({ resource, fileTypeLabels, cardIndex = 0, mobileAnimation }) => {
   const badge = getFileBadge(resource, fileTypeLabels);
-  const chips = resource.tags || [];
   const colors = getCardColor(cardIndex);
   const downloadUrl = resource.downloadUrl && resource.downloadUrl !== "#" ? resource.downloadUrl : "#";
   const viewUrl = downloadUrl !== "#" ? `${downloadUrl}?view=1` : "#";
   const canDownload = resource.allowDownloads !== false && downloadUrl !== "#";
   const canView = viewUrl !== "#";
+  const shouldAnimate = mobileAnimation?.enabled;
+  const delay = (mobileAnimation?.delay || 100) * cardIndex;
+  const cardStyle = {
+    backgroundColor: colors.bg,
+    borderColor: colors.border,
+    ...(shouldAnimate ? { animation: `fadeInUp ${mobileAnimation?.duration || 600}ms ease forwards`, animationDelay: `${delay}ms` } : {})
+  };
 
   const absoluteDownloadUrl = toAbsoluteUrl(downloadUrl);
   const absoluteViewUrl = toAbsoluteUrl(viewUrl);
 
   return (
-    <article className="flex h-64 flex-col overflow-hidden rounded-3xl border shadow-sm transition hover:shadow-md sm:h-72" style={{ backgroundColor: colors.bg, borderColor: colors.border }}>
+    <article className="flex h-auto min-h-[18rem] flex-col overflow-hidden rounded-3xl border shadow-sm transition hover:shadow-md sm:h-72" style={cardStyle}>
       <div className="relative h-28 w-full shrink-0 sm:h-32">
         {resource.coverImageUrl ? (
           <img src={toAbsoluteUrl(resource.coverImageUrl)} alt={resource.title} className="h-full w-full object-cover" />
@@ -716,7 +716,7 @@ const ResourceCard = ({ resource, fileTypeLabels, cardIndex = 0 }) => {
             {badge.label}
           </span>
         </div>
-        <h3 className="mt-2 text-sm font-semibold leading-tight text-slate-900 line-clamp-1">{resource.title}</h3>
+        <h3 className="mt-2 text-sm font-semibold leading-tight text-slate-900 truncate" title={resource.title}>{resource.title}</h3>
         <p className="mt-1 text-xs text-slate-600 line-clamp-2">{resource.summary || resource.description}</p>
         <div className="mt-auto flex gap-2 pt-3">
           {canView ? (

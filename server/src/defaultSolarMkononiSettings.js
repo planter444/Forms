@@ -190,6 +190,8 @@ export const defaultSolarMkononiSettings = {
       primaryHref: "#library-feed",
       searchPlaceholder: "Search policies, toolkits, best practices...",
       backgroundImageUrl: "",
+      desktopBackgroundImageUrl: "",
+      mobileBackgroundImageUrl: "",
       overlayOpacity: 0.5
     },
     nav: {
@@ -273,6 +275,17 @@ export const defaultSolarMkononiSettings = {
       primaryHref: "mailto:info@kerea.org",
       secondaryText: "Visit Solar Mkononi",
       secondaryHref: "/solar-mkononi"
+    },
+    focusAreas: [
+      "Policies and regulations for Kenya's renewable energy landscape",
+      "Technical implementation guides for PAYGO, solar, and biodigesters",
+      "Business playbooks, financing toolkits, and investment decks",
+      "Facilitator toolkits, training curricula, and cohort exercises"
+    ],
+    mobileAnimation: {
+      enabled: true,
+      delay: 100,
+      duration: 600
     },
     seo: {
       title: "Solar Mkononi Resource Library | KEREA",

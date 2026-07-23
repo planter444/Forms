@@ -110,7 +110,7 @@ const normalizeTags = (value) => {
       .filter(Boolean);
   }
 
-  return tags.length ? tags : null;
+  return tags.length ? tags : [];
 };
 
 const coerceBoolean = (value, fallback = false) => {

@@ -23,6 +23,69 @@ const defaultCategoryForm = {
   isActive: true
 };
 
+const defaultLibrarySettings = {
+  hero: {
+    eyebrow: "",
+    headline: "",
+    description: "",
+    searchPlaceholder: "",
+    primaryCta: "",
+    primaryHref: "",
+    backgroundImageUrl: "",
+    desktopBackgroundImageUrl: "",
+    mobileBackgroundImageUrl: "",
+    overlayOpacity: 0.5
+  },
+  stats: {
+    tagline: "",
+    cards: [
+      { label: "", value: "" },
+      { label: "", value: "" },
+      { label: "", value: "" }
+    ]
+  },
+  quickLinks: [],
+  featured: {
+    title: "",
+    description: ""
+  },
+  cta: {
+    title: "",
+    body: "",
+    primaryText: "",
+    primaryHref: "",
+    secondaryText: "",
+    secondaryHref: ""
+  },
+  focusAreas: [""],
+  nav: {
+    opacity: 0.85,
+    slideDirection: "left"
+  },
+  feed: {
+    columns: 2
+  },
+  mobileAnimation: {
+    enabled: true,
+    delay: 100,
+    duration: 600
+  }
+};
+
+const mergeLibrarySettings = (base, patch) => ({
+  ...base,
+  ...patch,
+  hero: { ...base.hero, ...patch.hero },
+  stats: { ...base.stats, ...patch.stats, cards: patch.stats?.cards || base.stats.cards },
+  quickLinks: patch.quickLinks || base.quickLinks,
+  featured: { ...base.featured, ...patch.featured },
+  cta: { ...base.cta, ...patch.cta },
+  focusAreas: patch.focusAreas || base.focusAreas,
+  nav: { ...base.nav, ...patch.nav },
+  feed: { ...base.feed, ...patch.feed },
+  mobileAnimation: { ...base.mobileAnimation, ...patch.mobileAnimation }
+});
+
 const defaultResourceForm = {
   title: "",
   description: "",
@@ -60,14 +123,7 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
   const [resourceSubmitting, setResourceSubmitting] = useState(false);
   const [loadingResources, setLoadingResources] = useState(false);
   const [librarySettings, setLibrarySettings] = useState(null);
-  const [settingsForm, setSettingsForm] = useState({
-    heroBg: "",
-    heroOverlay: 0.5,
-    ctaEmail: "",
-    navOpacity: 0.85,
-    navSlideDirection: "left",
-    feedColumns: 2
-  });
+  const [settingsForm, setSettingsForm] = useState(defaultLibrarySettings);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [heroImageUploading, setHeroImageUploading] = useState(false);
 
@@ -89,14 +145,7 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
         const data = await fetchLibraryOverview();
         const s = data.settings || {};
         setLibrarySettings(s);
-        setSettingsForm({
-          heroBg: s.hero?.backgroundImageUrl || "",
-          heroOverlay: s.hero?.overlayOpacity !== undefined ? s.hero.overlayOpacity : 0.5,
-          ctaEmail: s.cta?.primaryHref || "",
-          navOpacity: s.nav?.opacity !== undefined ? s.nav.opacity : 0.85,
-          navSlideDirection: s.nav?.slideDirection || "left",
-          feedColumns: s.feed?.columns || 2
-        });
+        setSettingsForm(mergeLibrarySettings(defaultLibrarySettings, s));
       } catch {
         // settings are optional
       }
@@ -306,7 +355,7 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
     }
   };
 
-  const handleHeroImageUpload = async (event) => {
+  const handleHeroImageUpload = async (event, field) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
@@ -317,7 +366,7 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
 
     try {
       const { imageUrl } = await adminUploadHeroImage(token, file);
-      setSettingsForm((prev) => ({ ...prev, heroBg: imageUrl }));
+      setHero(field, imageUrl);
       setNotice("Hero background image uploaded.");
     } catch (error) {
       setError(error.message || "Unable to upload hero background image.");
@@ -333,27 +382,7 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
     try {
       const current = await getSolarMkononiSettings();
       const currentLib = current.settings?.solarResourceLibrary || {};
-      const merged = {
-        ...currentLib,
-        hero: {
-          ...currentLib.hero,
-          backgroundImageUrl: settingsForm.heroBg,
-          overlayOpacity: Number(settingsForm.heroOverlay)
-        },
-        nav: {
-          opacity: Number(settingsForm.navOpacity),
-          slideDirection: settingsForm.navSlideDirection
-        },
-        cta: {
-          ...currentLib.cta,
-          primaryHref: settingsForm.ctaEmail
-        },
-        feed: {
-          ...currentLib.feed,
-          columns: Number(settingsForm.feedColumns) || 2
-        }
-      };
-      await updateSolarMkononiSettings(token, { solarResourceLibrary: merged });
+      await updateSolarMkononiSettings(token, { solarResourceLibrary: { ...currentLib, ...settingsForm } });
       setNotice("Library settings saved.");
     } catch (error) {
       setError(error.message || "Unable to save settings.");
@@ -361,6 +390,26 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
       setSettingsSaving(false);
     }
   };
+
+  const setHero = (key, value) => setSettingsForm((prev) => ({ ...prev, hero: { ...prev.hero, [key]: value } }));
+  const setStat = (index, key, value) =>
+    setSettingsForm((prev) => ({ ...prev, stats: { ...prev.stats, cards: prev.stats.cards.map((c, i) => (i === index ? { ...c, [key]: value } : c)) } }));
+  const setStatTagline = (value) => setSettingsForm((prev) => ({ ...prev, stats: { ...prev.stats, tagline: value } }));
+  const setQuickLink = (index, key, value) =>
+    setSettingsForm((prev) => ({ ...prev, quickLinks: prev.quickLinks.map((l, i) => (i === index ? { ...l, [key]: value } : l)) }));
+  const addQuickLink = () =>
+    setSettingsForm((prev) => ({ ...prev, quickLinks: [...prev.quickLinks, { label: "", description: "", categorySlug: "", accentColor: "#0f766e" }] }));
+  const removeQuickLink = (index) => setSettingsForm((prev) => ({ ...prev, quickLinks: prev.quickLinks.filter((_, i) => i !== index) }));
+  const setFeatured = (key, value) => setSettingsForm((prev) => ({ ...prev, featured: { ...prev.featured, [key]: value } }));
+  const setCta = (key, value) => setSettingsForm((prev) => ({ ...prev, cta: { ...prev.cta, [key]: value } }));
+  const setFocusArea = (index, value) =>
+    setSettingsForm((prev) => ({ ...prev, focusAreas: prev.focusAreas.map((a, i) => (i === index ? value : a)) }));
+  const addFocusArea = () => setSettingsForm((prev) => ({ ...prev, focusAreas: [...prev.focusAreas, ""] }));
+  const removeFocusArea = (index) => setSettingsForm((prev) => ({ ...prev, focusAreas: prev.focusAreas.filter((_, i) => i !== index) }));
+  const setNav = (key, value) => setSettingsForm((prev) => ({ ...prev, nav: { ...prev.nav, [key]: value } }));
+  const setFeed = (key, value) => setSettingsForm((prev) => ({ ...prev, feed: { ...prev.feed, [key]: value } }));
+  const setMobileAnimation = (key, value) =>
+    setSettingsForm((prev) => ({ ...prev, mobileAnimation: { ...prev.mobileAnimation, [key]: value } }));
 
   const categoryOptions = useMemo(() => [...categories].sort((a, b) => a.displayOrder - b.displayOrder), [categories]);
 
@@ -759,108 +808,477 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
       <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
         <div className="border-b pb-4" style={{ borderColor: palette.borderColor }}>
           <p className="text-sm font-semibold" style={{ color: palette.textColor }}>Library Landing Page Settings</p>
-          <p className="text-sm" style={{ color: palette.mutedTextColor }}>Customize the hero background, overlay, CTA email, and navigation.</p>
+          <p className="text-sm" style={{ color: palette.mutedTextColor }}>Customize hero content, stats, quick links, featured section, CTA, focus areas, and mobile animation.</p>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-            Hero background image
-            <input
-              type="url"
-              className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
-              style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-              value={settingsForm.heroBg}
-              onChange={(event) => setSettingsForm((prev) => ({ ...prev, heroBg: event.target.value }))}
-              placeholder="https://..."
-            />
-            <span className="mt-1 block text-xs" style={{ color: palette.mutedTextColor }}>Or upload an image from your computer</span>
-            <input
-              type="file"
-              accept="image/*"
-              disabled={heroImageUploading}
-              className="mt-2 w-full text-sm file:mr-3 file:rounded-2xl file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-              onChange={handleHeroImageUpload}
-            />
-            {heroImageUploading ? (
-              <span className="mt-1 block text-xs" style={{ color: palette.mutedTextColor }}>Uploading...</span>
-            ) : null}
-            {settingsForm.heroBg ? (
-              <img src={settingsForm.heroBg} alt="Hero preview" className="mt-2 h-24 w-full rounded-2xl object-cover" />
-            ) : null}
-          </label>
+        <div className="mt-6 space-y-8">
+          <section>
+            <p className="text-sm font-semibold" style={{ color: palette.textColor }}>Hero content</p>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                Eyebrow
+                <input
+                  type="text"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.hero.eyebrow}
+                  onChange={(event) => setHero("eyebrow", event.target.value)}
+                />
+              </label>
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                Headline
+                <input
+                  type="text"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.hero.headline}
+                  onChange={(event) => setHero("headline", event.target.value)}
+                />
+              </label>
+              <label className="block text-sm font-medium md:col-span-2" style={{ color: palette.textColor }}>
+                Description
+                <textarea
+                  rows={3}
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.hero.description}
+                  onChange={(event) => setHero("description", event.target.value)}
+                />
+              </label>
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                Search placeholder
+                <input
+                  type="text"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.hero.searchPlaceholder}
+                  onChange={(event) => setHero("searchPlaceholder", event.target.value)}
+                />
+              </label>
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                Hero CTA text
+                <input
+                  type="text"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.hero.primaryCta}
+                  onChange={(event) => setHero("primaryCta", event.target.value)}
+                />
+              </label>
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                Hero CTA link
+                <input
+                  type="text"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.hero.primaryHref}
+                  onChange={(event) => setHero("primaryHref", event.target.value)}
+                />
+              </label>
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                Default background image (fallback)
+                <input
+                  type="url"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.hero.backgroundImageUrl}
+                  onChange={(event) => setHero("backgroundImageUrl", event.target.value)}
+                  placeholder="https://..."
+                />
+                <span className="mt-1 block text-xs" style={{ color: palette.mutedTextColor }}>Or upload from your computer</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={heroImageUploading}
+                  className="mt-2 w-full text-sm file:mr-3 file:rounded-2xl file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  onChange={(event) => handleHeroImageUpload(event, "backgroundImageUrl")}
+                />
+                {heroImageUploading ? (
+                  <span className="mt-1 block text-xs" style={{ color: palette.mutedTextColor }}>Uploading...</span>
+                ) : null}
+                {settingsForm.hero.backgroundImageUrl ? (
+                  <img src={settingsForm.hero.backgroundImageUrl} alt="Hero preview" className="mt-2 h-24 w-full rounded-2xl object-cover" />
+                ) : null}
+              </label>
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                Desktop background image
+                <input
+                  type="url"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.hero.desktopBackgroundImageUrl}
+                  onChange={(event) => setHero("desktopBackgroundImageUrl", event.target.value)}
+                  placeholder="https://..."
+                />
+                <span className="mt-1 block text-xs" style={{ color: palette.mutedTextColor }}>Or upload from your computer</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={heroImageUploading}
+                  className="mt-2 w-full text-sm file:mr-3 file:rounded-2xl file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  onChange={(event) => handleHeroImageUpload(event, "desktopBackgroundImageUrl")}
+                />
+                {heroImageUploading ? (
+                  <span className="mt-1 block text-xs" style={{ color: palette.mutedTextColor }}>Uploading...</span>
+                ) : null}
+                {settingsForm.hero.desktopBackgroundImageUrl ? (
+                  <img src={settingsForm.hero.desktopBackgroundImageUrl} alt="Desktop hero preview" className="mt-2 h-24 w-full rounded-2xl object-cover" />
+                ) : null}
+              </label>
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                Mobile background image
+                <input
+                  type="url"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.hero.mobileBackgroundImageUrl}
+                  onChange={(event) => setHero("mobileBackgroundImageUrl", event.target.value)}
+                  placeholder="https://..."
+                />
+                <span className="mt-1 block text-xs" style={{ color: palette.mutedTextColor }}>Or upload from your computer</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={heroImageUploading}
+                  className="mt-2 w-full text-sm file:mr-3 file:rounded-2xl file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  onChange={(event) => handleHeroImageUpload(event, "mobileBackgroundImageUrl")}
+                />
+                {heroImageUploading ? (
+                  <span className="mt-1 block text-xs" style={{ color: palette.mutedTextColor }}>Uploading...</span>
+                ) : null}
+                {settingsForm.hero.mobileBackgroundImageUrl ? (
+                  <img src={settingsForm.hero.mobileBackgroundImageUrl} alt="Mobile hero preview" className="mt-2 h-24 w-full rounded-2xl object-cover" />
+                ) : null}
+              </label>
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                Overlay opacity ({Math.round(settingsForm.hero.overlayOpacity * 100)}%)
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  className="mt-3 w-full"
+                  value={settingsForm.hero.overlayOpacity}
+                  onChange={(event) => setHero("overlayOpacity", Number(event.target.value))}
+                />
+              </label>
+            </div>
+          </section>
 
-          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-            Overlay opacity ({Math.round(settingsForm.heroOverlay * 100)}%)
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              className="mt-3 w-full"
-              value={settingsForm.heroOverlay}
-              onChange={(event) => setSettingsForm((prev) => ({ ...prev, heroOverlay: Number(event.target.value) }))}
-            />
-          </label>
+          <section>
+            <p className="text-sm font-semibold" style={{ color: palette.textColor }}>Stats</p>
+            <label className="mt-3 block text-sm font-medium" style={{ color: palette.textColor }}>
+              Tagline
+              <input
+                type="text"
+                className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                value={settingsForm.stats.tagline}
+                onChange={(event) => setStatTagline(event.target.value)}
+              />
+            </label>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              {settingsForm.stats.cards.map((card, index) => (
+                <div key={index} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: palette.borderColor }}>
+                  <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                    Label
+                    <input
+                      type="text"
+                      className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                      value={card.label}
+                      onChange={(event) => setStat(index, "label", event.target.value)}
+                    />
+                  </label>
+                  <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                    Value
+                    <input
+                      type="text"
+                      className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                      value={card.value}
+                      onChange={(event) => setStat(index, "value", event.target.value)}
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+          </section>
 
-          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-            Request support email / URL
-            <input
-              type="text"
-              className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
-              style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-              value={settingsForm.ctaEmail}
-              onChange={(event) => setSettingsForm((prev) => ({ ...prev, ctaEmail: event.target.value }))}
-              placeholder="mailto:support@solarmkononi.org"
-            />
-          </label>
+          <section>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold" style={{ color: palette.textColor }}>Quick links</p>
+              <button
+                type="button"
+                onClick={addQuickLink}
+                className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+              >
+                Add quick link
+              </button>
+            </div>
+            <div className="mt-3 space-y-3">
+              {settingsForm.quickLinks.map((link, index) => (
+                <div key={index} className="grid gap-3 rounded-2xl border p-4 md:grid-cols-5" style={{ borderColor: palette.borderColor }}>
+                  <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                    Label
+                    <input
+                      type="text"
+                      className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                      value={link.label}
+                      onChange={(event) => setQuickLink(index, "label", event.target.value)}
+                    />
+                  </label>
+                  <label className="block text-sm font-medium md:col-span-2" style={{ color: palette.textColor }}>
+                    Description
+                    <input
+                      type="text"
+                      className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                      value={link.description}
+                      onChange={(event) => setQuickLink(index, "description", event.target.value)}
+                    />
+                  </label>
+                  <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                    Category slug
+                    <input
+                      type="text"
+                      className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                      value={link.categorySlug}
+                      onChange={(event) => setQuickLink(index, "categorySlug", event.target.value)}
+                    />
+                  </label>
+                  <div className="flex items-end gap-2">
+                    <label className="block flex-1 text-sm font-medium" style={{ color: palette.textColor }}>
+                      Color
+                      <input
+                        type="color"
+                        className="mt-2 h-11 w-full rounded-2xl border px-2 py-1"
+                        style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                        value={link.accentColor}
+                        onChange={(event) => setQuickLink(index, "accentColor", event.target.value)}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => removeQuickLink(index)}
+                      className="mb-0.5 rounded-xl border px-3 py-2.5 text-xs font-semibold text-rose-600"
+                      style={{ borderColor: "#fecaca" }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
 
-          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-            Nav transparency ({Math.round(settingsForm.navOpacity * 100)}%)
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              className="mt-3 w-full"
-              value={settingsForm.navOpacity}
-              onChange={(event) => setSettingsForm((prev) => ({ ...prev, navOpacity: Number(event.target.value) }))}
-            />
-          </label>
+          <section className="grid gap-4 md:grid-cols-2">
+            <div>
+              <p className="text-sm font-semibold" style={{ color: palette.textColor }}>Featured section</p>
+              <label className="mt-3 block text-sm font-medium" style={{ color: palette.textColor }}>
+                Title
+                <input
+                  type="text"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.featured.title}
+                  onChange={(event) => setFeatured("title", event.target.value)}
+                />
+              </label>
+              <label className="mt-3 block text-sm font-medium" style={{ color: palette.textColor }}>
+                Description
+                <textarea
+                  rows={3}
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.featured.description}
+                  onChange={(event) => setFeatured("description", event.target.value)}
+                />
+              </label>
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: palette.textColor }}>Need something custom?</p>
+              <label className="mt-3 block text-sm font-medium" style={{ color: palette.textColor }}>
+                Title
+                <input
+                  type="text"
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.cta.title}
+                  onChange={(event) => setCta("title", event.target.value)}
+                />
+              </label>
+              <label className="mt-3 block text-sm font-medium" style={{ color: palette.textColor }}>
+                Body
+                <textarea
+                  rows={3}
+                  className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.cta.body}
+                  onChange={(event) => setCta("body", event.target.value)}
+                />
+              </label>
+            </div>
+          </section>
 
-          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-            Mobile menu slide direction
-            <select
-              className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
-              style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-              value={settingsForm.navSlideDirection}
-              onChange={(event) => setSettingsForm((prev) => ({ ...prev, navSlideDirection: event.target.value }))}
-            >
-              <option value="left">Slide from left</option>
-              <option value="right">Slide from right</option>
-            </select>
-          </label>
+          <section className="grid gap-4 md:grid-cols-4">
+            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+              Primary button text
+              <input
+                type="text"
+                className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                value={settingsForm.cta.primaryText}
+                onChange={(event) => setCta("primaryText", event.target.value)}
+              />
+            </label>
+            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+              Primary button link
+              <input
+                type="text"
+                className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                value={settingsForm.cta.primaryHref}
+                onChange={(event) => setCta("primaryHref", event.target.value)}
+              />
+            </label>
+            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+              Secondary button text
+              <input
+                type="text"
+                className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                value={settingsForm.cta.secondaryText}
+                onChange={(event) => setCta("secondaryText", event.target.value)}
+              />
+            </label>
+            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+              Secondary button link
+              <input
+                type="text"
+                className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                value={settingsForm.cta.secondaryHref}
+                onChange={(event) => setCta("secondaryHref", event.target.value)}
+              />
+            </label>
+          </section>
 
-          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
-            Resources per row (big screens)
-            <select
-              className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
-              style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-              value={settingsForm.feedColumns}
-              onChange={(event) => setSettingsForm((prev) => ({ ...prev, feedColumns: Number(event.target.value) }))}
-            >
-              <option value={2}>2 per row</option>
-              <option value={3}>3 per row</option>
-              <option value={4}>4 per row</option>
-              <option value={5}>5 per row</option>
-            </select>
-          </label>
+          <section>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold" style={{ color: palette.textColor }}>Library focus areas</p>
+              <button
+                type="button"
+                onClick={addFocusArea}
+                className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+              >
+                Add focus area
+              </button>
+            </div>
+            <div className="mt-3 space-y-3">
+              {settingsForm.focusAreas.map((area, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                    style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                    value={area}
+                    onChange={(event) => setFocusArea(index, event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeFocusArea(index)}
+                    className="rounded-xl border px-3 py-2.5 text-xs font-semibold text-rose-600"
+                    style={{ borderColor: "#fecaca" }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+              Nav transparency ({Math.round(settingsForm.nav.opacity * 100)}%)
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                className="mt-3 w-full"
+                value={settingsForm.nav.opacity}
+                onChange={(event) => setNav("opacity", Number(event.target.value))}
+              />
+            </label>
+            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+              Mobile menu slide direction
+              <select
+                className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                value={settingsForm.nav.slideDirection}
+                onChange={(event) => setNav("slideDirection", event.target.value)}
+              >
+                <option value="left">Slide from left</option>
+                <option value="right">Slide from right</option>
+              </select>
+            </label>
+            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+              Resources per row (big screens)
+              <select
+                className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                value={settingsForm.feed.columns}
+                onChange={(event) => setFeed("columns", Number(event.target.value))}
+              >
+                <option value={2}>2 per row</option>
+                <option value={3}>3 per row</option>
+                <option value={4}>4 per row</option>
+                <option value={5}>5 per row</option>
+              </select>
+            </label>
+          </section>
+
+          <section className="grid gap-4 md:grid-cols-3">
+            <label className="flex items-center gap-2 text-sm font-medium" style={{ color: palette.textColor }}>
+              <input
+                type="checkbox"
+                checked={settingsForm.mobileAnimation.enabled}
+                onChange={(event) => setMobileAnimation("enabled", event.target.checked)}
+                className="h-5 w-5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              Enable mobile card animation
+            </label>
+            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+              Animation delay (ms)
+              <input
+                type="number"
+                className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                value={settingsForm.mobileAnimation.delay}
+                onChange={(event) => setMobileAnimation("delay", Number(event.target.value))}
+              />
+            </label>
+            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+              Animation duration (ms)
+              <input
+                type="number"
+                className="mt-2 w-full rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                value={settingsForm.mobileAnimation.duration}
+                onChange={(event) => setMobileAnimation("duration", Number(event.target.value))}
+              />
+            </label>
+          </section>
         </div>
 
         <button
           type="button"
           disabled={settingsSaving}
           onClick={handleSettingsSave}
-          className="mt-6 w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-8 w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {settingsSaving ? "Saving..." : "Save library settings"}
         </button>
