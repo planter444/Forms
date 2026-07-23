@@ -6,9 +6,20 @@ import {
   exportMarketplaceSubmissions,
   getMarketplaceSettings,
   getMarketplaceSubmissions,
-  updateMarketplaceSettings,
-  updateMarketplaceSubmission
+  updateMarketplaceSettings
 } from "../lib/api.js";
+import {
+  copyMarketplaceSubmission,
+  copyMarketplaceSubmissions,
+  downloadMarketplaceSubmissionExcel,
+  downloadMarketplaceSubmissionJson,
+  downloadMarketplaceSubmissionsExcel,
+  downloadMarketplaceSubmissionsJson,
+  formatMarketplaceCoverage,
+  getFileDownloadUrl,
+  printMarketplaceSubmissionPdf,
+  printMarketplaceSubmissionsPdf
+} from "../lib/marketplaceAdmin.js";
 
 const defaultProductCategoryOptions = [
   "Solar Products",
@@ -207,6 +218,20 @@ const RadioField = ({ label, options, value, onChange }) => {
           </button>
         ))}
       </div>
+    </div>
+  );
+};
+
+const ReadOnlyField = ({ label, value, children, className = "" }) => {
+  const { palette } = useSiteSettings();
+
+  return (
+    <div className={className}>
+      <div className="text-xs font-medium uppercase tracking-[0.1em]" style={{ color: palette.mutedTextColor }}>{label}</div>
+      <div className="mt-1 break-words rounded-2xl border px-4 py-3" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted, color: palette.textColor }}>
+        {value || "-"}
+      </div>
+      {children}
     </div>
   );
 };
@@ -476,6 +501,49 @@ const MarketplaceVendorAdmin = ({ token }) => {
           <button type="button" onClick={handleExport} disabled={!submissions.length} className={buttonClass} style={{ borderColor: palette.borderColor, color: palette.textColor }}>
             Export CSV
           </button>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await copyMarketplaceSubmissions(filteredSubmissions);
+                setNotice("Filtered responses copied to clipboard.");
+              } catch {
+                setError("Unable to copy filtered responses.");
+              }
+            }}
+            disabled={!filteredSubmissions.length}
+            className={buttonClass}
+            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+          >
+            Copy filtered
+          </button>
+          <button
+            type="button"
+            onClick={() => downloadMarketplaceSubmissionsJson(filteredSubmissions)}
+            disabled={!filteredSubmissions.length}
+            className={buttonClass}
+            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+          >
+            Export JSON
+          </button>
+          <button
+            type="button"
+            onClick={() => downloadMarketplaceSubmissionsExcel(filteredSubmissions)}
+            disabled={!filteredSubmissions.length}
+            className={buttonClass}
+            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+          >
+            Export Excel
+          </button>
+          <button
+            type="button"
+            onClick={() => printMarketplaceSubmissionsPdf(filteredSubmissions)}
+            disabled={!filteredSubmissions.length}
+            className={buttonClass}
+            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+          >
+            Export PDF
+          </button>
         </div>
       </div>
 
@@ -715,7 +783,7 @@ const MarketplaceVendorAdmin = ({ token }) => {
                       className="rounded-2xl px-3 py-2 text-xs font-semibold text-white"
                       style={{ backgroundColor: palette.primary }}
                     >
-                      View / Edit
+                      View
                     </button>
                     <button
                       type="button"
@@ -744,75 +812,140 @@ const MarketplaceVendorAdmin = ({ token }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[28px] border p-6 shadow-2xl" style={{ backgroundColor: palette.surfaceBackground, borderColor: palette.borderColor }}>
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold" style={{ color: palette.textColor }}>Edit Marketplace Vendor</h3>
+              <h3 className="text-xl font-semibold" style={{ color: palette.textColor }}>Marketplace Vendor Response</h3>
               <button type="button" onClick={closeEdit} className="text-2xl" style={{ color: palette.mutedTextColor }}>×</button>
             </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <FloatingField id="editCompanyName" label="Company Name" value={editValues.companyName} onChange={(event) => handleEditChange("companyName", event.target.value)} required />
-              <FloatingField id="editContactPerson" label="Contact Person" value={editValues.contactPerson} onChange={(event) => handleEditChange("contactPerson", event.target.value)} required />
-              <FloatingField id="editPhone" label="Phone Number" value={editValues.phoneNumber} onChange={(event) => handleEditChange("phoneNumber", event.target.value)} required />
-              <FloatingField id="editEmail" label="Email Address" type="email" value={editValues.email} onChange={(event) => handleEditChange("email", event.target.value)} required />
-              <FloatingField id="editAddress" label="Physical Address" value={editValues.physicalAddress} onChange={(event) => handleEditChange("physicalAddress", event.target.value)} />
-              <FloatingField id="editCounty" label="County" value={editValues.county} onChange={(event) => handleEditChange("county", event.target.value)} />
-              <div className="md:col-span-2">
-                <FloatingField id="editWebsite" label="Website" value={editValues.website} onChange={(event) => handleEditChange("website", event.target.value)} />
+            <div className="mt-6 space-y-5 text-sm">
+              <div className="grid gap-4 md:grid-cols-2">
+                <ReadOnlyField label="Company Name" value={selected.companyName} />
+                <ReadOnlyField label="Contact Person" value={selected.contactPerson} />
+                <ReadOnlyField label="Phone Number" value={selected.phoneNumber} />
+                <ReadOnlyField label="Email Address" value={selected.email} />
+                <ReadOnlyField className="md:col-span-2" label="Physical Address" value={selected.physicalAddress} />
+                <ReadOnlyField className="md:col-span-2" label="Website" value={selected.website} />
+                <ReadOnlyField className="md:col-span-2" label="Company Profile" value={selected.companyProfile} />
               </div>
-              <div className="md:col-span-2">
-                <FloatingField id="editProfile" as="textarea" rows={4} label="Company Profile" value={editValues.companyProfile} onChange={(event) => handleEditChange("companyProfile", event.target.value)} />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <ReadOnlyField label="Business Registration Number" value={selected.businessRegNumber} />
+                <div>
+                  <ReadOnlyField label="KRA PIN" value={selected.kraPin?.number || selected.kraPin || "-"} />
+                  {selected.kraPin?.fileName && selected.kraPin?.fileData ? (
+                    <a
+                      href={getFileDownloadUrl(selected.kraPin.fileData)}
+                      download={selected.kraPin.fileName}
+                      className="mt-2 inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold"
+                      style={{ borderColor: palette.borderColor, color: palette.primary }}
+                    >
+                      Download KRA PIN file
+                    </a>
+                  ) : null}
+                </div>
+                <div className="md:col-span-2">
+                  <ReadOnlyField label="Business Registration File" value={selected.businessRegDocument?.fileName || "-"}>
+                    {selected.businessRegDocument?.fileName && selected.businessRegDocument?.fileData ? (
+                      <a
+                        href={getFileDownloadUrl(selected.businessRegDocument.fileData)}
+                        download={selected.businessRegDocument.fileName}
+                        className="mt-2 inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold"
+                        style={{ borderColor: palette.borderColor, color: palette.primary }}
+                      >
+                        Download business registration file
+                      </a>
+                    ) : null}
+                  </ReadOnlyField>
+                </div>
+                <div className="md:col-span-2">
+                  <div className="text-sm font-medium" style={{ color: palette.mutedTextColor }}>Relevant Certifications</div>
+                  {selected.certifications?.length ? (
+                    <ul className="mt-2 space-y-2">
+                      {selected.certifications.map((cert, index) => (
+                        <li key={index} className="rounded-2xl border p-3" style={{ borderColor: palette.borderColor }}>
+                          <div style={{ color: palette.textColor }}>{cert.name || "Unnamed"}</div>
+                          {cert.fileName && cert.fileData ? (
+                            <a
+                              href={getFileDownloadUrl(cert.fileData)}
+                              download={cert.fileName}
+                              className="mt-1 inline-flex items-center gap-2 text-xs font-semibold"
+                              style={{ color: palette.primary }}
+                            >
+                              Download {cert.fileName}
+                            </a>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2" style={{ color: palette.mutedTextColor }}>No certificates uploaded.</p>
+                  )}
+                </div>
+                <ReadOnlyField label="Years of Operation" value={selected.yearsOfOperation} />
               </div>
-              <FloatingField id="editReg" label="Business Registration Number" value={editValues.businessRegNumber} onChange={(event) => handleEditChange("businessRegNumber", event.target.value)} required />
-              <div>
-                <FloatingField
-                  id="editKraPin"
-                  label="KRA PIN"
-                  value={typeof editValues.kraPin === "object" ? editValues.kraPin.number || "" : editValues.kraPin}
-                  onChange={(event) => handleEditChange("kraPin", { ...(editValues.kraPin || {}), number: event.target.value })}
-                  required
-                />
-                {editValues.kraPin?.fileName ? (
-                  <p className="mt-2 truncate text-sm" style={{ color: palette.mutedTextColor }}>
-                    File: {editValues.kraPin.fileName}
-                  </p>
-                ) : null}
-              </div>
-              <div className="md:col-span-2">
-                <div className="text-sm font-medium" style={{ color: palette.textColor }}>Relevant Certifications</div>
-                {editValues.certifications?.length ? (
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm" style={{ color: palette.textColor }}>
-                    {editValues.certifications.map((cert, index) => (
-                      <li key={index}>{cert.name || "Unnamed"}{cert.fileName ? ` (${cert.fileName})` : ""}</li>
+
+              <div className="rounded-2xl border p-4" style={{ borderColor: palette.borderColor }}>
+                <div className="text-sm font-medium" style={{ color: palette.mutedTextColor }}>Coverage</div>
+                {selected.coverageMode === "countrywide" || (selected.coverageDetails || "").toLowerCase().includes("countrywide") ? (
+                  <p className="mt-2 font-medium" style={{ color: palette.textColor }}>Countrywide delivery — all counties in Kenya</p>
+                ) : (
+                  <ul className="mt-2 list-disc space-y-1 pl-5" style={{ color: palette.textColor }}>
+                    {(formatMarketplaceCoverage(selected) || []).map((line, index) => (
+                      <li key={index}>{line}</li>
                     ))}
                   </ul>
-                ) : (
-                  <p className="mt-2 text-sm" style={{ color: palette.mutedTextColor }}>No certificates uploaded.</p>
                 )}
               </div>
-              <div className="md:col-span-2">
-                <RadioField label="Years of Operation" options={yearsOptions} value={editValues.yearsOfOperation} onChange={(value) => handleEditChange("yearsOfOperation", value)} />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <ReadOnlyField className="md:col-span-2" label="Product Categories" value={(selected.productCategories || []).join(", ")} />
+                <ReadOnlyField className="md:col-span-2" label="Brands Represented" value={selected.brandsRepresented} />
+                <ReadOnlyField className="md:col-span-2" label="Social Media Links" value={selected.socialMediaLinks} />
+                <ReadOnlyField className="md:col-span-2" label="Declaration" value={selected.declaration ? "Confirmed that the information provided is accurate and complete." : "-"} />
               </div>
-              <div className="md:col-span-2">
-                <MultiSelectDropdown
-                  id="editCategories"
-                  label="Product Categories"
-                  options={categoryOptions}
-                  values={editValues.productCategories}
-                  onChange={(value) => handleEditChange("productCategories", value)}
-                  placeholder="Select categories"
-                  enableSelectAll
-                  showSelectedChips
-                />
-              </div>
-              <FloatingField id="editBrands" label="Brands Represented" value={editValues.brandsRepresented} onChange={(event) => handleEditChange("brandsRepresented", event.target.value)} />
-              <FloatingField id="editSocial" label="Social Media Links" value={editValues.socialMediaLinks} onChange={(event) => handleEditChange("socialMediaLinks", event.target.value)} />
             </div>
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
               <button type="button" onClick={closeEdit} className="rounded-2xl border px-5 py-3 text-sm font-semibold" style={{ borderColor: palette.borderColor, color: palette.textColor }}>
-                Cancel
+                Close
               </button>
-              <button type="button" onClick={handleSave} disabled={saving} className="rounded-2xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: palette.primary }}>
-                {saving ? "Saving..." : "Save changes"}
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await copyMarketplaceSubmission(selected);
+                    setNotice("Response copied to clipboard.");
+                  } catch {
+                    setError("Unable to copy response.");
+                  }
+                }}
+                className="rounded-2xl border px-5 py-3 text-sm font-semibold"
+                style={{ borderColor: palette.borderColor, color: palette.textColor }}
+              >
+                Copy
+              </button>
+              <button
+                type="button"
+                onClick={() => downloadMarketplaceSubmissionJson(selected)}
+                className="rounded-2xl border px-5 py-3 text-sm font-semibold"
+                style={{ borderColor: palette.borderColor, color: palette.textColor }}
+              >
+                JSON
+              </button>
+              <button
+                type="button"
+                onClick={() => downloadMarketplaceSubmissionExcel(selected)}
+                className="rounded-2xl border px-5 py-3 text-sm font-semibold"
+                style={{ borderColor: palette.borderColor, color: palette.textColor }}
+              >
+                Excel
+              </button>
+              <button
+                type="button"
+                onClick={() => printMarketplaceSubmissionPdf(selected)}
+                className="rounded-2xl px-5 py-3 text-sm font-semibold text-white"
+                style={{ backgroundColor: palette.primary }}
+              >
+                PDF
               </button>
             </div>
           </div>
