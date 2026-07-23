@@ -252,7 +252,7 @@ router.get("/submissions", requireAdmin, async (_request, response) => {
         SELECT id, company_name, contact_person, phone_number, email,
                physical_address, county, coverage_mode, coverage_details, coverage_entries,
                website, company_profile,
-               business_reg_number, kra_pin, certifications, years_of_operation,
+               business_reg_number, business_reg_document, kra_pin, certifications, years_of_operation,
                product_categories, brands_represented, social_media_links,
                declaration, created_at, updated_at
         FROM marketplace_vendor_submissions
@@ -279,7 +279,7 @@ router.get("/submissions/:id", requireAdmin, async (request, response) => {
         SELECT id, company_name, contact_person, phone_number, email,
                physical_address, county, coverage_mode, coverage_details, coverage_entries,
                website, company_profile,
-               business_reg_number, kra_pin, certifications, years_of_operation,
+               business_reg_number, business_reg_document, kra_pin, certifications, years_of_operation,
                product_categories, brands_represented, social_media_links,
                declaration, created_at, updated_at
         FROM marketplace_vendor_submissions
@@ -419,7 +419,7 @@ router.get("/submissions/export", requireAdmin, async (_request, response) => {
         SELECT id, company_name, contact_person, phone_number, email,
                physical_address, county, coverage_mode, coverage_details, coverage_entries,
                website, company_profile,
-               business_reg_number, kra_pin, certifications, years_of_operation,
+               business_reg_number, business_reg_document, kra_pin, certifications, years_of_operation,
                product_categories, brands_represented, social_media_links,
                declaration, created_at, updated_at
         FROM marketplace_vendor_submissions

@@ -150,12 +150,6 @@ export const initializeDatabase = async () => {
     `);
 
     await pool.query(`
-      ALTER TABLE marketplace_vendor_submissions
-        ALTER COLUMN kra_pin TYPE JSONB USING '{}'::jsonb,
-        ALTER COLUMN certifications TYPE JSONB USING '[]'::jsonb;
-    `);
-
-    await pool.query(`
       CREATE TABLE IF NOT EXISTS marketplace_settings (
         id TEXT PRIMARY KEY DEFAULT 'default',
         field_config JSONB NOT NULL DEFAULT '{}',
