@@ -7,6 +7,8 @@ import SuccessPage from "./pages/SuccessPage.jsx";
 import AdminConsolePage from "./pages/AdminConsolePage.jsx";
 import SolarMkononiPage from "./pages/SolarMkononiPage.jsx";
 import SolarResourceLibraryPage from "./pages/SolarResourceLibraryPage.jsx";
+import MarketplaceVendorLandingPage from "./pages/MarketplaceVendorLandingPage.jsx";
+import MarketplaceVendorFormPage from "./pages/MarketplaceVendorFormPage.jsx";
 
 const isMobileViewport = () =>
   typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)").matches : false;
@@ -51,6 +53,8 @@ const App = () => {
         <Route path="/admin" element={<AdminConsolePage />} />
         <Route path="/solar-mkononi" element={<SolarMkononiPage />} />
         <Route path="/solar/resource-library" element={<SolarResourceLibraryPage />} />
+        <Route path="/marketplace" element={<MarketplaceVendorLandingPage />} />
+        <Route path="/marketplace/apply" element={<MarketplaceVendorFormPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </PageTransition>

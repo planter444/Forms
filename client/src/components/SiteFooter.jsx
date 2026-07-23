@@ -3,7 +3,7 @@ import { useSiteSettings } from "../context/SiteSettingsContext.jsx";
 
 const isInternalLink = (href = "") => href.startsWith("/") || href.startsWith("#");
 const isHashLink = (href = "") => href.startsWith("#") || href.startsWith("/#");
-const draftStorageKey = "kerea-form-draft-v1";
+const defaultDraftKey = "kerea-form-draft-v1";
 const desktopHomepageFooterClasses = {
   normal: {
     wrapper: "lg:gap-4 lg:py-6",
@@ -31,13 +31,13 @@ const desktopHomepageFooterClasses = {
   }
 };
 
-const hasFormDraft = () => {
+const hasFormDraft = (draftKey = defaultDraftKey) => {
   if (typeof window === "undefined") {
     return false;
   }
 
   try {
-    const rawDraft = window.localStorage.getItem(draftStorageKey);
+    const rawDraft = window.localStorage.getItem(draftKey);
     const parsedDraft = rawDraft ? JSON.parse(rawDraft) : null;
     const formValues = parsedDraft?.formValues || {};
 
@@ -48,14 +48,16 @@ const hasFormDraft = () => {
         formValues.phoneNumber ||
         formValues.category?.length ||
         formValues.declineReason ||
-        formValues.countyCoverageEntries?.some((entry) => entry.county)
+        formValues.countyCoverageEntries?.some((entry) => entry.county) ||
+        formValues.companyName ||
+        formValues.businessRegNumber
     );
   } catch {
     return false;
   }
 };
 
-const SiteFooter = ({ desktopHomepageSize = "", desktopScaleStyle }) => {
+const SiteFooter = ({ desktopHomepageSize = "", desktopScaleStyle, draftKey = defaultDraftKey, resumeHref = "/form" }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { palette, settings } = useSiteSettings();
@@ -72,9 +74,9 @@ const SiteFooter = ({ desktopHomepageSize = "", desktopScaleStyle }) => {
   const links = Array.isArray(footer.links) && footer.links.length
     ? footer.links.filter((item) => item.label && item.href)
     : legacyLinks;
-  const draftExists = hasFormDraft();
+  const draftExists = hasFormDraft(draftKey);
   const resolvedLinks = links.map((link) =>
-    draftExists && link.href === "/form" && link.label.toLowerCase().includes("start")
+    draftExists && link.href === resumeHref && link.label.toLowerCase().includes("start")
       ? { ...link, label: link.label.replace(/start form/i, "Resume form").replace(/start/i, "Resume") }
       : link
   );

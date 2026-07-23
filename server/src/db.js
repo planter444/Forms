@@ -108,6 +108,68 @@ export const initializeDatabase = async () => {
     `);
 
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS marketplace_vendor_submissions (
+        id UUID PRIMARY KEY,
+        company_name TEXT NOT NULL,
+        contact_person TEXT NOT NULL,
+        phone_number TEXT NOT NULL,
+        email TEXT NOT NULL,
+        physical_address TEXT DEFAULT '',
+        county TEXT DEFAULT '',
+        website TEXT DEFAULT '',
+        company_profile TEXT DEFAULT '',
+        business_reg_number TEXT NOT NULL,
+        kra_pin JSONB NOT NULL DEFAULT '{}',
+        certifications JSONB DEFAULT '[]',
+        years_of_operation TEXT NOT NULL,
+        product_categories TEXT[] DEFAULT '{}',
+        brands_represented TEXT DEFAULT '',
+        social_media_links TEXT DEFAULT '',
+        declaration TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS marketplace_vendor_submissions_email_index
+        ON marketplace_vendor_submissions (email);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS marketplace_vendor_submissions_created_index
+        ON marketplace_vendor_submissions (created_at DESC);
+    `);
+
+    await pool.query(`
+      ALTER TABLE marketplace_vendor_submissions
+        ADD COLUMN IF NOT EXISTS coverage_mode TEXT DEFAULT '',
+        ADD COLUMN IF NOT EXISTS coverage_details TEXT DEFAULT '',
+        ADD COLUMN IF NOT EXISTS coverage_entries JSONB DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS business_reg_document JSONB DEFAULT '{}';
+    `);
+
+    await pool.query(`
+      ALTER TABLE marketplace_vendor_submissions
+        ALTER COLUMN kra_pin TYPE JSONB USING '{}'::jsonb,
+        ALTER COLUMN certifications TYPE JSONB USING '[]'::jsonb;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS marketplace_settings (
+        id TEXT PRIMARY KEY DEFAULT 'default',
+        field_config JSONB NOT NULL DEFAULT '{}',
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      INSERT INTO marketplace_settings (id, field_config)
+      VALUES ('default', '{}')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS resource_library_categories (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,

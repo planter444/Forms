@@ -30,6 +30,7 @@ import {
 } from "../lib/locationHierarchyText.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import SolarResourceLibraryAdmin from "../components/SolarResourceLibraryAdmin.jsx";
+import MarketplaceVendorAdmin from "../components/MarketplaceVendorAdmin.jsx";
 import { categories } from "../data/formOptions.js";
 import {
   downloadSubmissionsJson,
@@ -273,7 +274,8 @@ const tabs = [
   { id: "appearance", label: "Appearance" },
   { id: "responses", label: "Responses" },
   { id: "solar-mkononi", label: "Solar Mkononi" },
-  { id: "resource-library", label: "Resource library" }
+  { id: "resource-library", label: "Resource library" },
+  { id: "marketplace", label: "Marketplace vendors" }
 ];
 
 const cardClass = "rounded-[28px] border p-5 shadow-sm";
@@ -1109,6 +1111,10 @@ const AdminConsolePage = () => {
 
             {activeTab === "resource-library" ? (
               <SolarResourceLibraryAdmin token={token} palette={palette} setNotice={setNotice} setError={setError} />
+            ) : null}
+
+            {activeTab === "marketplace" ? (
+              <MarketplaceVendorAdmin token={token} />
             ) : null}
 
             {activeTab === "content" ? (

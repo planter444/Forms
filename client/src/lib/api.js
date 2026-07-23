@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 const request = async (path, options = {}) => {
   const { headers: customHeaders, ...rest } = options;
@@ -124,6 +124,74 @@ export const deleteSubmission = (token, id) =>
       Authorization: `Bearer ${token}`
     }
   });
+
+export const getMarketplaceSettings = () =>
+  request("/api/marketplace/settings", {
+    cache: "no-store"
+  });
+
+export const updateMarketplaceSettings = (token, fieldConfig) =>
+  request("/api/marketplace/settings", {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ fieldConfig })
+  });
+
+export const submitMarketplaceVendor = (payload) =>
+  request("/api/marketplace/submissions", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+export const getMarketplaceSubmissions = (token) =>
+  request("/api/marketplace/submissions", {
+    cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+export const getMarketplaceSubmission = (token, id) =>
+  request(`/api/marketplace/submissions/${id}`, {
+    cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+export const updateMarketplaceSubmission = (token, id, payload) =>
+  request(`/api/marketplace/submissions/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+export const deleteMarketplaceSubmission = (token, id) =>
+  request(`/api/marketplace/submissions/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+export const exportMarketplaceSubmissions = async (token) => {
+  const response = await fetch(`${API_URL}/api/marketplace/submissions/export`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || "Unable to export marketplace submissions.");
+  }
+
+  return response.blob();
+};
 
 export const exportSubmissions = async (token) => {
   const response = await fetch(`${API_URL}/api/submissions/export`, {
