@@ -57,9 +57,29 @@ const ALLOWED_MIME_TYPES = new Map([
   ["text/plain", "txt"],
   ["image/png", "png"],
   ["image/jpeg", "jpg"],
+  ["image/webp", "webp"],
   ["video/mp4", "mp4"],
   ["audio/mpeg", "mp3"]
 ]);
+
+const lookupMimeType = (extension) => {
+  const ext = `${extension || ""}`.toLowerCase().replace(/^\./, "");
+  for (const [mime, mappedExt] of ALLOWED_MIME_TYPES) {
+    if (mappedExt === ext) {
+      return mime;
+    }
+  }
+  return undefined;
+};
+
+const getResourceExtension = (resource) => {
+  if (resource.fileExtension) {
+    return resource.fileExtension;
+  }
+  const name = resource.fileName || "";
+  const ext = path.extname(name).toLowerCase().replace(/^\./, "");
+  return ext;
+};
 
 const toBoolean = (value) => {
   if (value === undefined || value === null) {
@@ -94,11 +114,12 @@ const buildDownloadUrl = (resource) => {
     return "";
   }
 
-  if (resource.filePath) {
+  const hasFile = resource.filePath || resource.fileUrl || resource.previewUrl || resource.externalUrl;
+  if (hasFile) {
     return `/api/solar-library/resources/${resource.id}/download`;
   }
 
-  return resource.fileUrl || resource.externalUrl || "";
+  return "";
 };
 
 const serializeResource = (resource) => ({
@@ -159,9 +180,13 @@ router.get("/resources", async (request, response) => {
 
 const proxyRemoteFile = (url, resource, request, response, isView) => {
   const protocol = url.startsWith("https:") ? https : http;
+  const requestHeaders = {
+    "User-Agent": request.get("user-agent") || "kerea-portal",
+    "Accept-Encoding": "identity"
+  };
 
   protocol
-    .get(url, { headers: { "User-Agent": request.get("user-agent") || "kerea-portal" } }, (remote) => {
+    .get(url, { headers: requestHeaders }, (remote) => {
       if (remote.statusCode >= 300 && remote.statusCode < 400 && remote.headers.location) {
         return proxyRemoteFile(remote.headers.location, resource, request, response, isView);
       }
@@ -172,11 +197,13 @@ const proxyRemoteFile = (url, resource, request, response, isView) => {
       }
 
       const safeName = (resource.fileName || resource.title || "resource").replace(/[\r\n"]/g, "");
-      const dispositionType = isView ? "inline" : "attachment";
-      const fallbackExt = resource.fileExtension ? `.${resource.fileExtension}` : "";
-      const fileName = safeName.includes(".") ? safeName : `${safeName}${fallbackExt}`;
+      const ext = getResourceExtension(resource);
+      const fileName = safeName.includes(".") ? safeName : `${safeName}.${ext || "bin"}`;
 
-      response.setHeader("Content-Type", resource.mimeType || remote.headers["content-type"] || "application/octet-stream");
+      const contentType = resource.mimeType || lookupMimeType(ext) || remote.headers["content-type"] || "application/octet-stream";
+      const dispositionType = isView ? "inline" : "attachment";
+
+      response.setHeader("Content-Type", contentType);
       response.setHeader(
         "Content-Disposition",
         `${dispositionType}; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
@@ -216,10 +243,14 @@ router.get("/resources/:id/download", async (request, response) => {
 
     try {
       const fileInfo = await stat(fullPath);
-      response.setHeader("Content-Type", resource.mimeType || "application/octet-stream");
+      const ext = getResourceExtension(resource);
+      const safeName = (resource.fileName || resource.title || "resource").replace(/[\r\n"]/g, "");
+      const fileName = safeName.includes(".") ? safeName : `${safeName}.${ext || "bin"}`;
+
+      response.setHeader("Content-Type", resource.mimeType || lookupMimeType(ext) || "application/octet-stream");
       response.setHeader(
         "Content-Disposition",
-        `${request.query.view === "1" ? "inline" : "attachment"}; filename="${resource.fileName || resource.title || "resource"}"`
+        `${request.query.view === "1" ? "inline" : "attachment"}; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
       );
       response.setHeader("Content-Length", fileInfo.size);
       const stream = createReadStream(fullPath);

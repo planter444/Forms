@@ -686,10 +686,8 @@ const ResourceCard = ({ resource, fileTypeLabels, cardIndex = 0 }) => {
   const badge = getFileBadge(resource, fileTypeLabels);
   const chips = resource.tags || [];
   const colors = getCardColor(cardIndex);
-  const localDownloadPath = resource.filePath ? `/api/solar-library/resources/${resource.id}/download` : "";
-  const localViewPath = resource.filePath ? `/api/solar-library/resources/${resource.id}/download?view=1` : "";
-  const downloadUrl = resource.downloadUrl && resource.downloadUrl !== "#" ? resource.downloadUrl : localDownloadPath || resource.fileUrl || resource.externalUrl || "#";
-  const viewUrl = resource.previewUrl || resource.externalUrl || resource.fileUrl || localViewPath || downloadUrl || "#";
+  const downloadUrl = resource.downloadUrl && resource.downloadUrl !== "#" ? resource.downloadUrl : "#";
+  const viewUrl = downloadUrl !== "#" ? `${downloadUrl}?view=1` : "#";
   const canDownload = resource.allowDownloads !== false && downloadUrl !== "#";
   const canView = viewUrl !== "#";
 
