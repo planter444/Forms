@@ -184,7 +184,7 @@ router.post("/submissions", marketplaceLimiter, async (request, response) => {
   }
 
   const payload = request.body || {};
-  const { errors, productCategories } = validatePayload(payload, fieldConfig);
+  const { errors, productCategories, coverageEntries } = validatePayload(payload, fieldConfig);
 
   if (Object.keys(errors).length > 0) {
     return response.status(400).json({ message: "Validation failed.", errors });
@@ -204,7 +204,7 @@ router.post("/submissions", marketplaceLimiter, async (request, response) => {
           product_categories, brands_represented, social_media_links,
           declaration, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12, $13, $14::jsonb, $15::jsonb, $16::jsonb, $17, $18::text[], $19, $20, $21, $22, $23)
       `,
       [
         id,
@@ -216,13 +216,13 @@ router.post("/submissions", marketplaceLimiter, async (request, response) => {
         coverageEntries[0]?.county || "",
         payload.coverageMode || "",
         `${payload.coverageDetails || ""}`.trim(),
-        coverageEntries,
+        JSON.stringify(coverageEntries || []),
         `${payload.website || ""}`.trim(),
         `${payload.companyProfile || ""}`.trim(),
         payload.businessRegNumber.trim(),
-        payload.businessRegDocument,
-        payload.kraPin,
-        payload.certifications,
+        JSON.stringify(payload.businessRegDocument || {}),
+        JSON.stringify(payload.kraPin || {}),
+        JSON.stringify(payload.certifications || []),
         payload.yearsOfOperation,
         productCategories,
         `${payload.brandsRepresented || ""}`.trim(),
@@ -314,7 +314,7 @@ router.put("/submissions/:id", requireAdmin, async (request, response) => {
   }
 
   const payload = request.body || {};
-  const { errors, productCategories } = validatePayload(payload, fieldConfig);
+  const { errors, productCategories, coverageEntries } = validatePayload(payload, fieldConfig);
 
   if (Object.keys(errors).length > 0) {
     return response.status(400).json({ message: "Validation failed.", errors });
@@ -336,9 +336,9 @@ router.put("/submissions/:id", requireAdmin, async (request, response) => {
             website = $11,
             company_profile = $12,
             business_reg_number = $13,
-            business_reg_document = $14,
-            kra_pin = $15,
-            certifications = $16,
+            business_reg_document = $14::jsonb,
+            kra_pin = $15::jsonb,
+            certifications = $16::jsonb,
             years_of_operation = $17,
             product_categories = $18::text[],
             brands_represented = $19,
@@ -358,13 +358,13 @@ router.put("/submissions/:id", requireAdmin, async (request, response) => {
         coverageEntries[0]?.county || "",
         payload.coverageMode || "",
         `${payload.coverageDetails || ""}`.trim(),
-        coverageEntries,
+        JSON.stringify(coverageEntries || []),
         `${payload.website || ""}`.trim(),
         `${payload.companyProfile || ""}`.trim(),
         payload.businessRegNumber.trim(),
-        payload.businessRegDocument,
-        payload.kraPin,
-        payload.certifications,
+        JSON.stringify(payload.businessRegDocument || {}),
+        JSON.stringify(payload.kraPin || {}),
+        JSON.stringify(payload.certifications || []),
         payload.yearsOfOperation,
         productCategories,
         `${payload.brandsRepresented || ""}`.trim(),
