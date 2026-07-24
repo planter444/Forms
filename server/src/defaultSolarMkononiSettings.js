@@ -193,6 +193,7 @@ export const defaultSolarMkononiSettings = {
       backgroundImageUrl: "",
       desktopBackgroundImageUrl: "",
       mobileBackgroundImageUrl: "",
+      overlayColor: "#044e38",
       overlayOpacity: 0.5
     },
     nav: {

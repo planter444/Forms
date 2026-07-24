@@ -34,6 +34,7 @@ const defaultLibrarySettings = {
     backgroundImageUrl: "",
     desktopBackgroundImageUrl: "",
     mobileBackgroundImageUrl: "",
+    overlayColor: "#044e38",
     overlayOpacity: 0.5
   },
   stats: {
@@ -949,6 +950,16 @@ const SolarResourceLibraryAdmin = ({ token, palette, setNotice, setError }) => {
                 {settingsForm.hero.mobileBackgroundImageUrl ? (
                   <img src={settingsForm.hero.mobileBackgroundImageUrl} alt="Mobile hero preview" className="mt-2 h-24 w-full rounded-2xl object-cover" />
                 ) : null}
+              </label>
+              <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                Overlay color
+                <input
+                  type="color"
+                  className="mt-2 h-10 w-full rounded-2xl border px-1 py-1"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  value={settingsForm.hero.overlayColor || "#044e38"}
+                  onChange={(event) => setHero("overlayColor", event.target.value)}
+                />
               </label>
               <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
                 Overlay opacity ({Math.round(settingsForm.hero.overlayOpacity * 100)}%)

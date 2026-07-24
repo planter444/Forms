@@ -42,6 +42,26 @@ const formatDate = (value) => {
   });
 };
 
+const hexToRgba = (hex, alpha) => {
+  const clean = (hex || "#044e38").replace("#", "");
+  const valid = /^[0-9A-Fa-f]{3,6}$/.test(clean);
+  if (!valid) {
+    return `rgba(4, 78, 56, ${alpha ?? 1})`;
+  }
+
+  const expand = (short) =>
+    short.length === 3
+      ? short.split("").map((c) => c + c).join("")
+      : short;
+
+  const full = expand(clean);
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha ?? 1})`;
+};
+
 const fileBadgeStyles = {
   pdf: { label: "PDF", background: "#fee2e2", color: "#b91c1c" },
   doc: { label: "DOC", background: "#e0ecff", color: "#1d4ed8" },
@@ -283,7 +303,8 @@ const SolarResourceLibraryPage = () => {
   };
   const feedGridClass = columnClasses[feedColumns] || columnClasses[2];
 
-  const heroOverlay = hero.overlayOpacity !== undefined ? hero.overlayOpacity : 0.5;
+  const heroOverlayColor = hero.overlayColor || "#044e38";
+  const heroOverlayOpacity = hero.overlayOpacity !== undefined ? hero.overlayOpacity : 0.5;
   const desktopBg = hero.desktopBackgroundImageUrl || hero.backgroundImageUrl || "";
   const mobileBg = hero.mobileBackgroundImageUrl || hero.backgroundImageUrl || "";
   const hasHeroImage = Boolean(hero.backgroundImageUrl || hero.desktopBackgroundImageUrl || hero.mobileBackgroundImageUrl);
@@ -311,7 +332,7 @@ const SolarResourceLibraryPage = () => {
         ${heroBackgroundCss}
       `}</style>
       <header className="resource-hero-bg relative flex min-h-screen flex-col justify-center overflow-hidden text-white">
-        {hasHeroImage ? <div className="absolute inset-0" style={{ backgroundColor: `rgba(4, 78, 56, ${heroOverlay})` }} /> : null}
+        {hasHeroImage ? <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(heroOverlayColor, heroOverlayOpacity) }} /> : null}
         <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-6 px-4 py-12 lg:flex-row lg:items-end">
           <div className="flex-1">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-200">{hero.eyebrow || "Solar Mkononi"}</p>
