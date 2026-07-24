@@ -315,10 +315,11 @@ export const updateCategory = async (id, payload) => {
   }
 
   fields.push("updated_at = CURRENT_TIMESTAMP");
+  const idPlaceholder = values.length + 1;
   const query = `
     UPDATE resource_library_categories
     SET ${fields.join(", ")}
-    WHERE id = $${fields.length + 1}
+    WHERE id = $${idPlaceholder}
     RETURNING *
   `;
   const result = await pool.query(query, [...values, id]);
@@ -637,11 +638,12 @@ export const updateResource = async (id, payload) => {
 
   fields.push("updated_at = CURRENT_TIMESTAMP");
 
+  const idPlaceholder = values.length + 1;
   const result = await pool.query(
     `
       UPDATE resource_library_resources
       SET ${fields.join(", ")}
-      WHERE id = $${fields.length + 1}
+      WHERE id = $${idPlaceholder}
       RETURNING *
     `,
     [...values, id]
