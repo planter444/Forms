@@ -548,7 +548,7 @@ export const updateResource = async (id, payload) => {
   };
 
   if (payload.categoryId !== undefined) {
-    assign("category_id", payload.categoryId || null);
+    assign("category_id", payload.categoryId || null, "integer");
   }
 
   if (payload.title !== undefined) {
@@ -584,7 +584,7 @@ export const updateResource = async (id, payload) => {
   }
 
   if (payload.fileSize !== undefined) {
-    assign("file_size", payload.fileSize || 0);
+    assign("file_size", payload.fileSize || 0, "integer");
   }
 
   if (payload.storageProvider !== undefined) {
@@ -612,23 +612,23 @@ export const updateResource = async (id, payload) => {
   }
 
   if (payload.sortOrder !== undefined) {
-    assign("sort_order", parseInteger(payload.sortOrder, 0));
+    assign("sort_order", parseInteger(payload.sortOrder, 0), "integer");
   }
 
   if (payload.publishedAt !== undefined) {
-    assign("published_at", isValidDate(payload.publishedAt) ? payload.publishedAt : null);
+    assign("published_at", isValidDate(payload.publishedAt) ? payload.publishedAt : null, "timestamp");
   }
 
   if (payload.isFeatured !== undefined) {
-    assign("is_featured", coerceBoolean(payload.isFeatured));
+    assign("is_featured", coerceBoolean(payload.isFeatured), "boolean");
   }
 
   if (payload.isPublished !== undefined) {
-    assign("is_published", coerceBoolean(payload.isPublished));
+    assign("is_published", coerceBoolean(payload.isPublished), "boolean");
   }
 
   if (payload.allowDownloads !== undefined) {
-    assign("allow_downloads", coerceBoolean(payload.allowDownloads));
+    assign("allow_downloads", coerceBoolean(payload.allowDownloads), "boolean");
   }
 
   if (!fields.length) {

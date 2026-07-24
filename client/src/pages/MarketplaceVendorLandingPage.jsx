@@ -302,12 +302,13 @@ const MarketplaceVendorLandingPage = () => {
           }`}
         >
           <div className={`${splitLayout ? "self-center" : "mx-auto max-w-4xl text-center"}`}>
-            <div
+            <a
+              href={marketplaceContent.heroBadgeLink || "/marketplace"}
               className={`inline-flex rounded-full border px-4 py-2 text-sm font-medium shadow-sm ${desktopClasses.heroBadge}`}
               style={{ ...desktopScaleStyle, borderColor: palette.primaryGlow, backgroundColor: palette.accent, color: palette.accentStrong }}
             >
               {marketplaceContent.heroBadge}
-            </div>
+            </a>
             <h1 className={`mt-5 max-w-4xl text-2xl font-black leading-[1.08] tracking-tight sm:text-[2.35rem] sm:leading-[1.02] lg:text-[2.75rem] xl:text-5xl ${heroMotionClass}`} style={desktopHeroTitleStyle}>
               {marketplaceContent.heroTitle}
             </h1>
@@ -414,6 +415,15 @@ const MarketplaceVendorLandingPage = () => {
       <SiteFooter
         desktopHomepageSize={desktopHomepageSize}
         desktopScaleStyle={desktopScaleStyle}
+        basePath="/marketplace"
+        footer={{
+          ...settings.footer,
+          enabled: true,
+          links: [
+            { label: "Start form", href: "/marketplace/apply" },
+            { label: "Learn more", href: "#how-it-works" }
+          ]
+        }}
         draftKey="kerea-marketplace-vendor-draft-v1"
         resumeHref="/marketplace/apply"
       />

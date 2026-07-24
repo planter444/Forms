@@ -595,19 +595,22 @@ const StatsSection = ({ settings, theme }) => {
 const ServicesSection = ({ settings, theme }) => {
   const services = settings.services || {};
   const cards = services.cards || [];
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const carouselRef = useRef(null);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
-  const [translateX, setTranslateX] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(cards.length || 0);
+  const [cardWidth, setCardWidth] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const cardWidth = useRef(0);
+  const [isResetting, setIsResetting] = useState(false);
+  const [dragTranslateX, setDragTranslateX] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
   const sectionRef = useRef(null);
 
-  // Duplicate cards for infinite scrolling
-  const duplicatedCards = [...cards, ...cards];
+  const duplicatedCards = [...cards, ...cards, ...cards];
+  const delayMs = (services.mobileCarouselDelay || 5) * 1000;
+  const baseTranslate = -activeIndex * cardWidth;
+  const currentTranslate = isDragging ? dragTranslateX : baseTranslate;
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -618,9 +621,29 @@ const ServicesSection = ({ settings, theme }) => {
 
   useEffect(() => {
     if (carouselRef.current && isMobile) {
-      cardWidth.current = carouselRef.current.offsetWidth;
+      setCardWidth(carouselRef.current.offsetWidth);
     }
   }, [isMobile, cards]);
+
+  useEffect(() => {
+    setIsResetting(true);
+    setActiveIndex(cards.length || 0);
+  }, [cards.length]);
+
+  useEffect(() => {
+    if (isResetting) {
+      const id = requestAnimationFrame(() => setIsResetting(false));
+      return () => cancelAnimationFrame(id);
+    }
+  }, [isResetting]);
+
+  useEffect(() => {
+    if (!isMobile || cards.length <= 1) return;
+    const id = setInterval(() => {
+      setActiveIndex((prev) => prev + 1);
+    }, delayMs);
+    return () => clearInterval(id);
+  }, [isMobile, cards.length, delayMs]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -641,40 +664,33 @@ const ServicesSection = ({ settings, theme }) => {
 
   const nextSlide = () => {
     if (isMobile) {
-      setTranslateX((prev) => {
-        const newTranslate = prev - cardWidth.current;
-        // Loop back to start when reaching the end
-        if (newTranslate <= -cardWidth.current * cards.length) {
-          return 0;
-        }
-        return newTranslate;
-      });
+      setActiveIndex((prev) => prev + 1);
     } else {
-      if (currentIndex < cards.length - 1) {
-        setCurrentIndex((prev) => prev + 1);
-      }
+      setActiveIndex((prev) => Math.min(prev + 1, cards.length - 1));
     }
   };
 
   const prevSlide = () => {
     if (isMobile) {
-      setTranslateX((prev) => {
-        const newTranslate = prev + cardWidth.current;
-        // Loop to end when going back from start
-        if (newTranslate > 0) {
-          return -cardWidth.current * (cards.length - 1);
-        }
-        return newTranslate;
-      });
+      setActiveIndex((prev) => prev - 1);
     } else {
-      if (currentIndex > 0) {
-        setCurrentIndex((prev) => prev - 1);
-      }
+      setActiveIndex((prev) => Math.max(prev - 1, 0));
     }
   };
 
+  useEffect(() => {
+    if (cards.length && activeIndex < 0) {
+      setIsResetting(true);
+      setActiveIndex(activeIndex + cards.length);
+    } else if (cards.length && activeIndex >= 2 * cards.length) {
+      setIsResetting(true);
+      setActiveIndex(activeIndex - cards.length);
+    }
+  }, [activeIndex, cards.length]);
+
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = e.touches[0].clientX;
     setIsDragging(true);
   };
 
@@ -682,32 +698,19 @@ const ServicesSection = ({ settings, theme }) => {
     if (!isDragging) return;
     touchEndX.current = e.touches[0].clientX;
     const diff = touchStartX.current - touchEndX.current;
-    setTranslateX((prev) => prev - diff);
-    touchStartX.current = touchEndX.current;
+    setDragTranslateX(baseTranslate - diff);
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
     const diff = touchStartX.current - touchEndX.current;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        nextSlide();
-      } else {
-        prevSlide();
-      }
+    const threshold = cardWidth ? cardWidth * 0.15 : 50;
+    if (diff > threshold) {
+      nextSlide();
+    } else if (diff < -threshold) {
+      prevSlide();
     } else {
-      // Snap to nearest card with smooth transition
-      const currentCardIndex = Math.round(Math.abs(translateX) / cardWidth.current);
-      let snappedTranslate = -currentCardIndex * cardWidth.current;
-      
-      // Loop back to start if at the end
-      if (snappedTranslate <= -cardWidth.current * cards.length) {
-        snappedTranslate = 0;
-      } else if (snappedTranslate > 0) {
-        snappedTranslate = -cardWidth.current * (cards.length - 1);
-      }
-      
-      setTranslateX(snappedTranslate);
+      setDragTranslateX(baseTranslate);
     }
   };
 
@@ -766,14 +769,14 @@ const ServicesSection = ({ settings, theme }) => {
               <div
                 className="flex"
                 style={{
-                  transform: `translateX(${translateX}px)`,
-                  transition: isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                  transform: `translateX(${currentTranslate}px)`,
+                  transition: isResetting || isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
                 }}
               >
                 {duplicatedCards.map((card, index) => {
                   const color = lightCardColors[index % lightCardColors.length];
                   return (
-                    <div key={index} className="w-full flex-shrink-0 px-4">
+                    <div key={`${card.title}-${index}`} className="w-full flex-shrink-0 px-4">
                       <div
                         className="p-6 rounded-2xl shadow-sm"
                         style={{
@@ -793,37 +796,39 @@ const ServicesSection = ({ settings, theme }) => {
                 })}
               </div>
             </div>
-            <div className="flex justify-center gap-4 mt-6">
-              <button
-                onClick={prevSlide}
-                className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold transition hover:scale-110"
-                style={{ backgroundColor: theme.primaryColor || "#059669", color: "#ffffff" }}
-              >
-                ←
-              </button>
-              <div className="flex items-center gap-2">
-                {cards.map((_, index) => {
-                  const currentCardIndex = Math.round(Math.abs(translateX) / cardWidth.current) % cards.length;
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => setTranslateX(-index * cardWidth.current)}
-                      className={`w-3 h-3 rounded-full transition ${index === currentCardIndex ? "scale-125" : ""}`}
-                      style={{
-                        backgroundColor: index === currentCardIndex ? theme.primaryColor || "#059669" : theme.borderColor || "#a7f3d0"
-                      }}
-                    />
-                  );
-                })}
+            {cards.length > 1 ? (
+              <div className="flex justify-center gap-4 mt-6">
+                <button
+                  onClick={prevSlide}
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold transition hover:scale-110"
+                  style={{ backgroundColor: theme.primaryColor || "#059669", color: "#ffffff" }}
+                >
+                  ←
+                </button>
+                <div className="flex items-center gap-2">
+                  {cards.map((_, index) => {
+                    const currentCardIndex = cards.length ? activeIndex % cards.length : 0;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => setActiveIndex(cards.length + index)}
+                        className={`w-3 h-3 rounded-full transition ${index === currentCardIndex ? "scale-125" : ""}`}
+                        style={{
+                          backgroundColor: index === currentCardIndex ? theme.primaryColor || "#059669" : theme.borderColor || "#a7f3d0"
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={nextSlide}
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold transition hover:scale-110"
+                  style={{ backgroundColor: theme.primaryColor || "#059669", color: "#ffffff" }}
+                >
+                  →
+                </button>
               </div>
-              <button
-                onClick={nextSlide}
-                className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold transition hover:scale-110"
-                style={{ backgroundColor: theme.primaryColor || "#059669", color: "#ffffff" }}
-              >
-                →
-              </button>
-            </div>
+            ) : null}
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -41,6 +41,7 @@ export const defaultSolarMkononiSettings = {
     mobileAnimationEnabled: true,
     mobileAnimationStyle: "fade-up",
     mobileAnimationDelay: 100,
+    mobileCarouselDelay: 5,
     backgroundColor: "#f0fdf4",
     backgroundPattern: "none",
     cards: [

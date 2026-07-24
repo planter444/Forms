@@ -78,6 +78,7 @@ const fieldLabels = {
 const defaultContent = {
   landing: {
     heroBadge: "KEREA Marketplace",
+    heroBadgeLink: "",
     heroTitle: "A simple, secure way for distributors and suppliers to be listed.",
     heroDescription: "Join Kenya's trusted renewable energy marketplace. Showcase your products, coverage, and certifications in minutes.",
     heroPrimaryCta: "Get Listed",

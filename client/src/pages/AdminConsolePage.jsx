@@ -2436,6 +2436,18 @@ const AdminConsolePage = () => {
                             step="50"
                           />
                         </label>
+                        <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                          Mobile Carousel Delay (seconds)
+                          <input
+                            type="number"
+                            value={solarMkononiEditor.services?.mobileCarouselDelay || 5}
+                            onChange={(e) => setSolarMkononiEditor({ ...solarMkononiEditor, services: { ...solarMkononiEditor.services, mobileCarouselDelay: parseInt(e.target.value) || 5 } })}
+                            className="mt-2 w-full rounded-2xl border px-4 py-3 outline-none"
+                            style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                            min="1"
+                            max="60"
+                          />
+                        </label>
                         <div className="space-y-3">
                           {solarMkononiEditor.services?.cards?.map((card, index) => (
                             <div key={index} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>

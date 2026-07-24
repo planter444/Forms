@@ -57,11 +57,11 @@ const hasFormDraft = (draftKey = defaultDraftKey) => {
   }
 };
 
-const SiteFooter = ({ desktopHomepageSize = "", desktopScaleStyle, draftKey = defaultDraftKey, resumeHref = "/form" }) => {
+const SiteFooter = ({ desktopHomepageSize = "", desktopScaleStyle, draftKey = defaultDraftKey, resumeHref = "/form", footer: footerProp, basePath = "/" }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { palette, settings } = useSiteSettings();
-  const footer = settings.footer || {};
+  const footer = footerProp || settings.footer || {};
 
   if (!footer.enabled) {
     return null;
@@ -105,8 +105,8 @@ const SiteFooter = ({ desktopHomepageSize = "", desktopScaleStyle, draftKey = de
 
     const hash = href.includes("#") ? `#${href.split("#").pop()}` : href;
 
-    if (location.pathname !== "/") {
-      navigate({ pathname: "/", hash });
+    if (location.pathname !== basePath) {
+      navigate({ pathname: basePath, hash });
       window.setTimeout(() => scrollToHashTarget(hash), 100);
       return;
     }
