@@ -4,6 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
   const [activeSubTab, setActiveSubTab] = useState("hero");
+  const [surveyResponses, setSurveyResponses] = useState([]);
   const [wriSettings, setWriSettings] = useState({
     hero: {
       title: "Africa–China Renewable Energy Partnership",
@@ -15,6 +16,7 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
       overlayOpacity: 0.3
     }
   });
+  const [heroImageFile, setHeroImageFile] = useState(null);
   const [enquiries, setEnquiries] = useState([]);
   const [businesses, setBusinesses] = useState([]);
   const [events, setEvents] = useState([]);
@@ -43,43 +45,80 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
     nature_of_business: "",
     partnership_interest: "",
     description: "",
-    logo_url: "",
     website_url: "",
+    logo_url: "",
     contact_email: "",
     contact_phone: "",
     is_approved: false
   });
+  const [businessLogoFile, setBusinessLogoFile] = useState(null);
 
   const [eventForm, setEventForm] = useState({
     title: "",
     event_date: "",
     location: "",
     description: "",
-    image_url: "",
     registration_link: "",
-    status: "upcoming"
+    image_url: ""
   });
+  const [eventImageFile, setEventImageFile] = useState(null);
 
   const [partnerForm, setPartnerForm] = useState({
     name: "",
-    logo_url: "",
     website_url: "",
+    logo_url: "",
     description: "",
     is_approved: false,
     display_order: 0
   });
+  const [partnerLogoFile, setPartnerLogoFile] = useState(null);
 
   const [resourceForm, setResourceForm] = useState({
     title: "",
-    resource_type: "",
     description: "",
+    resource_type: "Report",
     file_url: "",
     file_name: "",
     external_url: "",
     is_published: true
   });
+  const [resourceFile, setResourceFile] = useState(null);
 
   const [editingItem, setEditingItem] = useState(null);
+
+  const fetchSurveyResponses = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/survey-responses`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setSurveyResponses(data);
+    } catch (error) {
+      console.error("Error fetching survey responses:", error);
+    }
+  };
+
+  const handleDownloadSurveyExcel = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/survey-responses/excel`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `wri-survey-responses-${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setNotice("Excel downloaded successfully");
+      }
+    } catch (error) {
+      setError("Failed to download Excel");
+    }
+  };
 
   useEffect(() => {
     fetchWriSettings();
@@ -88,6 +127,7 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
     fetchEvents();
     fetchPartners();
     fetchResources();
+    fetchSurveyResponses();
   }, []);
 
   const fetchWriSettings = async () => {
@@ -104,16 +144,38 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
 
   const handleSaveWriSettings = async () => {
     try {
+      let imageUrl = wriSettings.hero.backgroundImageUrl;
+      
+      if (heroImageFile) {
+        const formData = new FormData();
+        formData.append("file", heroImageFile);
+        formData.append("type", "hero");
+        
+        const uploadResponse = await fetch(`${API_URL}/api/wri/admin/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          imageUrl = uploadData.url;
+        }
+      }
+      
       const response = await fetch(`${API_URL}/api/wri/admin/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ wri: wriSettings })
+        body: JSON.stringify({ wri: { ...wriSettings, hero: { ...wriSettings.hero, backgroundImageUrl: imageUrl } } })
       });
       if (response.ok) {
         setNotice("WRI settings saved successfully");
+        setHeroImageFile(null);
+        fetchWriSettings();
+        window.location.reload();
       }
     } catch (error) {
       setError("Failed to save WRI settings");
@@ -240,6 +302,25 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
   const handleSaveBusiness = async () => {
     setLoading(true);
     try {
+      let logoUrl = businessForm.logo_url;
+      
+      if (businessLogoFile) {
+        const formData = new FormData();
+        formData.append("file", businessLogoFile);
+        formData.append("type", "business");
+        
+        const uploadResponse = await fetch(`${API_URL}/api/wri/admin/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          logoUrl = uploadData.url;
+        }
+      }
+      
       const url = editingItem
         ? `${API_URL}/api/wri/admin/businesses/${editingItem.id}`
         : `${API_URL}/api/wri/admin/businesses`;
@@ -250,7 +331,7 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(businessForm)
+        body: JSON.stringify({ ...businessForm, logo_url: logoUrl })
       });
       if (response.ok) {
         setNotice(editingItem ? "Business updated" : "Business created");
@@ -268,6 +349,7 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
           contact_phone: "",
           is_approved: false
         });
+        setBusinessLogoFile(null);
         setEditingItem(null);
         fetchBusinesses();
       }
@@ -297,6 +379,25 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
   const handleSaveEvent = async () => {
     setLoading(true);
     try {
+      let imageUrl = eventForm.image_url;
+      
+      if (eventImageFile) {
+        const formData = new FormData();
+        formData.append("file", eventImageFile);
+        formData.append("type", "event");
+        
+        const uploadResponse = await fetch(`${API_URL}/api/wri/admin/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          imageUrl = uploadData.url;
+        }
+      }
+      
       const url = editingItem
         ? `${API_URL}/api/wri/admin/events/${editingItem.id}`
         : `${API_URL}/api/wri/admin/events`;
@@ -307,19 +408,12 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(eventForm)
+        body: JSON.stringify({ ...eventForm, image_url: imageUrl })
       });
       if (response.ok) {
         setNotice(editingItem ? "Event updated" : "Event created");
-        setEventForm({
-          title: "",
-          event_date: "",
-          location: "",
-          description: "",
-          image_url: "",
-          registration_link: "",
-          status: "upcoming"
-        });
+        setEventForm({ title: "", event_date: "", location: "", description: "", registration_link: "", image_url: "" });
+        setEventImageFile(null);
         setEditingItem(null);
         fetchEvents();
       }
@@ -349,6 +443,25 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
   const handleSavePartner = async () => {
     setLoading(true);
     try {
+      let logoUrl = partnerForm.logo_url;
+      
+      if (partnerLogoFile) {
+        const formData = new FormData();
+        formData.append("file", partnerLogoFile);
+        formData.append("type", "partner");
+        
+        const uploadResponse = await fetch(`${API_URL}/api/wri/admin/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          logoUrl = uploadData.url;
+        }
+      }
+      
       const url = editingItem
         ? `${API_URL}/api/wri/admin/partners/${editingItem.id}`
         : `${API_URL}/api/wri/admin/partners`;
@@ -359,18 +472,12 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(partnerForm)
+        body: JSON.stringify({ ...partnerForm, logo_url: logoUrl })
       });
       if (response.ok) {
         setNotice(editingItem ? "Partner updated" : "Partner created");
-        setPartnerForm({
-          name: "",
-          logo_url: "",
-          website_url: "",
-          description: "",
-          is_approved: false,
-          display_order: 0
-        });
+        setPartnerForm({ name: "", website_url: "", logo_url: "" });
+        setPartnerLogoFile(null);
         setEditingItem(null);
         fetchPartners();
       }
@@ -400,6 +507,27 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
   const handleSaveResource = async () => {
     setLoading(true);
     try {
+      let fileUrl = resourceForm.file_url;
+      let fileName = resourceForm.file_name;
+      
+      if (resourceFile) {
+        const formData = new FormData();
+        formData.append("file", resourceFile);
+        formData.append("type", "resource");
+        
+        const uploadResponse = await fetch(`${API_URL}/api/wri/admin/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          fileUrl = uploadData.url;
+          fileName = resourceFile.name;
+        }
+      }
+      
       const url = editingItem
         ? `${API_URL}/api/wri/admin/resources/${editingItem.id}`
         : `${API_URL}/api/wri/admin/resources`;
@@ -410,19 +538,12 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(resourceForm)
+        body: JSON.stringify({ ...resourceForm, file_url: fileUrl, file_name: fileName })
       });
       if (response.ok) {
         setNotice(editingItem ? "Resource updated" : "Resource created");
-        setResourceForm({
-          title: "",
-          resource_type: "",
-          description: "",
-          file_url: "",
-          file_name: "",
-          external_url: "",
-          is_published: true
-        });
+        setResourceForm({ title: "", description: "", resource_type: "Report", file_url: "", file_name: "", external_url: "", is_published: true });
+        setResourceFile(null);
         setEditingItem(null);
         fetchResources();
       }
@@ -462,7 +583,7 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
       </div>
 
       <div className="flex gap-2 border-b" style={{ borderColor: palette.borderColor }}>
-        {["hero", "enquiries", "businesses", "events", "partners", "resources"].map((tab) => (
+        {["hero", "enquiries", "businesses", "events", "partners", "resources", "survey"].map((tab) => (
           <button
             key={tab}
             onClick={() => {
@@ -535,15 +656,26 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Image URL</label>
-              <input
-                type="url"
-                value={wriSettings.hero.backgroundImageUrl}
-                onChange={(e) => setWriSettings({ ...wriSettings, hero: { ...wriSettings.hero, backgroundImageUrl: e.target.value } })}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                placeholder="https://example.com/image.jpg"
-              />
+              <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Image</label>
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setHeroImageFile(e.target.files?.[0] || null)}
+                  className="w-full text-sm"
+                />
+                <input
+                  type="url"
+                  value={wriSettings.hero.backgroundImageUrl}
+                  onChange={(e) => setWriSettings({ ...wriSettings, hero: { ...wriSettings.hero, backgroundImageUrl: e.target.value } })}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                  placeholder="Or enter image URL"
+                />
+                {wriSettings.hero.backgroundImageUrl && (
+                  <img src={wriSettings.hero.backgroundImageUrl} alt="Preview" className="h-32 w-full object-cover rounded-lg" />
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Overlay Opacity ({Math.round(wriSettings.hero.overlayOpacity * 100)}%)</label>
@@ -692,14 +824,23 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                 style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
                 rows={2}
               />
-              <input
-                type="url"
-                placeholder="Logo URL"
-                value={businessForm.logo_url}
-                onChange={(e) => setBusinessForm({ ...businessForm, logo_url: e.target.value })}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-              />
+              <div>
+                <label className="block text-sm mb-1" style={{ color: palette.textColor }}>Logo</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setBusinessLogoFile(e.target.files?.[0] || null)}
+                  className="w-full text-sm mb-2"
+                />
+                <input
+                  type="url"
+                  placeholder="Or enter Logo URL"
+                  value={businessForm.logo_url}
+                  onChange={(e) => setBusinessForm({ ...businessForm, logo_url: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                />
+              </div>
               <input
                 type="url"
                 placeholder="Website URL"
@@ -823,14 +964,23 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                 style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
                 rows={2}
               />
-              <input
-                type="url"
-                placeholder="Image URL"
-                value={eventForm.image_url}
-                onChange={(e) => setEventForm({ ...eventForm, image_url: e.target.value })}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-              />
+              <div>
+                <label className="block text-sm mb-1" style={{ color: palette.textColor }}>Event Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setEventImageFile(e.target.files?.[0] || null)}
+                  className="w-full text-sm mb-2"
+                />
+                <input
+                  type="url"
+                  placeholder="Or enter Image URL"
+                  value={eventForm.image_url}
+                  onChange={(e) => setEventForm({ ...eventForm, image_url: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                />
+              </div>
               <input
                 type="url"
                 placeholder="Registration Link"
@@ -926,14 +1076,23 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                 className="w-full rounded-lg border px-3 py-2 text-sm"
                 style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
               />
-              <input
-                type="url"
-                placeholder="Logo URL"
-                value={partnerForm.logo_url}
-                onChange={(e) => setPartnerForm({ ...partnerForm, logo_url: e.target.value })}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-              />
+              <div>
+                <label className="block text-sm mb-1" style={{ color: palette.textColor }}>Logo</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPartnerLogoFile(e.target.files?.[0] || null)}
+                  className="w-full text-sm mb-2"
+                />
+                <input
+                  type="url"
+                  placeholder="Or enter Logo URL"
+                  value={partnerForm.logo_url}
+                  onChange={(e) => setPartnerForm({ ...partnerForm, logo_url: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                />
+              </div>
               <input
                 type="url"
                 placeholder="Website URL"
@@ -1030,6 +1189,45 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
         </div>
       )}
 
+      {activeSubTab === "survey" && (
+        <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold" style={{ color: palette.textColor }}>Survey Responses</h3>
+            <button
+              onClick={handleDownloadSurveyExcel}
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-white"
+              style={{ backgroundColor: palette.primary }}
+            >
+              Download Excel
+            </button>
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b" style={{ borderColor: palette.borderColor }}>
+                  <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Company</th>
+                  <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Contact</th>
+                  <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Email</th>
+                  <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Engages Chinese Partners</th>
+                  <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Submitted At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {surveyResponses.map((response) => (
+                  <tr key={response.id} className="border-b" style={{ borderColor: palette.borderColor }}>
+                    <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.company_name}</td>
+                    <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.contact_person}</td>
+                    <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.email}</td>
+                    <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.engages_chinese_partners}</td>
+                    <td className="px-4 py-2" style={{ color: palette.textColor }}>{new Date(response.submitted_at).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {activeSubTab === "resources" && (
         <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
           <h3 className="text-lg font-semibold" style={{ color: palette.textColor }}>Resources</h3>
@@ -1065,14 +1263,23 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                 style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
                 rows={2}
               />
-              <input
-                type="url"
-                placeholder="File URL"
-                value={resourceForm.file_url}
-                onChange={(e) => setResourceForm({ ...resourceForm, file_url: e.target.value })}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-              />
+              <div>
+                <label className="block text-sm mb-1" style={{ color: palette.textColor }}>File Upload</label>
+                <input
+                  type="file"
+                  accept="*/*"
+                  onChange={(e) => setResourceFile(e.target.files?.[0] || null)}
+                  className="w-full text-sm mb-2"
+                />
+                <input
+                  type="url"
+                  placeholder="Or enter File URL"
+                  value={resourceForm.file_url}
+                  onChange={(e) => setResourceForm({ ...resourceForm, file_url: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                />
+              </div>
               <input
                 type="text"
                 placeholder="File Name"

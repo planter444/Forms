@@ -356,6 +356,25 @@ const WriPartnershipPage = () => {
   const [enquiryAttachment, setEnquiryAttachment] = useState(null);
   const [enquirySubmitting, setEnquirySubmitting] = useState(false);
   const [enquirySuccess, setEnquirySuccess] = useState(false);
+  const [surveyForm, setSurveyForm] = useState({
+    company_name: "",
+    contact_person: "",
+    position: "",
+    email: "",
+    phone: "",
+    nature_of_business: [],
+    technologies: [],
+    engages_chinese_partners: "",
+    collaboration_types: [],
+    engagement_duration: "",
+    challenges: [],
+    support_needed: [],
+    future_interest: "",
+    interested_activities: [],
+    additional_comments: ""
+  });
+  const [surveySubmitting, setSurveySubmitting] = useState(false);
+  const [surveySuccess, setSurveySuccess] = useState(false);
   const [businessFilters, setBusinessFilters] = useState({
     country: "",
     technology: "",
@@ -365,7 +384,17 @@ const WriPartnershipPage = () => {
   });
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetchSettings();
+    const loadSettings = async () => {
+      try {
+        const data = await getSolarMkononiSettings();
+        setSettings(data);
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSettings();
     fetchBusinesses();
     fetchEvents();
     fetchPartners();
@@ -375,16 +404,6 @@ const WriPartnershipPage = () => {
   useEffect(() => {
     fetchBusinesses(businessFilters);
   }, [businessFilters]);
-
-  const fetchSettings = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/wri/public/settings`);
-      const data = await response.json();
-      setSettings(data);
-    } catch (error) {
-      console.error("Error fetching WRI settings:", error);
-    }
-  };
 
   const fetchBusinesses = async (filters = {}) => {
     try {
@@ -430,8 +449,6 @@ const WriPartnershipPage = () => {
   const handleEnquirySubmit = async (e) => {
     e.preventDefault();
     setEnquirySubmitting(true);
-    setEnquirySuccess(false);
-
     try {
       const formData = new FormData();
       Object.entries(enquiryForm).forEach(([key, value]) => {
@@ -467,6 +484,52 @@ const WriPartnershipPage = () => {
     } finally {
       setEnquirySubmitting(false);
     }
+  };
+
+  const handleSurveySubmit = async (e) => {
+    e.preventDefault();
+    setSurveySubmitting(true);
+    try {
+      const response = await fetch(`${API_URL}/api/wri/survey`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(surveyForm)
+      });
+
+      if (response.ok) {
+        setSurveySuccess(true);
+        setSurveyForm({
+          company_name: "",
+          contact_person: "",
+          position: "",
+          email: "",
+          phone: "",
+          nature_of_business: [],
+          technologies: [],
+          engages_chinese_partners: "",
+          collaboration_types: [],
+          engagement_duration: "",
+          challenges: [],
+          support_needed: [],
+          future_interest: "",
+          interested_activities: [],
+          additional_comments: ""
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting survey:", error);
+    } finally {
+      setSurveySubmitting(false);
+    }
+  };
+
+  const handleCheckboxChange = (field, value) => {
+    setSurveyForm(prev => ({
+      ...prev,
+      [field]: prev[field].includes(value)
+        ? prev[field].filter(item => item !== value)
+        : [...prev[field], value]
+    }));
   };
 
   const scrollToSection = (sectionId) => {
@@ -783,7 +846,7 @@ const WriPartnershipPage = () => {
           {events.length === 0 ? (
             <p className="text-center py-8" style={{ color: "#065f46" }}>No events scheduled at this time.</p>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {events.map((event) => (
                 <div key={event.id} className="rounded-2xl border bg-white shadow-sm hover:shadow-lg transition-all overflow-hidden" style={{ borderColor: "#a7f3d0" }}>
                   <div className="h-48 flex items-center justify-center" style={{ backgroundColor: "#f0fdf4" }}>
@@ -833,7 +896,273 @@ const WriPartnershipPage = () => {
         </div>
       </section>
 
-      <section id="partners" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }}>
+      <section id="survey" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }}>
+        <div className="mx-auto max-w-4xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>KEREA Member Survey</h2>
+            <p className="mt-4 text-lg" style={{ color: "#065f46" }}>
+              Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement
+            </p>
+            <p className="mt-2 text-sm" style={{ color: "#065f46" }}>
+              Estimated completion time: 5–7 minutes
+            </p>
+          </div>
+
+          {surveySuccess ? (
+            <div className="rounded-2xl border p-8 text-center" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+              <svg className="w-16 h-16 mx-auto mb-4" style={{ color: "#059669" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-2xl font-semibold" style={{ color: "#064e3b" }}>Thank You!</h3>
+              <p className="mt-2" style={{ color: "#065f46" }}>Your survey response has been submitted successfully.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSurveySubmit} className="space-y-8">
+              <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 1: Company Information</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>1. Company Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={surveyForm.company_name}
+                      onChange={(e) => setSurveyForm({ ...surveyForm, company_name: e.target.value })}
+                      className="w-full rounded-lg border px-3 py-2"
+                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>2. Contact Person Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={surveyForm.contact_person}
+                      onChange={(e) => setSurveyForm({ ...surveyForm, contact_person: e.target.value })}
+                      className="w-full rounded-lg border px-3 py-2"
+                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>3. Position/Title *</label>
+                    <input
+                      type="text"
+                      required
+                      value={surveyForm.position}
+                      onChange={(e) => setSurveyForm({ ...surveyForm, position: e.target.value })}
+                      className="w-full rounded-lg border px-3 py-2"
+                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>4. Email Address *</label>
+                    <input
+                      type="email"
+                      required
+                      value={surveyForm.email}
+                      onChange={(e) => setSurveyForm({ ...surveyForm, email: e.target.value })}
+                      className="w-full rounded-lg border px-3 py-2"
+                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>5. Phone Number *</label>
+                    <input
+                      type="tel"
+                      required
+                      value={surveyForm.phone}
+                      onChange={(e) => setSurveyForm({ ...surveyForm, phone: e.target.value })}
+                      className="w-full rounded-lg border px-3 py-2"
+                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>6. Nature of Business (Select all that apply) *</label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {["Manufacturing", "Distribution / Supply", "Installation / EPC", "Financing / Investment", "Consultancy", "Research & Innovation", "Product Development", "Importation", "Other"].map((option) => (
+                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                          <input
+                            type="checkbox"
+                            checked={surveyForm.nature_of_business.includes(option)}
+                            onChange={() => handleCheckboxChange("nature_of_business", option)}
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>7. Renewable Energy Technologies (Select all that apply) *</label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {["Solar PV", "Solar Water Heating", "Clean Cooking", "Biogas", "Mini-grids", "Energy Storage (Battery Systems)", "E-mobility", "Productive Use of Renewable Energy (PURE)", "Energy Efficiency", "Cross-cutting / Multiple Technologies", "Other"].map((option) => (
+                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                          <input
+                            type="checkbox"
+                            checked={surveyForm.technologies.includes(option)}
+                            onChange={() => handleCheckboxChange("technologies", option)}
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 2: Current Engagement with Chinese Partners</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>8. Does your organization currently engage with Chinese companies or institutions? *</label>
+                    <div className="space-x-4 mt-2">
+                      {["Yes", "No", "Planning to engage"].map((option) => (
+                        <label key={option} className="inline-flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                          <input
+                            type="radio"
+                            name="engages_chinese_partners"
+                            value={option}
+                            checked={surveyForm.engages_chinese_partners === option}
+                            onChange={(e) => setSurveyForm({ ...surveyForm, engages_chinese_partners: e.target.value })}
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>9. What type of collaboration or support would your organization seek from Chinese partners? (Select all that apply) *</label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {["Technology transfer", "Manufacturing partnerships", "Financing", "Capacity building", "Distribution partnerships", "Research & Development", "Market access", "Investment", "Other"].map((option) => (
+                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                          <input
+                            type="checkbox"
+                            checked={surveyForm.collaboration_types.includes(option)}
+                            onChange={() => handleCheckboxChange("collaboration_types", option)}
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>10. How long has your organization been engaging with Chinese partners? *</label>
+                    <div className="space-x-4 mt-2">
+                      {["Less than 1 year", "1–3 years", "4–7 years", "Over 7 years"].map((option) => (
+                        <label key={option} className="inline-flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                          <input
+                            type="radio"
+                            name="engagement_duration"
+                            value={option}
+                            checked={surveyForm.engagement_duration === option}
+                            onChange={(e) => setSurveyForm({ ...surveyForm, engagement_duration: e.target.value })}
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 3: Challenges and Support Needs</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>11. What are the key challenges your organization faces when engaging with Chinese partners? (Select all that apply) *</label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {["Language barriers", "Limited access to trusted partners", "Financing constraints", "Import/logistics challenges", "Regulatory barriers", "Quality assurance concerns", "Limited market information", "Cultural/business practice differences", "Communication delays", "Other"].map((option) => (
+                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                          <input
+                            type="checkbox"
+                            checked={surveyForm.challenges.includes(option)}
+                            onChange={() => handleCheckboxChange("challenges", option)}
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>12. What support would you like KEREA to provide? (Select all that apply) *</label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {["B2B matchmaking", "Trade mission coordination", "Business networking events", "Investment linkages", "Policy advocacy", "Technical training", "Market intelligence", "Supplier verification", "Translation/interpreter support", "Regulatory guidance", "Access to financing opportunities", "Other"].map((option) => (
+                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                          <input
+                            type="checkbox"
+                            checked={surveyForm.support_needed.includes(option)}
+                            onChange={() => handleCheckboxChange("support_needed", option)}
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 4: Future Collaboration Opportunities</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>13. Would your organization be interested in participating in future Kenya–China B2B engagements organized by KEREA? *</label>
+                    <div className="space-x-4 mt-2">
+                      {["Yes", "No", "Maybe"].map((option) => (
+                        <label key={option} className="inline-flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                          <input
+                            type="radio"
+                            name="future_interest"
+                            value={option}
+                            checked={surveyForm.future_interest === option}
+                            onChange={(e) => setSurveyForm({ ...surveyForm, future_interest: e.target.value })}
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>14. Which of the following Kenya–China business engagement activities would your organization be interested in participating in? (Select all that apply) *</label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {["Trade fairs", "Virtual B2B meetings", "Investor forums", "Site visits", "Product exhibitions", "Technical workshops", "Joint pilot projects", "None of the above"].map((option) => (
+                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                          <input
+                            type="checkbox"
+                            checked={surveyForm.interested_activities.includes(option)}
+                            onChange={() => handleCheckboxChange("interested_activities", option)}
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>15. Please share any additional comments, recommendations, or partnership interests *</label>
+                    <textarea
+                      required
+                      value={surveyForm.additional_comments}
+                      onChange={(e) => setSurveyForm({ ...surveyForm, additional_comments: e.target.value })}
+                      className="w-full rounded-lg border px-3 py-2"
+                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                      rows={4}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={surveySubmitting}
+                className="w-full rounded-full py-3 text-lg font-semibold text-white disabled:opacity-50 transition hover:scale-105"
+                style={{ backgroundColor: "#059669" }}
+              >
+                {surveySubmitting ? "Submitting..." : "Submit Survey"}
+              </button>
+            </form>
+          )}
+        </div>
+      </section>
+
+      <section id="partners" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Partners & Stakeholders</h2>
@@ -844,32 +1173,34 @@ const WriPartnershipPage = () => {
           {partners.length === 0 ? (
             <p className="text-center py-8" style={{ color: "#065f46" }}>No partners listed at this time.</p>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {partners.map((partner) => (
-                <div key={partner.id} className="rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center text-center" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                  <div className="h-24 w-24 flex items-center justify-center rounded-full" style={{ backgroundColor: "#ffffff" }}>
-                    {partner.logo_url ? (
-                      <img src={partner.logo_url} alt={partner.name} className="h-20 w-20 object-contain" />
-                    ) : (
-                      <svg className="w-12 h-12" style={{ color: "#065f46", opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
+            <div className="relative overflow-hidden">
+              <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                {partners.map((partner) => (
+                  <div key={partner.id} className="flex-shrink-0 w-64 snap-center rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center text-center" style={{ backgroundColor: "#ffffff", borderColor: "#a7f3d0" }}>
+                    <div className="h-24 w-24 flex items-center justify-center rounded-full" style={{ backgroundColor: "#f0fdf4" }}>
+                      {partner.logo_url ? (
+                        <img src={partner.logo_url} alt={partner.name} className="h-20 w-20 object-contain" />
+                      ) : (
+                        <svg className="w-12 h-12" style={{ color: "#065f46", opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                      )}
+                    </div>
+                    <h3 className="mt-4 font-semibold" style={{ color: "#064e3b" }}>{partner.name}</h3>
+                    {partner.website_url && (
+                      <a
+                        href={partner.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-block rounded-full px-4 py-2 text-sm font-medium text-white transition hover:scale-105"
+                        style={{ backgroundColor: "#059669" }}
+                      >
+                        Visit Website
+                      </a>
                     )}
                   </div>
-                  <h3 className="mt-4 font-semibold" style={{ color: "#064e3b" }}>{partner.name}</h3>
-                  {partner.website_url && (
-                    <a
-                      href={partner.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 inline-block rounded-full px-4 py-2 text-sm font-medium text-white transition hover:scale-105"
-                      style={{ backgroundColor: "#059669" }}
-                    >
-                      Visit Website
-                    </a>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>

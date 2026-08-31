@@ -353,6 +353,33 @@ export const initializeDatabase = async () => {
         ON wri_resources (is_published, resource_type);
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS wri_survey_responses (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        company_name TEXT NOT NULL,
+        contact_person TEXT NOT NULL,
+        position TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        nature_of_business TEXT[] DEFAULT '{}',
+        technologies TEXT[] DEFAULT '{}',
+        engages_chinese_partners TEXT NOT NULL,
+        collaboration_types TEXT[] DEFAULT '{}',
+        engagement_duration TEXT NOT NULL,
+        challenges TEXT[] DEFAULT '{}',
+        support_needed TEXT[] DEFAULT '{}',
+        future_interest TEXT NOT NULL,
+        interested_activities TEXT[] DEFAULT '{}',
+        additional_comments TEXT DEFAULT '',
+        submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS wri_survey_responses_submitted_at_index
+        ON wri_survey_responses (submitted_at DESC);
+    `);
+
     await pool.query(`ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_email_key;`);
     await pool.query(`DROP INDEX IF EXISTS submissions_phone_number_unique;`);
     await pool.query(`CREATE INDEX IF NOT EXISTS submissions_email_index ON submissions (email);`);

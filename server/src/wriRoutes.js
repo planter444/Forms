@@ -39,6 +39,33 @@ router.put("/admin/settings", async (req, res) => {
   }
 });
 
+router.post("/admin/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const { type } = req.body;
+    const fileName = `${type}-${Date.now()}-${req.file.originalname}`;
+    const filePath = `/uploads/wri/${fileName}`;
+
+    const fs = require("fs");
+    const path = require("path");
+    
+    const uploadsDir = path.join(process.cwd(), "public", "uploads", "wri");
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    fs.writeFileSync(path.join(process.cwd(), "public", filePath), req.file.buffer);
+
+    res.json({ url: filePath });
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    res.status(500).json({ error: "Failed to upload file" });
+  }
+});
+
 router.post("/enquiries", upload.single("attachment"), async (req, res) => {
   try {
     const { name, organisation, country, email, phone, organisation_type, technology_sector, area_of_interest, enquiry_type, message } = req.body;
@@ -151,6 +178,112 @@ router.get("/admin/enquiries/excel", async (req, res) => {
     res.end();
   } catch (error) {
     console.error("Error generating Excel:", error);
+    res.status(500).json({ error: "Failed to generate Excel" });
+  }
+});
+
+router.post("/survey", async (req, res) => {
+  try {
+    const {
+      company_name,
+      contact_person,
+      position,
+      email,
+      phone,
+      nature_of_business,
+      technologies,
+      engages_chinese_partners,
+      collaboration_types,
+      engagement_duration,
+      challenges,
+      support_needed,
+      future_interest,
+      interested_activities,
+      additional_comments
+    } = req.body;
+
+    if (!company_name || !contact_person || !position || !email || !phone || !engages_chinese_partners || !engagement_duration || !future_interest) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO wri_survey_responses 
+       (company_name, contact_person, position, email, phone, nature_of_business, technologies, engages_chinese_partners, collaboration_types, engagement_duration, challenges, support_needed, future_interest, interested_activities, additional_comments)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+       RETURNING *`,
+      [
+        company_name,
+        contact_person,
+        position,
+        email,
+        phone,
+        nature_of_business || [],
+        technologies || [],
+        engages_chinese_partners,
+        collaboration_types || [],
+        engagement_duration,
+        challenges || [],
+        support_needed || [],
+        future_interest,
+        interested_activities || [],
+        additional_comments || ""
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating survey response:", error);
+    res.status(500).json({ error: "Failed to submit survey" });
+  }
+});
+
+router.get("/admin/survey-responses", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM wri_survey_responses ORDER BY submitted_at DESC");
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching survey responses:", error);
+    res.status(500).json({ error: "Failed to fetch survey responses" });
+  }
+});
+
+router.get("/admin/survey-responses/excel", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM wri_survey_responses ORDER BY submitted_at DESC");
+    const responses = result.rows;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Survey Responses");
+
+    worksheet.columns = [
+      { header: "ID", key: "id" },
+      { header: "Company Name", key: "company_name" },
+      { header: "Contact Person", key: "contact_person" },
+      { header: "Position", key: "position" },
+      { header: "Email", key: "email" },
+      { header: "Phone", key: "phone" },
+      { header: "Nature of Business", key: "nature_of_business" },
+      { header: "Technologies", key: "technologies" },
+      { header: "Engages Chinese Partners", key: "engages_chinese_partners" },
+      { header: "Collaboration Types", key: "collaboration_types" },
+      { header: "Engagement Duration", key: "engagement_duration" },
+      { header: "Challenges", key: "challenges" },
+      { header: "Support Needed", key: "support_needed" },
+      { header: "Future Interest", key: "future_interest" },
+      { header: "Interested Activities", key: "interested_activities" },
+      { header: "Additional Comments", key: "additional_comments" },
+      { header: "Submitted At", key: "submitted_at" }
+    ];
+
+    worksheet.addRows(responses);
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename=wri-survey-responses-${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Error generating survey Excel:", error);
     res.status(500).json({ error: "Failed to generate Excel" });
   }
 });
