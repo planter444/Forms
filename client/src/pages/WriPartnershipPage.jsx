@@ -42,12 +42,12 @@ const WriNav = ({ settings, overHero = false }) => {
   const navItems = [
     { label: "About", href: "#about", to: null },
     { label: "Areas", href: "#areas", to: null },
-    { label: "Opportunities", href: "#opportunities", to: null },
+    { label: "B2B", href: "#opportunities", to: null },
     { label: "Enquiry", href: "#enquiry", to: null },
     { label: "Events", href: "#events", to: null },
     { label: "Partners", href: "#partners", to: null },
     { label: "Resources", href: "#resources", to: null },
-    { label: "Business Database", href: "#business-database", to: null }
+    { label: "Database", href: "#business-database", to: null }
   ];
 
   useEffect(() => {
@@ -119,27 +119,32 @@ const WriNav = ({ settings, overHero = false }) => {
           style={{ ...glassStyle, transform: navHidden ? "translateY(-150%)" : "translateY(0)" }}
         >
           <div className="flex items-center justify-between px-4 py-3 sm:px-6">
-            <Link
-              to="/solar-mkononi"
-              className="text-lg md:text-xl font-bold"
-              style={{ color: primaryColor }}
-            >
-              <span className="brand-char" style={{ animationDelay: "0s" }}>S</span>
-              <span className="brand-char" style={{ animationDelay: "0.15s" }}>o</span>
-              <span className="brand-char" style={{ animationDelay: "0.3s" }}>l</span>
-              <span className="brand-char" style={{ animationDelay: "0.45s" }}>a</span>
-              <span className="brand-char" style={{ animationDelay: "0.6s" }}>r</span>
+            <span className="text-lg md:text-xl font-bold" style={{ color: primaryColor }}>
+              <span className="brand-char" style={{ animationDelay: "0s" }}>A</span>
+              <span className="brand-char" style={{ animationDelay: "0.15s" }}>f</span>
+              <span className="brand-char" style={{ animationDelay: "0.3s" }}>r</span>
+              <span className="brand-char" style={{ animationDelay: "0.45s" }}>i</span>
+              <span className="brand-char" style={{ animationDelay: "0.6s" }}>c</span>
+              <span className="brand-char" style={{ animationDelay: "0.75s" }}>a</span>
+              <span className="mx-1">–</span>
+              <span className="brand-char" style={{ animationDelay: "0.9s" }}>C</span>
+              <span className="brand-char" style={{ animationDelay: "1.05s" }}>h</span>
+              <span className="brand-char" style={{ animationDelay: "1.2s" }}>i</span>
+              <span className="brand-char" style={{ animationDelay: "1.35s" }}>n</span>
+              <span className="brand-char" style={{ animationDelay: "1.5s" }}>a</span>
               <span className="mx-1"> </span>
-              <span className="brand-char" style={{ animationDelay: "0.75s" }}>M</span>
-              <span className="brand-char" style={{ animationDelay: "0.9s" }}>k</span>
-              <span className="brand-char" style={{ animationDelay: "1.05s" }}>o</span>
-              <span className="brand-char" style={{ animationDelay: "1.2s" }}>n</span>
-              <span className="brand-char" style={{ animationDelay: "1.35s" }}>o</span>
-              <span className="brand-char" style={{ animationDelay: "1.5s" }}>n</span>
-              <span className="brand-char" style={{ animationDelay: "1.65s" }}>i</span>
-            </Link>
-            <span className="hidden sm:inline mx-2 text-gray-300">|</span>
-            <span className="hidden sm:inline text-sm md:text-base font-semibold" style={{ color: primaryColor }}>Africa–China Partnership</span>
+              <span className="brand-char" style={{ animationDelay: "1.65s" }}>P</span>
+              <span className="brand-char" style={{ animationDelay: "1.8s" }}>a</span>
+              <span className="brand-char" style={{ animationDelay: "1.95s" }}>r</span>
+              <span className="brand-char" style={{ animationDelay: "2.1s" }}>t</span>
+              <span className="brand-char" style={{ animationDelay: "2.25s" }}>n</span>
+              <span className="brand-char" style={{ animationDelay: "2.4s" }}>e</span>
+              <span className="brand-char" style={{ animationDelay: "2.55s" }}>r</span>
+              <span className="brand-char" style={{ animationDelay: "2.7s" }}>s</span>
+              <span className="brand-char" style={{ animationDelay: "2.85s" }}>h</span>
+              <span className="brand-char" style={{ animationDelay: "3s" }}>i</span>
+              <span className="brand-char" style={{ animationDelay: "3.15s" }}>p</span>
+            </span>
 
             <nav className="hidden items-center gap-1 lg:flex">
               {navItems.map((item) =>
@@ -481,31 +486,31 @@ const WriPartnershipPage = () => {
     <div style={{ backgroundColor: "#f0fdf4", color: "#064e3b" }}>
       <WriNav settings={settings} overHero />
 
-      <section id="hero" className="relative min-h-screen flex flex-col justify-center px-4 overflow-hidden" style={{ backgroundImage: "linear-gradient(135deg, #059669 0%, #10b981 50%, #065f46 100%)" }}>
-        <div className="absolute inset-0" style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }} />
-        <div className="relative z-10 max-w-4xl mx-auto text-center text-white lg:mt-[6vh]">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 drop-shadow-lg">
-            Africa–China Renewable Energy Partnership
+      <section id="hero" className="relative min-h-screen flex flex-col justify-center px-4 overflow-hidden pt-20" style={{ backgroundImage: settings?.wri?.hero?.backgroundImageUrl ? `url(${settings.wri.hero.backgroundImageUrl})` : "linear-gradient(135deg, #059669 0%, #10b981 50%, #065f46 100%)", backgroundSize: "cover", backgroundPosition: "center" }}>
+        <div className="absolute inset-0" style={{ backgroundColor: `rgba(0, 0, 0, ${settings?.wri?.hero?.overlayOpacity ?? 0.3})` }} />
+        <div className="relative z-10 max-w-4xl mx-auto text-center text-white">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 drop-shadow-lg">
+            {settings?.wri?.hero?.title || "Africa–China Renewable Energy Partnership"}
           </h1>
-          <p className="text-xl md:text-2xl mb-6 max-w-3xl mx-auto drop-shadow-md">
-            Connecting Kenya's Renewable Energy Sector with Chinese Technology, Investment and Business Opportunities.
+          <p className="text-lg md:text-xl mb-6 max-w-3xl mx-auto drop-shadow-md">
+            {settings?.wri?.hero?.subtitle || "Connecting Kenya's Renewable Energy Sector with Chinese Technology, Investment and Business Opportunities."}
           </p>
-          <p className="text-lg md:text-xl mb-10 max-w-3xl mx-auto drop-shadow-md opacity-90">
-            A dedicated hub facilitating B2B linkages, partnership enquiries, events, business opportunities, knowledge sharing, and stakeholder engagement between Kenya and China in the renewable energy sector.
+          <p className="text-base md:text-lg mb-10 max-w-3xl mx-auto drop-shadow-md opacity-90">
+            {settings?.wri?.hero?.introduction || "A dedicated hub facilitating B2B linkages, partnership enquiries, events, business opportunities, knowledge sharing, and stakeholder engagement between Kenya and China in the renewable energy sector."}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => scrollToSection("enquiry")}
-              className="px-8 py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
+              className="px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
               style={{ backgroundColor: "#ffffff", color: "#059669" }}
             >
-              Make a Partnership Enquiry
+              {settings?.wri?.hero?.primaryCta || "Make a Partnership Enquiry"}
             </button>
             <button
               onClick={() => scrollToSection("business-database")}
-              className="px-8 py-4 rounded-full font-bold border-2 border-white text-white transition hover:scale-105 backdrop-blur-sm"
+              className="px-6 py-3 md:px-8 md:py-4 rounded-full font-bold border-2 border-white text-white transition hover:scale-105 backdrop-blur-sm"
             >
-              Browse Business Database
+              {settings?.wri?.hero?.secondaryCta || "Browse Business Database"}
             </button>
           </div>
         </div>
@@ -519,7 +524,7 @@ const WriPartnershipPage = () => {
               The Kenya–China Renewable Energy Partnership focuses on strengthening collaboration across key areas:
             </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             {[
               "Kenya–China B2B linkages",
               "Technology transfer",
@@ -592,7 +597,7 @@ const WriPartnershipPage = () => {
               Discover the types of partnership and business opportunities available through this platform.
             </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             {b2bOpportunities.map((opportunity, index) => (
               <div key={index} className="flex items-center space-x-3 rounded-2xl bg-white p-4 shadow-sm hover:shadow-md transition-all">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full text-white font-bold text-lg" style={{ backgroundColor: "#059669" }}>
@@ -778,27 +783,49 @@ const WriPartnershipPage = () => {
           {events.length === 0 ? (
             <p className="text-center py-8" style={{ color: "#065f46" }}>No events scheduled at this time.</p>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2">
               {events.map((event) => (
-                <div key={event.id} className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-lg transition-all" style={{ borderColor: "#a7f3d0" }}>
-                  {event.image_url && (
-                    <img src={event.image_url} alt={event.title} className="h-48 w-full rounded-xl object-cover" />
-                  )}
-                  <h3 className="mt-4 text-xl font-semibold" style={{ color: "#064e3b" }}>{event.title}</h3>
-                  <p className="mt-2 text-sm" style={{ color: "#065f46" }}>{formatDate(event.event_date)}</p>
-                  <p className="mt-1 text-sm" style={{ color: "#065f46" }}>{event.location}</p>
-                  <p className="mt-3" style={{ color: "#064e3b" }}>{event.description}</p>
-                  {event.registration_link && (
-                    <a
-                      href={event.registration_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 inline-block rounded-full px-6 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                      style={{ backgroundColor: "#059669" }}
-                    >
-                      Register
-                    </a>
-                  )}
+                <div key={event.id} className="rounded-2xl border bg-white shadow-sm hover:shadow-lg transition-all overflow-hidden" style={{ borderColor: "#a7f3d0" }}>
+                  <div className="h-48 flex items-center justify-center" style={{ backgroundColor: "#f0fdf4" }}>
+                    {event.image_url ? (
+                      <img src={event.image_url} alt={event.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="text-center" style={{ color: "#065f46" }}>
+                        <svg className="w-16 h-16 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-sm opacity-50">Event Image</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold" style={{ color: "#064e3b" }}>{event.title}</h3>
+                    <div className="mt-2 flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {formatDate(event.event_date)}
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {event.location}
+                    </div>
+                    <p className="mt-3 text-sm" style={{ color: "#064e3b" }}>{event.description}</p>
+                    {event.registration_link && (
+                      <a
+                        href={event.registration_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-block rounded-full px-6 py-2 text-sm font-semibold text-white transition hover:scale-105"
+                        style={{ backgroundColor: "#059669" }}
+                      >
+                        Register Now
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -819,18 +846,24 @@ const WriPartnershipPage = () => {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {partners.map((partner) => (
-                <div key={partner.id} className="rounded-2xl border p-6 shadow-sm text-center hover:shadow-lg transition-all" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                  {partner.logo_url && (
-                    <img src={partner.logo_url} alt={partner.name} className="mx-auto h-24 w-24 object-contain" />
-                  )}
+                <div key={partner.id} className="rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center text-center" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                  <div className="h-24 w-24 flex items-center justify-center rounded-full" style={{ backgroundColor: "#ffffff" }}>
+                    {partner.logo_url ? (
+                      <img src={partner.logo_url} alt={partner.name} className="h-20 w-20 object-contain" />
+                    ) : (
+                      <svg className="w-12 h-12" style={{ color: "#065f46", opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    )}
+                  </div>
                   <h3 className="mt-4 font-semibold" style={{ color: "#064e3b" }}>{partner.name}</h3>
                   {partner.website_url && (
                     <a
                       href={partner.website_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2 inline-block text-sm font-medium transition hover:scale-105"
-                      style={{ color: "#059669" }}
+                      className="mt-3 inline-block rounded-full px-4 py-2 text-sm font-medium text-white transition hover:scale-105"
+                      style={{ backgroundColor: "#059669" }}
                     >
                       Visit Website
                     </a>
@@ -853,36 +886,48 @@ const WriPartnershipPage = () => {
           {resources.length === 0 ? (
             <p className="text-center py-8" style={{ color: "#065f46" }}>No resources available at this time.</p>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2">
               {resources.map((resource) => (
                 <div key={resource.id} className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-lg transition-all" style={{ borderColor: "#a7f3d0" }}>
-                  <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "#f0fdf4", color: "#065f46" }}>
-                    {resource.resource_type}
-                  </span>
-                  <h3 className="mt-4 text-lg font-semibold" style={{ color: "#064e3b" }}>{resource.title}</h3>
-                  <p className="mt-2" style={{ color: "#065f46" }}>{resource.description}</p>
-                  {resource.file_url && (
-                    <a
-                      href={resource.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 inline-block rounded-full px-6 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                      style={{ backgroundColor: "#059669" }}
-                    >
-                      Download
-                    </a>
-                  )}
-                  {resource.external_url && (
-                    <a
-                      href={resource.external_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 inline-block rounded-full px-6 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                      style={{ backgroundColor: "#6b7280" }}
-                    >
-                      View Resource
-                    </a>
-                  )}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "#f0fdf4", color: "#065f46" }}>
+                        {resource.resource_type}
+                      </span>
+                      <h3 className="mt-3 text-lg font-semibold" style={{ color: "#064e3b" }}>{resource.title}</h3>
+                      <p className="mt-2 text-sm" style={{ color: "#065f46" }}>{resource.description}</p>
+                    </div>
+                    <div className="ml-4 flex flex-col gap-2">
+                      {resource.file_url && (
+                        <a
+                          href={resource.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:scale-105"
+                          style={{ backgroundColor: "#059669" }}
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          Download
+                        </a>
+                      )}
+                      {resource.external_url && (
+                        <a
+                          href={resource.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:scale-105"
+                          style={{ backgroundColor: "#6b7280" }}
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          View
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

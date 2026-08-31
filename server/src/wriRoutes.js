@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { pool } from "./db.js";
+import ExcelJS from "exceljs";
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -10,10 +11,31 @@ router.get("/public/settings", async (req, res) => {
     const result = await pool.query("SELECT settings FROM solar_mkononi_settings WHERE id = 'default'");
     const settings = result.rows[0]?.settings || {};
     const wriSettings = settings.wri || {};
-    res.json(wriSettings);
+    res.json({ wri: wriSettings });
   } catch (error) {
     console.error("Error fetching WRI settings:", error);
     res.status(500).json({ error: "Failed to fetch WRI settings" });
+  }
+});
+
+router.put("/admin/settings", async (req, res) => {
+  try {
+    const { wri } = req.body;
+    
+    const result = await pool.query("SELECT settings FROM solar_mkononi_settings WHERE id = 'default'");
+    const settings = result.rows[0]?.settings || {};
+    
+    settings.wri = wri;
+    
+    await pool.query(
+      "UPDATE solar_mkononi_settings SET settings = $1 WHERE id = 'default'",
+      [settings]
+    );
+    
+    res.json({ success: true, wri });
+  } catch (error) {
+    console.error("Error updating WRI settings:", error);
+    res.status(500).json({ error: "Failed to update WRI settings" });
   }
 });
 
@@ -87,12 +109,49 @@ router.put("/admin/enquiries/:id", async (req, res) => {
 
 router.delete("/admin/enquiries/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    await pool.query("DELETE FROM wri_partnership_enquiries WHERE id = $1", [id]);
-    res.status(204).send();
+    await pool.query("DELETE FROM wri_partnership_enquiries WHERE id = $1", [req.params.id]);
+    res.json({ success: true });
   } catch (error) {
-    console.error("Error deleting WRI enquiry:", error);
+    console.error("Error deleting enquiry:", error);
     res.status(500).json({ error: "Failed to delete enquiry" });
+  }
+});
+
+router.get("/admin/enquiries/excel", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM wri_partnership_enquiries ORDER BY created_at DESC");
+    const enquiries = result.rows;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Enquiries");
+
+    worksheet.columns = [
+      { header: "ID", key: "id" },
+      { header: "Name", key: "name" },
+      { header: "Organisation", key: "organisation" },
+      { header: "Country", key: "country" },
+      { header: "Email", key: "email" },
+      { header: "Phone", key: "phone" },
+      { header: "Organisation Type", key: "organisation_type" },
+      { header: "Technology Sector", key: "technology_sector" },
+      { header: "Area of Interest", key: "area_of_interest" },
+      { header: "Enquiry Type", key: "enquiry_type" },
+      { header: "Message", key: "message" },
+      { header: "Attachment", key: "attachment_name" },
+      { header: "Status", key: "status" },
+      { header: "Created At", key: "created_at" }
+    ];
+
+    worksheet.addRows(enquiries);
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename=wri-enquiries-${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Error generating Excel:", error);
+    res.status(500).json({ error: "Failed to generate Excel" });
   }
 });
 

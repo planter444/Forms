@@ -3,7 +3,18 @@ import { useEffect, useState } from "react";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
-  const [activeSubTab, setActiveSubTab] = useState("enquiries");
+  const [activeSubTab, setActiveSubTab] = useState("hero");
+  const [wriSettings, setWriSettings] = useState({
+    hero: {
+      title: "Africa–China Renewable Energy Partnership",
+      subtitle: "Connecting Kenya's Renewable Energy Sector with Chinese Technology, Investment and Business Opportunities.",
+      introduction: "This dedicated hub facilitates B2B linkages, partnership enquiries, events, business opportunities, knowledge sharing, and stakeholder engagement between Kenya and China in the renewable energy sector.",
+      primaryCta: "Make a Partnership Enquiry",
+      secondaryCta: "Browse Business Database",
+      backgroundImageUrl: "",
+      overlayOpacity: 0.3
+    }
+  });
   const [enquiries, setEnquiries] = useState([]);
   const [businesses, setBusinesses] = useState([]);
   const [events, setEvents] = useState([]);
@@ -71,12 +82,43 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
   const [editingItem, setEditingItem] = useState(null);
 
   useEffect(() => {
+    fetchWriSettings();
     fetchEnquiries();
     fetchBusinesses();
     fetchEvents();
     fetchPartners();
     fetchResources();
   }, []);
+
+  const fetchWriSettings = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/public/settings`);
+      const data = await response.json();
+      if (data.wri) {
+        setWriSettings(data.wri);
+      }
+    } catch (error) {
+      console.error("Error fetching WRI settings:", error);
+    }
+  };
+
+  const handleSaveWriSettings = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/settings`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ wri: wriSettings })
+      });
+      if (response.ok) {
+        setNotice("WRI settings saved successfully");
+      }
+    } catch (error) {
+      setError("Failed to save WRI settings");
+    }
+  };
 
   const fetchEnquiries = async () => {
     try {
@@ -170,6 +212,28 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
       }
     } catch (error) {
       setError("Failed to delete enquiry");
+    }
+  };
+
+  const handleDownloadEnquiriesExcel = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/enquiries/excel`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `wri-enquiries-${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setNotice("Excel downloaded successfully");
+      }
+    } catch (error) {
+      setError("Failed to download Excel");
     }
   };
 
@@ -394,11 +458,11 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
     <div className="space-y-6">
       <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
         <h2 className="text-2xl font-semibold" style={{ color: palette.textColor }}>Africa–China Renewable Energy Partnership Admin</h2>
-        <p className="mt-2 text-sm" style={{ color: palette.mutedTextColor }}>Manage enquiries, businesses, events, partners, and resources.</p>
+        <p className="mt-2 text-sm" style={{ color: palette.mutedTextColor }}>Manage hero content, enquiries, businesses, events, partners, and resources.</p>
       </div>
 
       <div className="flex gap-2 border-b" style={{ borderColor: palette.borderColor }}>
-        {["enquiries", "businesses", "events", "partners", "resources"].map((tab) => (
+        {["hero", "enquiries", "businesses", "events", "partners", "resources"].map((tab) => (
           <button
             key={tab}
             onClick={() => {
@@ -416,9 +480,106 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
         ))}
       </div>
 
+      {activeSubTab === "hero" && (
+        <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+          <h3 className="text-lg font-semibold" style={{ color: palette.textColor }}>Hero Section</h3>
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Title</label>
+              <input
+                type="text"
+                value={wriSettings.hero.title}
+                onChange={(e) => setWriSettings({ ...wriSettings, hero: { ...wriSettings.hero, title: e.target.value } })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Subtitle</label>
+              <textarea
+                value={wriSettings.hero.subtitle}
+                onChange={(e) => setWriSettings({ ...wriSettings, hero: { ...wriSettings.hero, subtitle: e.target.value } })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                rows={2}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Introduction</label>
+              <textarea
+                value={wriSettings.hero.introduction}
+                onChange={(e) => setWriSettings({ ...wriSettings, hero: { ...wriSettings.hero, introduction: e.target.value } })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                rows={3}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Primary CTA Button Text</label>
+              <input
+                type="text"
+                value={wriSettings.hero.primaryCta}
+                onChange={(e) => setWriSettings({ ...wriSettings, hero: { ...wriSettings.hero, primaryCta: e.target.value } })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Secondary CTA Button Text</label>
+              <input
+                type="text"
+                value={wriSettings.hero.secondaryCta}
+                onChange={(e) => setWriSettings({ ...wriSettings, hero: { ...wriSettings.hero, secondaryCta: e.target.value } })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Image URL</label>
+              <input
+                type="url"
+                value={wriSettings.hero.backgroundImageUrl}
+                onChange={(e) => setWriSettings({ ...wriSettings, hero: { ...wriSettings.hero, backgroundImageUrl: e.target.value } })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Overlay Opacity ({Math.round(wriSettings.hero.overlayOpacity * 100)}%)</label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                className="w-full"
+                value={wriSettings.hero.overlayOpacity}
+                onChange={(e) => setWriSettings({ ...wriSettings, hero: { ...wriSettings.hero, overlayOpacity: Number(e.target.value) } })}
+              />
+            </div>
+            <button
+              onClick={handleSaveWriSettings}
+              className="w-full rounded-lg py-2 text-sm font-semibold text-white"
+              style={{ backgroundColor: palette.primary }}
+            >
+              Save Hero Settings
+            </button>
+          </div>
+        </div>
+      )}
+
       {activeSubTab === "enquiries" && (
         <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
-          <h3 className="text-lg font-semibold" style={{ color: palette.textColor }}>Partnership Enquiries</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold" style={{ color: palette.textColor }}>Partnership Enquiries</h3>
+            <button
+              onClick={handleDownloadEnquiriesExcel}
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-white"
+              style={{ backgroundColor: palette.primary }}
+            >
+              Download Excel
+            </button>
+          </div>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

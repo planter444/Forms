@@ -428,7 +428,10 @@ export const defaultSolarMkononiSettings = {
       title: "Africa–China Renewable Energy Partnership",
       subtitle: "Connecting Kenya's Renewable Energy Sector with Chinese Technology, Investment and Business Opportunities.",
       introduction: "This dedicated hub facilitates B2B linkages, partnership enquiries, events, business opportunities, knowledge sharing, and stakeholder engagement between Kenya and China in the renewable energy sector.",
-      primaryCta: "Make a Partnership Enquiry"
+      primaryCta: "Make a Partnership Enquiry",
+      secondaryCta: "Browse Business Database",
+      backgroundImageUrl: "",
+      overlayOpacity: 0.3
     },
     about: {
       title: "About the Partnership",
