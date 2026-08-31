@@ -9,6 +9,7 @@ import SolarMkononiPage from "./pages/SolarMkononiPage.jsx";
 import SolarResourceLibraryPage from "./pages/SolarResourceLibraryPage.jsx";
 import MarketplaceVendorLandingPage from "./pages/MarketplaceVendorLandingPage.jsx";
 import MarketplaceVendorFormPage from "./pages/MarketplaceVendorFormPage.jsx";
+import WriPartnershipPage from "./pages/WriPartnershipPage.jsx";
 
 const isMobileViewport = () =>
   typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)").matches : false;
@@ -55,6 +56,7 @@ const App = () => {
         <Route path="/solar/resource-library" element={<SolarResourceLibraryPage />} />
         <Route path="/marketplace" element={<MarketplaceVendorLandingPage />} />
         <Route path="/marketplace/apply" element={<MarketplaceVendorFormPage />} />
+        <Route path="/wri" element={<WriPartnershipPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </PageTransition>

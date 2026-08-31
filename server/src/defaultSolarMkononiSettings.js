@@ -420,5 +420,115 @@ export const defaultSolarMkononiSettings = {
     partners: true,
     contact: true,
     footer: true
+  },
+
+  wri: {
+    enabled: true,
+    hero: {
+      title: "Africa–China Renewable Energy Partnership",
+      subtitle: "Connecting Kenya's Renewable Energy Sector with Chinese Technology, Investment and Business Opportunities.",
+      introduction: "This dedicated hub facilitates B2B linkages, partnership enquiries, events, business opportunities, knowledge sharing, and stakeholder engagement between Kenya and China in the renewable energy sector.",
+      primaryCta: "Make a Partnership Enquiry"
+    },
+    about: {
+      title: "About the Partnership",
+      description: "The Kenya–China Renewable Energy Partnership focuses on strengthening collaboration across key areas:",
+      focusAreas: [
+        "Kenya–China B2B linkages",
+        "Technology transfer",
+        "Investment opportunities",
+        "Local manufacturing and assembly",
+        "Skills development",
+        "Standards and quality assurance",
+        "Renewable energy collaboration"
+      ]
+    },
+    technologyAreas: [
+      { id: "solar", title: "Solar", description: "Solar PV systems, components, and manufacturing" },
+      { id: "energy-storage", title: "Energy Storage", description: "Battery systems and energy storage solutions" },
+      { id: "e-mobility", title: "E-Mobility", description: "Electric vehicles and charging infrastructure" },
+      { id: "pure", title: "Productive Use of Renewable Energy (PURE)", description: "Solar-powered appliances and productive equipment" },
+      { id: "green-manufacturing", title: "Green Manufacturing", description: "Sustainable manufacturing and assembly" },
+      { id: "other", title: "Other Renewable Energy Technologies", description: "Wind, hydro, biomass, and other clean energy tech" }
+    ],
+    b2bOpportunities: [
+      "Technology partnerships",
+      "Suppliers/distributors",
+      "Investment",
+      "Financing",
+      "Manufacturing/assembly",
+      "Technical partnerships",
+      "Market entry"
+    ],
+    enquiry: {
+      title: "Partnership Enquiry",
+      description: "Submit your enquiry to explore partnership opportunities with Chinese renewable energy companies and stakeholders.",
+      organisationTypes: [
+        "Company",
+        "Government Agency",
+        "Research Institution",
+        "NGO/Non-profit",
+        "Financial Institution",
+        "Development Partner",
+        "Industry Association",
+        "Other"
+      ],
+      technologySectors: [
+        "Solar PV",
+        "Energy Storage",
+        "E-Mobility",
+        "PURE",
+        "Green Manufacturing",
+        "Wind",
+        "Hydro",
+        "Biomass",
+        "Other"
+      ],
+      areasOfInterest: [
+        "Technology Transfer",
+        "Investment Opportunities",
+        "Market Entry",
+        "Manufacturing Partnership",
+        "Distribution Partnership",
+        "Technical Collaboration",
+        "Skills Development",
+        "Standards & Quality Assurance",
+        "Policy & Regulation",
+        "Other"
+      ],
+      enquiryTypes: [
+        "General Enquiry",
+        "Partnership Proposal",
+        "Investment Inquiry",
+        "Technology Inquiry",
+        "Market Information",
+        "Event Participation",
+        "Other"
+      ]
+    },
+    events: {
+      title: "Events",
+      description: "Stay updated on upcoming Kenya–China partnership events and activities."
+    },
+    partners: {
+      title: "Partners & Stakeholders",
+      description: "Approved organisations and partners participating in the Kenya–China Renewable Energy Partnership."
+    },
+    resources: {
+      title: "Resources",
+      description: "Access reports, policy briefs, research, publications, and event reports.",
+      resourceTypes: [
+        "Report",
+        "Policy Brief",
+        "Research",
+        "Publication",
+        "Event Report",
+        "Other"
+      ]
+    },
+    businessDatabase: {
+      title: "Business Database",
+      description: "Search the directory of participating businesses approved for public display."
+    }
   }
 };

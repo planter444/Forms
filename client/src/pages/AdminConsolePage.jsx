@@ -31,6 +31,7 @@ import {
 import BrandLogo from "../components/BrandLogo.jsx";
 import SolarResourceLibraryAdmin from "../components/SolarResourceLibraryAdmin.jsx";
 import MarketplaceVendorAdmin from "../components/MarketplaceVendorAdmin.jsx";
+import WriPartnershipAdmin from "../components/WriPartnershipAdmin.jsx";
 import { categories } from "../data/formOptions.js";
 import {
   downloadSubmissionsJson,
@@ -275,7 +276,8 @@ const tabs = [
   { id: "responses", label: "Responses" },
   { id: "solar-mkononi", label: "Solar Mkononi" },
   { id: "resource-library", label: "Resource library" },
-  { id: "marketplace", label: "Marketplace vendors" }
+  { id: "marketplace", label: "Marketplace vendors" },
+  { id: "wri", label: "WRI Partnership" }
 ];
 
 const cardClass = "rounded-[28px] border p-5 shadow-sm";
@@ -1115,6 +1117,10 @@ const AdminConsolePage = () => {
 
             {activeTab === "marketplace" ? (
               <MarketplaceVendorAdmin token={token} />
+            ) : null}
+
+            {activeTab === "wri" ? (
+              <WriPartnershipAdmin token={token} palette={palette} setNotice={setNotice} setError={setError} />
             ) : null}
 
             {activeTab === "content" ? (

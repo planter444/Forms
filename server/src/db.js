@@ -241,6 +241,118 @@ export const initializeDatabase = async () => {
         ON resource_library_downloads (resource_id, downloaded_at);
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS wri_partnership_enquiries (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        organisation TEXT NOT NULL,
+        country TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT DEFAULT '',
+        organisation_type TEXT NOT NULL,
+        technology_sector TEXT NOT NULL,
+        area_of_interest TEXT NOT NULL,
+        enquiry_type TEXT NOT NULL,
+        message TEXT NOT NULL,
+        attachment_url TEXT DEFAULT '',
+        attachment_name TEXT DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS wri_enquiries_status_index
+        ON wri_partnership_enquiries (status, created_at DESC);
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS wri_businesses (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        country TEXT NOT NULL,
+        technology TEXT NOT NULL,
+        organisation_type TEXT NOT NULL,
+        nature_of_business TEXT NOT NULL,
+        partnership_interest TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        logo_url TEXT DEFAULT '',
+        website_url TEXT DEFAULT '',
+        contact_email TEXT DEFAULT '',
+        contact_phone TEXT DEFAULT '',
+        is_approved BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS wri_businesses_approved_index
+        ON wri_businesses (is_approved, country, technology);
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS wri_events (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        event_date DATE NOT NULL,
+        location TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        image_url TEXT DEFAULT '',
+        registration_link TEXT DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'upcoming',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS wri_events_status_date_index
+        ON wri_events (status, event_date);
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS wri_partners (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        logo_url TEXT DEFAULT '',
+        website_url TEXT DEFAULT '',
+        description TEXT DEFAULT '',
+        is_approved BOOLEAN NOT NULL DEFAULT false,
+        display_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS wri_partners_approved_index
+        ON wri_partners (is_approved, display_order);
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS wri_resources (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        resource_type TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        file_url TEXT DEFAULT '',
+        file_name TEXT DEFAULT '',
+        file_size BIGINT NOT NULL DEFAULT 0,
+        external_url TEXT DEFAULT '',
+        is_published BOOLEAN NOT NULL DEFAULT true,
+        download_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS wri_resources_published_index
+        ON wri_resources (is_published, resource_type);
+    `);
+
     await pool.query(`ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_email_key;`);
     await pool.query(`DROP INDEX IF EXISTS submissions_phone_number_unique;`);
     await pool.query(`CREATE INDEX IF NOT EXISTS submissions_email_index ON submissions (email);`);

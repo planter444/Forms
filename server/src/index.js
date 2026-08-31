@@ -18,6 +18,7 @@ import {
 } from "./solarMkononiSettingsStore.js";
 import resourceLibraryRouter from "./resourceLibraryRoutes.js";
 import marketplaceRouter from "./marketplaceRoutes.js";
+import wriRouter from "./wriRoutes.js";
 import { escapeCsvValue, sanitizeSubmissionInput, validateSubmission } from "./validators.js";
 
 dotenv.config();
@@ -239,6 +240,7 @@ app.post("/api/admin/media", requireAdmin, upload.single("file"), async (request
 
 app.use("/api/solar-library", resourceLibraryRouter);
 app.use("/api/marketplace", marketplaceRouter);
+app.use("/api/wri", wriRouter);
 
 app.post("/api/submissions", submissionLimiter, async (request, response) => {
   if (!(await requireDatabase(response))) {
