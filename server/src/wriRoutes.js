@@ -2,6 +2,8 @@ import express from "express";
 import multer from "multer";
 import { pool } from "./db.js";
 import ExcelJS from "exceljs";
+import fs from "fs";
+import path from "path";
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -49,9 +51,6 @@ router.post("/admin/upload", upload.single("file"), async (req, res) => {
     const fileName = `${type}-${Date.now()}-${req.file.originalname}`;
     const filePath = `/uploads/wri/${fileName}`;
 
-    const fs = require("fs");
-    const path = require("path");
-    
     const uploadsDir = path.join(process.cwd(), "public", "uploads", "wri");
     console.log("Upload directory:", uploadsDir);
     
