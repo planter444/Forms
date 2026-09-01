@@ -517,7 +517,7 @@ const WriPartnershipPage = () => {
     <div style={{ backgroundColor: "#f0fdf4", color: "#064e3b" }}>
       <WriNav settings={settings} overHero />
 
-      <section id="hero" className="relative min-h-screen flex flex-col justify-center px-4 overflow-hidden pt-20" style={{ backgroundImage: settings?.wri?.hero?.backgroundImageUrl ? `url(${settings.wri.hero.backgroundImageUrl})` : "linear-gradient(135deg, #059669 0%, #10b981 50%, #065f46 100%)", backgroundSize: "cover", backgroundPosition: "center" }}>
+      <section id="hero" className="relative min-h-screen flex flex-col justify-center px-4 overflow-hidden pt-20" style={{ backgroundImage: settings?.wri?.hero?.backgroundImageUrl ? `url(${settings?.wri?.hero?.backgroundImageUrl})` : "linear-gradient(135deg, #059669 0%, #10b981 50%, #065f46 100%)", backgroundSize: "cover", backgroundPosition: "center" }}>
         <div className="absolute inset-0" style={{ backgroundColor: `rgba(0, 0, 0, ${settings?.wri?.hero?.overlayOpacity ?? 0.3})` }} />
         <div className="relative z-10 max-w-4xl mx-auto text-center text-white">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 drop-shadow-lg">
