@@ -53,16 +53,21 @@ router.post("/admin/upload", upload.single("file"), async (req, res) => {
     const path = require("path");
     
     const uploadsDir = path.join(process.cwd(), "public", "uploads", "wri");
+    console.log("Upload directory:", uploadsDir);
+    
     if (!fs.existsSync(uploadsDir)) {
+      console.log("Creating upload directory:", uploadsDir);
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    fs.writeFileSync(path.join(process.cwd(), "public", filePath), req.file.buffer);
+    const fullPath = path.join(process.cwd(), "public", filePath);
+    console.log("Writing file to:", fullPath);
+    fs.writeFileSync(fullPath, req.file.buffer);
 
     res.json({ url: filePath });
   } catch (error) {
     console.error("Error uploading file:", error);
-    res.status(500).json({ error: "Failed to upload file" });
+    res.status(500).json({ error: "Failed to upload file: " + error.message });
   }
 });
 
