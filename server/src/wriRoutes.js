@@ -8,7 +8,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 router.get("/public/settings", async (req, res) => {
   try {
-    const result = await pool.query("SELECT settings FROM solar_mkononi_settings WHERE id = 'default'");
+    const result = await pool.query("SELECT settings FROM site_settings WHERE id = 'default'");
     const settings = result.rows[0]?.settings || {};
     const wriSettings = settings.wri || {};
     res.json({ wri: wriSettings });
@@ -22,13 +22,13 @@ router.put("/admin/settings", async (req, res) => {
   try {
     const { wri } = req.body;
     
-    const result = await pool.query("SELECT settings FROM solar_mkononi_settings WHERE id = 'default'");
+    const result = await pool.query("SELECT settings FROM site_settings WHERE id = 'default'");
     const settings = result.rows[0]?.settings || {};
     
     settings.wri = wri;
     
     await pool.query(
-      "UPDATE solar_mkononi_settings SET settings = $1 WHERE id = 'default'",
+      "UPDATE site_settings SET settings = $1 WHERE id = 'default'",
       [settings]
     );
     
