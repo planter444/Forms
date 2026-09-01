@@ -84,6 +84,24 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
   });
   const [resourceFile, setResourceFile] = useState(null);
 
+  const [surveyForm, setSurveyForm] = useState({
+    company_name: "",
+    contact_person: "",
+    position: "",
+    email: "",
+    phone: "",
+    nature_of_business: [],
+    technologies: [],
+    engages_chinese_partners: "",
+    collaboration_types: [],
+    engagement_duration: "",
+    challenges: [],
+    support_needed: [],
+    future_interest: "",
+    interested_activities: [],
+    additional_comments: ""
+  });
+
   const [editingItem, setEditingItem] = useState(null);
 
   const fetchSurveyResponses = async () => {
@@ -117,6 +135,64 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
       }
     } catch (error) {
       setError("Failed to download Excel");
+    }
+  };
+
+  const handleSaveSurvey = async () => {
+    if (!editingItem) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/survey-responses/${editingItem.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(surveyForm)
+      });
+      if (response.ok) {
+        setNotice("Survey response updated");
+        setSurveyForm({
+          company_name: "",
+          contact_person: "",
+          position: "",
+          email: "",
+          phone: "",
+          nature_of_business: [],
+          technologies: [],
+          engages_chinese_partners: "",
+          collaboration_types: [],
+          engagement_duration: "",
+          challenges: [],
+          support_needed: [],
+          future_interest: "",
+          interested_activities: [],
+          additional_comments: ""
+        });
+        setEditingItem(null);
+        fetchSurveyResponses();
+      }
+    } catch (error) {
+      setError("Failed to save survey response");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSurvey = async (id) => {
+    if (!confirm("Are you sure you want to delete this survey response?")) return;
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/survey-responses/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        setNotice("Survey response deleted");
+        fetchSurveyResponses();
+      }
+    } catch (error) {
+      setError("Failed to delete survey response");
     }
   };
 
@@ -160,6 +236,10 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
           imageUrl = uploadData.url;
+        } else {
+          console.error("Upload failed:", uploadResponse.status);
+          setError("Failed to upload image");
+          return;
         }
       }
       
@@ -171,13 +251,19 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
         },
         body: JSON.stringify({ wri: { ...wriSettings, hero: { ...wriSettings.hero, backgroundImageUrl: imageUrl } } })
       });
+      
       if (response.ok) {
         setNotice("WRI settings saved successfully");
         setHeroImageFile(null);
         fetchWriSettings();
         window.location.reload();
+      } else {
+        const errorData = await response.json();
+        console.error("Save failed:", errorData);
+        setError(errorData.error || "Failed to save WRI settings");
       }
     } catch (error) {
+      console.error("Error saving WRI settings:", error);
       setError("Failed to save WRI settings");
     }
   };
@@ -1201,30 +1287,183 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
               Download Excel
             </button>
           </div>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b" style={{ borderColor: palette.borderColor }}>
-                  <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Company</th>
-                  <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Contact</th>
-                  <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Email</th>
-                  <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Engages Chinese Partners</th>
-                  <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Submitted At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {surveyResponses.map((response) => (
-                  <tr key={response.id} className="border-b" style={{ borderColor: palette.borderColor }}>
-                    <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.company_name}</td>
-                    <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.contact_person}</td>
-                    <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.email}</td>
-                    <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.engages_chinese_partners}</td>
-                    <td className="px-4 py-2" style={{ color: palette.textColor }}>{new Date(response.submitted_at).toLocaleDateString()}</td>
+          {editingItem ? (
+            <div className="mt-4 space-y-3">
+              <h4 className="text-md font-medium" style={{ color: palette.textColor }}>Edit Survey Response</h4>
+              <input
+                type="text"
+                placeholder="Company Name"
+                value={surveyForm.company_name}
+                onChange={(e) => setSurveyForm({ ...surveyForm, company_name: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <input
+                type="text"
+                placeholder="Contact Person"
+                value={surveyForm.contact_person}
+                onChange={(e) => setSurveyForm({ ...surveyForm, contact_person: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <input
+                type="text"
+                placeholder="Position"
+                value={surveyForm.position}
+                onChange={(e) => setSurveyForm({ ...surveyForm, position: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={surveyForm.email}
+                onChange={(e) => setSurveyForm({ ...surveyForm, email: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <input
+                type="text"
+                placeholder="Phone"
+                value={surveyForm.phone}
+                onChange={(e) => setSurveyForm({ ...surveyForm, phone: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <select
+                value={surveyForm.engages_chinese_partners}
+                onChange={(e) => setSurveyForm({ ...surveyForm, engages_chinese_partners: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              >
+                <option value="">Select option</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+                <option value="Planning to">Planning to</option>
+              </select>
+              <select
+                value={surveyForm.engagement_duration}
+                onChange={(e) => setSurveyForm({ ...surveyForm, engagement_duration: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              >
+                <option value="">Select duration</option>
+                <option value="Less than 1 year">Less than 1 year</option>
+                <option value="1-3 years">1-3 years</option>
+                <option value="3-5 years">3-5 years</option>
+                <option value="More than 5 years">More than 5 years</option>
+              </select>
+              <select
+                value={surveyForm.future_interest}
+                onChange={(e) => setSurveyForm({ ...surveyForm, future_interest: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              >
+                <option value="">Select interest level</option>
+                <option value="Very interested">Very interested</option>
+                <option value="Somewhat interested">Somewhat interested</option>
+                <option value="Not interested">Not interested</option>
+              </select>
+              <textarea
+                placeholder="Additional Comments"
+                value={surveyForm.additional_comments}
+                onChange={(e) => setSurveyForm({ ...surveyForm, additional_comments: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                rows={3}
+              />
+              <button
+                onClick={handleSaveSurvey}
+                disabled={loading}
+                className="w-full rounded-lg py-2 text-sm font-semibold text-white disabled:opacity-50"
+                style={{ backgroundColor: palette.primary }}
+              >
+                {loading ? "Saving..." : "Update Survey Response"}
+              </button>
+              <button
+                onClick={() => {
+                  setEditingItem(null);
+                  setSurveyForm({
+                    company_name: "",
+                    contact_person: "",
+                    position: "",
+                    email: "",
+                    phone: "",
+                    nature_of_business: [],
+                    technologies: [],
+                    engages_chinese_partners: "",
+                    collaboration_types: [],
+                    engagement_duration: "",
+                    challenges: [],
+                    support_needed: [],
+                    future_interest: "",
+                    interested_activities: [],
+                    additional_comments: ""
+                  });
+                }}
+                className="w-full rounded-lg border py-2 text-sm font-semibold"
+                style={{ borderColor: palette.borderColor, color: palette.textColor }}
+              >
+                Cancel Edit
+              </button>
+            </div>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b" style={{ borderColor: palette.borderColor }}>
+                    <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Company</th>
+                    <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Contact</th>
+                    <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Email</th>
+                    <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Engages Chinese Partners</th>
+                    <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Submitted At</th>
+                    <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {surveyResponses.map((response) => (
+                    <tr key={response.id} className="border-b" style={{ borderColor: palette.borderColor }}>
+                      <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.company_name}</td>
+                      <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.contact_person}</td>
+                      <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.email}</td>
+                      <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.engages_chinese_partners}</td>
+                      <td className="px-4 py-2" style={{ color: palette.textColor }}>{new Date(response.submitted_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingItem(response);
+                              setSurveyForm({
+                                ...response,
+                                nature_of_business: response.nature_of_business || [],
+                                technologies: response.technologies || [],
+                                collaboration_types: response.collaboration_types || [],
+                                challenges: response.challenges || [],
+                                support_needed: response.support_needed || [],
+                                interested_activities: response.interested_activities || []
+                              });
+                            }}
+                            className="text-xs text-blue-600 hover:underline"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSurvey(response.id)}
+                            className="text-xs text-red-600 hover:underline"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {surveyResponses.length === 0 && (
+                <p className="py-4 text-center" style={{ color: palette.mutedTextColor }}>No survey responses yet.</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

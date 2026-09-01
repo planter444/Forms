@@ -371,13 +371,19 @@ export const initializeDatabase = async () => {
         future_interest TEXT NOT NULL,
         interested_activities TEXT[] DEFAULT '{}',
         additional_comments TEXT DEFAULT '',
-        submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
     await pool.query(`
       CREATE INDEX IF NOT EXISTS wri_survey_responses_submitted_at_index
         ON wri_survey_responses (submitted_at DESC);
+    `);
+
+    await pool.query(`
+      ALTER TABLE wri_survey_responses
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
     `);
 
     await pool.query(`ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_email_key;`);

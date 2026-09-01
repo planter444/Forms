@@ -288,6 +288,76 @@ router.get("/admin/survey-responses/excel", async (req, res) => {
   }
 });
 
+router.put("/admin/survey-responses/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      company_name,
+      contact_person,
+      position,
+      email,
+      phone,
+      nature_of_business,
+      technologies,
+      engages_chinese_partners,
+      collaboration_types,
+      engagement_duration,
+      challenges,
+      support_needed,
+      future_interest,
+      interested_activities,
+      additional_comments
+    } = req.body;
+
+    const result = await pool.query(
+      `UPDATE wri_survey_responses 
+       SET company_name = $1, contact_person = $2, position = $3, email = $4, phone = $5, 
+           nature_of_business = $6, technologies = $7, engages_chinese_partners = $8, 
+           collaboration_types = $9, engagement_duration = $10, challenges = $11, 
+           support_needed = $12, future_interest = $13, interested_activities = $14, 
+           additional_comments = $15, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $16 RETURNING *`,
+      [
+        company_name,
+        contact_person,
+        position,
+        email,
+        phone,
+        nature_of_business || [],
+        technologies || [],
+        engages_chinese_partners,
+        collaboration_types || [],
+        engagement_duration,
+        challenges || [],
+        support_needed || [],
+        future_interest,
+        interested_activities || [],
+        additional_comments || "",
+        id
+      ]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Survey response not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error updating survey response:", error);
+    res.status(500).json({ error: "Failed to update survey response" });
+  }
+});
+
+router.delete("/admin/survey-responses/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM wri_survey_responses WHERE id = $1", [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting survey response:", error);
+    res.status(500).json({ error: "Failed to delete survey response" });
+  }
+});
+
 router.get("/public/businesses", async (req, res) => {
   try {
     const { country, technology, organisation_type, nature_of_business, partnership_interest } = req.query;

@@ -99,15 +99,6 @@ const WriNav = ({ settings, overHero = false }) => {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        .brand-char {
-          display: inline-block;
-          animation: colorShift 6s ease-in-out infinite;
-        }
-        @keyframes colorShift {
-          0%, 100% { color: #ffffff; }
-          33% { color: #10b981; }
-          66% { color: #0ea5e9; }
-        }
       `}</style>
       <div
         className={`left-0 right-0 z-50 px-4 ${overHero ? "absolute" : "sticky"} top-3 md:top-0`}
@@ -119,31 +110,8 @@ const WriNav = ({ settings, overHero = false }) => {
           style={{ ...glassStyle, transform: navHidden ? "translateY(-150%)" : "translateY(0)" }}
         >
           <div className="flex items-center justify-between px-4 py-3 sm:px-6">
-            <span className="text-lg md:text-xl font-bold" style={{ color: primaryColor }}>
-              <span className="brand-char" style={{ animationDelay: "0s" }}>A</span>
-              <span className="brand-char" style={{ animationDelay: "0.15s" }}>f</span>
-              <span className="brand-char" style={{ animationDelay: "0.3s" }}>r</span>
-              <span className="brand-char" style={{ animationDelay: "0.45s" }}>i</span>
-              <span className="brand-char" style={{ animationDelay: "0.6s" }}>c</span>
-              <span className="brand-char" style={{ animationDelay: "0.75s" }}>a</span>
-              <span className="mx-1">–</span>
-              <span className="brand-char" style={{ animationDelay: "0.9s" }}>C</span>
-              <span className="brand-char" style={{ animationDelay: "1.05s" }}>h</span>
-              <span className="brand-char" style={{ animationDelay: "1.2s" }}>i</span>
-              <span className="brand-char" style={{ animationDelay: "1.35s" }}>n</span>
-              <span className="brand-char" style={{ animationDelay: "1.5s" }}>a</span>
-              <span className="mx-1"> </span>
-              <span className="brand-char" style={{ animationDelay: "1.65s" }}>P</span>
-              <span className="brand-char" style={{ animationDelay: "1.8s" }}>a</span>
-              <span className="brand-char" style={{ animationDelay: "1.95s" }}>r</span>
-              <span className="brand-char" style={{ animationDelay: "2.1s" }}>t</span>
-              <span className="brand-char" style={{ animationDelay: "2.25s" }}>n</span>
-              <span className="brand-char" style={{ animationDelay: "2.4s" }}>e</span>
-              <span className="brand-char" style={{ animationDelay: "2.55s" }}>r</span>
-              <span className="brand-char" style={{ animationDelay: "2.7s" }}>s</span>
-              <span className="brand-char" style={{ animationDelay: "2.85s" }}>h</span>
-              <span className="brand-char" style={{ animationDelay: "3s" }}>i</span>
-              <span className="brand-char" style={{ animationDelay: "3.15s" }}>p</span>
+            <span className="text-lg md:text-xl font-bold whitespace-nowrap" style={{ color: primaryColor }}>
+              Africa–China Partnership
             </span>
 
             <nav className="hidden items-center gap-1 lg:flex">
