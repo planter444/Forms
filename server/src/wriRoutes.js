@@ -4,15 +4,32 @@ import { pool } from "./db.js";
 import ExcelJS from "exceljs";
 import fs from "fs";
 import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
+
+// Configure Cloudinary
+const cloudinaryConfigured = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+);
+
+if (cloudinaryConfigured) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+}
 
 router.get("/public/settings", async (req, res) => {
   try {
     const result = await pool.query("SELECT settings FROM site_settings WHERE id = 'default'");
     const settings = result.rows[0]?.settings || {};
     const wriSettings = settings.wri || {};
+    console.log("Fetched WRI settings from database:", wriSettings);
     res.json({ wri: wriSettings });
   } catch (error) {
     console.error("Error fetching WRI settings:", error);
@@ -23,16 +40,29 @@ router.get("/public/settings", async (req, res) => {
 router.put("/admin/settings", async (req, res) => {
   try {
     const { wri } = req.body;
+    console.log("Received WRI settings to save:", wri);
     
     const result = await pool.query("SELECT settings FROM site_settings WHERE id = 'default'");
     const settings = result.rows[0]?.settings || {};
     
     settings.wri = wri;
     
-    await pool.query(
-      "UPDATE site_settings SET settings = $1 WHERE id = 'default'",
-      [settings]
-    );
+    console.log("Updated settings object:", settings);
+    
+    // Check if row exists and insert or update accordingly
+    if (result.rows.length === 0) {
+      await pool.query(
+        "INSERT INTO site_settings (id, settings) VALUES ('default', $1)",
+        [settings]
+      );
+      console.log("Inserted new WRI settings");
+    } else {
+      await pool.query(
+        "UPDATE site_settings SET settings = $1 WHERE id = 'default'",
+        [settings]
+      );
+      console.log("Updated existing WRI settings");
+    }
     
     res.json({ success: true, wri });
   } catch (error) {
@@ -47,23 +77,27 @@ router.post("/admin/upload", upload.single("file"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const { type } = req.body;
-    const fileName = `${type}-${Date.now()}-${req.file.originalname}`;
-    const filePath = `/uploads/wri/${fileName}`;
-
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "wri");
-    console.log("Upload directory:", uploadsDir);
-    
-    if (!fs.existsSync(uploadsDir)) {
-      console.log("Creating upload directory:", uploadsDir);
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    if (!cloudinaryConfigured) {
+      return res.status(503).json({
+        error: "Cloudinary is not configured. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET."
+      });
     }
 
-    const fullPath = path.join(process.cwd(), "public", filePath);
-    console.log("Writing file to:", fullPath);
-    fs.writeFileSync(fullPath, req.file.buffer);
+    const { type } = req.body;
+    const folder = "wri-hero";
+    
+    // Convert buffer to data URI
+    const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder: folder,
+      resource_type: "image",
+      public_id: `${type}-${Date.now()}`
+    });
 
-    res.json({ url: filePath });
+    console.log("Cloudinary upload successful:", result.secure_url);
+    res.json({ url: result.secure_url });
   } catch (error) {
     console.error("Error uploading file:", error);
     res.status(500).json({ error: "Failed to upload file: " + error.message });
@@ -256,30 +290,138 @@ router.get("/admin/survey-responses/excel", async (req, res) => {
     const result = await pool.query("SELECT * FROM wri_survey_responses ORDER BY submitted_at DESC");
     const responses = result.rows;
 
+    // Get survey questions for proper column headers
+    const questionsResult = await pool.query("SELECT * FROM wri_survey_questions ORDER BY section_order, question_order");
+    const questions = questionsResult.rows;
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Survey Responses");
 
-    worksheet.columns = [
-      { header: "ID", key: "id" },
-      { header: "Company Name", key: "company_name" },
-      { header: "Contact Person", key: "contact_person" },
-      { header: "Position", key: "position" },
-      { header: "Email", key: "email" },
-      { header: "Phone", key: "phone" },
-      { header: "Nature of Business", key: "nature_of_business" },
-      { header: "Technologies", key: "technologies" },
-      { header: "Engages Chinese Partners", key: "engages_chinese_partners" },
-      { header: "Collaboration Types", key: "collaboration_types" },
-      { header: "Engagement Duration", key: "engagement_duration" },
-      { header: "Challenges", key: "challenges" },
-      { header: "Support Needed", key: "support_needed" },
-      { header: "Future Interest", key: "future_interest" },
-      { header: "Interested Activities", key: "interested_activities" },
-      { header: "Additional Comments", key: "additional_comments" },
-      { header: "Submitted At", key: "submitted_at" }
+    // Build column headers based on questions
+    const columns = [
+      { header: "ID", key: "id", width: 10 },
+      { header: "Submitted At", key: "submitted_at", width: 20 }
     ];
 
-    worksheet.addRows(responses);
+    // Add question columns
+    questions.forEach(q => {
+      columns.push({
+        header: `${q.question_text} ${q.required ? '*' : ''}`,
+        key: `q_${q.id}`,
+        width: 30
+      });
+    });
+
+    worksheet.columns = columns;
+
+    // Map responses to question-based format
+    const rows = responses.map(response => {
+      const row = {
+        id: response.id,
+        submitted_at: response.submitted_at
+      };
+
+      // Map field names to questions
+      const fieldMapping = {
+        'company_name': 'Company Name',
+        'contact_person': 'Contact Person',
+        'position': 'Position',
+        'email': 'Email',
+        'phone': 'Phone',
+        'nature_of_business': 'Nature of Business',
+        'technologies': 'Technologies',
+        'engages_chinese_partners': 'Engages Chinese Partners',
+        'collaboration_types': 'Collaboration Types',
+        'engagement_duration': 'Engagement Duration',
+        'challenges': 'Challenges',
+        'support_needed': 'Support Needed',
+        'future_interest': 'Future Interest',
+        'interested_activities': 'Interested Activities',
+        'additional_comments': 'Additional Comments'
+      };
+
+      // For now, use the current field mapping
+      // TODO: Update to use dynamic question mapping once questions are configured
+      Object.keys(fieldMapping).forEach(field => {
+        const value = response[field];
+        if (Array.isArray(value)) {
+          row[field] = value.join(', ');
+        } else {
+          row[field] = value;
+        }
+      });
+
+      return row;
+    });
+
+    // Add all response columns for backward compatibility
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 10 },
+      { header: "Company Name", key: "company_name", width: 25 },
+      { header: "Contact Person", key: "contact_person", width: 20 },
+      { header: "Position", key: "position", width: 20 },
+      { header: "Email", key: "email", width: 25 },
+      { header: "Phone", key: "phone", width: 15 },
+      { header: "Nature of Business", key: "nature_of_business", width: 30 },
+      { header: "Nature of Business (Other)", key: "nature_of_business_other", width: 30 },
+      { header: "Technologies", key: "technologies", width: 30 },
+      { header: "Technologies (Other)", key: "technologies_other", width: 30 },
+      { header: "Engages Chinese Partners", key: "engages_chinese_partners", width: 25 },
+      { header: "Collaboration Types", key: "collaboration_types", width: 30 },
+      { header: "Collaboration Types (Other)", key: "collaboration_types_other", width: 30 },
+      { header: "Engagement Duration", key: "engagement_duration", width: 20 },
+      { header: "Challenges", key: "challenges", width: 30 },
+      { header: "Challenges (Other)", key: "challenges_other", width: 30 },
+      { header: "Support Needed", key: "support_needed", width: 30 },
+      { header: "Support Needed (Other)", key: "support_needed_other", width: 30 },
+      { header: "Future Interest", key: "future_interest", width: 20 },
+      { header: "Interested Activities", key: "interested_activities", width: 30 },
+      { header: "Interested Activities (Other)", key: "interested_activities_other", width: 30 },
+      { header: "Additional Comments", key: "additional_comments", width: 40 },
+      { header: "Submitted At", key: "submitted_at", width: 20 }
+    ];
+
+    // Convert array fields to comma-separated strings
+    const formattedRows = responses.map(response => ({
+      ...response,
+      nature_of_business: Array.isArray(response.nature_of_business) ? response.nature_of_business.join(', ') : response.nature_of_business,
+      technologies: Array.isArray(response.technologies) ? response.technologies.join(', ') : response.technologies,
+      collaboration_types: Array.isArray(response.collaboration_types) ? response.collaboration_types.join(', ') : response.collaboration_types,
+      challenges: Array.isArray(response.challenges) ? response.challenges.join(', ') : response.challenges,
+      support_needed: Array.isArray(response.support_needed) ? response.support_needed.join(', ') : response.support_needed,
+      interested_activities: Array.isArray(response.interested_activities) ? response.interested_activities.join(', ') : response.interested_activities,
+      // Add "Other" custom text fields
+      nature_of_business_other: response.nature_of_business_other || '',
+      technologies_other: response.technologies_other || '',
+      collaboration_types_other: response.collaboration_types_other || '',
+      challenges_other: response.challenges_other || '',
+      support_needed_other: response.support_needed_other || '',
+      interested_activities_other: response.interested_activities_other || ''
+    }));
+
+    worksheet.addRows(formattedRows);
+
+    // Style the header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF059669' }
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Auto-fit column widths
+    worksheet.columns.forEach(column => {
+      if (column.header) {
+        const headerWidth = column.header.toString().length;
+        const dataWidth = Math.max(...formattedRows.map(row => {
+          const value = row[column.key];
+          return value ? value.toString().length : 0;
+        }));
+        column.width = Math.max(headerWidth, dataWidth) + 2;
+      }
+    });
 
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition", `attachment; filename=wri-survey-responses-${new Date().toISOString().split('T')[0]}.xlsx`);
@@ -310,7 +452,13 @@ router.put("/admin/survey-responses/:id", async (req, res) => {
       support_needed,
       future_interest,
       interested_activities,
-      additional_comments
+      additional_comments,
+      nature_of_business_other,
+      technologies_other,
+      collaboration_types_other,
+      challenges_other,
+      support_needed_other,
+      interested_activities_other
     } = req.body;
 
     const result = await pool.query(
@@ -319,8 +467,10 @@ router.put("/admin/survey-responses/:id", async (req, res) => {
            nature_of_business = $6, technologies = $7, engages_chinese_partners = $8, 
            collaboration_types = $9, engagement_duration = $10, challenges = $11, 
            support_needed = $12, future_interest = $13, interested_activities = $14, 
-           additional_comments = $15, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $16 RETURNING *`,
+           additional_comments = $15, nature_of_business_other = $16, technologies_other = $17,
+           collaboration_types_other = $18, challenges_other = $19, support_needed_other = $20,
+           interested_activities_other = $21, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $22 RETURNING *`,
       [
         company_name,
         contact_person,
@@ -337,6 +487,12 @@ router.put("/admin/survey-responses/:id", async (req, res) => {
         future_interest,
         interested_activities || [],
         additional_comments || "",
+        nature_of_business_other || "",
+        technologies_other || "",
+        collaboration_types_other || "",
+        challenges_other || "",
+        support_needed_other || "",
+        interested_activities_other || "",
         id
       ]
     );
@@ -359,6 +515,97 @@ router.delete("/admin/survey-responses/:id", async (req, res) => {
   } catch (error) {
     console.error("Error deleting survey response:", error);
     res.status(500).json({ error: "Failed to delete survey response" });
+  }
+});
+
+// Survey Questions Management
+router.get("/admin/survey-questions", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM wri_survey_questions ORDER BY section_order, question_order");
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching survey questions:", error);
+    res.status(500).json({ error: "Failed to fetch survey questions" });
+  }
+});
+
+router.post("/admin/survey-questions", async (req, res) => {
+  try {
+    const {
+      section_order,
+      question_order,
+      question_text,
+      question_type,
+      options,
+      required
+    } = req.body;
+
+    if (!question_text || !question_type) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO wri_survey_questions (section_order, question_order, question_text, question_type, options, required)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [section_order || 1, question_order || 1, question_text, question_type, options || [], required || false]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating survey question:", error);
+    res.status(500).json({ error: "Failed to create survey question" });
+  }
+});
+
+router.put("/admin/survey-questions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      section_order,
+      question_order,
+      question_text,
+      question_type,
+      options,
+      required
+    } = req.body;
+
+    const result = await pool.query(
+      `UPDATE wri_survey_questions
+       SET section_order = $1, question_order = $2, question_text = $3, question_type = $4, options = $5, required = $6
+       WHERE id = $7
+       RETURNING *`,
+      [section_order, question_order, question_text, question_type, options, required, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Survey question not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error updating survey question:", error);
+    res.status(500).json({ error: "Failed to update survey question" });
+  }
+});
+
+router.delete("/admin/survey-questions/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM wri_survey_questions WHERE id = $1", [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting survey question:", error);
+    res.status(500).json({ error: "Failed to delete survey question" });
+  }
+});
+
+router.get("/public/survey-questions", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM wri_survey_questions ORDER BY section_order, question_order");
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching public survey questions:", error);
+    res.status(500).json({ error: "Failed to fetch survey questions" });
   }
 });
 

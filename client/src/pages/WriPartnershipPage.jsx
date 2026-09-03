@@ -1,8 +1,31 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { getSolarMkononiSettings } from "../lib/api.js";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
+// Add animation styles
+const animationStyles = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(5, 150, 105, 0); }
+  }
+  @keyframes borderSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+// Helper function to convert hex to RGB with opacity
+const hexToRgba = (hex, opacity) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
 
 const useScrollReveal = ({ threshold = 0.15, rootMargin = "0px 0px -50px 0px" } = {}) => {
   const [inView, setInView] = useState(false);
@@ -28,6 +51,164 @@ const useScrollReveal = ({ threshold = 0.15, rootMargin = "0px 0px -50px 0px" } 
   return [elementRef, inView];
 };
 
+const getAnimationClass = (style, inView) => {
+  if (!inView) return "opacity-0";
+  
+  switch (style) {
+    case "fade-up":
+      return "opacity-100 translate-y-0 transition-all duration-600";
+    case "fade-in":
+      return "opacity-100 transition-all duration-600";
+    case "slide-left":
+      return "opacity-100 translate-x-0 transition-all duration-600";
+    case "slide-right":
+      return "opacity-100 translate-x-0 transition-all duration-600";
+    case "zoom-in":
+      return "opacity-100 scale-100 transition-all duration-600";
+    default:
+      return "opacity-100 translate-y-0 transition-all duration-600";
+  }
+};
+
+const getInitialClass = (style) => {
+  switch (style) {
+    case "fade-up":
+      return "opacity-0 translate-y-8";
+    case "fade-in":
+      return "opacity-0";
+    case "slide-left":
+      return "opacity-0 -translate-x-8";
+    case "slide-right":
+      return "opacity-0 translate-x-8";
+    case "zoom-in":
+      return "opacity-0 scale-95";
+    default:
+      return "opacity-0 translate-y-8";
+  }
+};
+
+const AnimatedSection = ({ children, settings, id, className = "" }) => {
+  const [ref, inView] = useScrollReveal();
+  const animationEnabled = settings?.animation?.enabled !== false;
+  const isMobile = window.innerWidth < 768;
+  const animationConfig = isMobile ? settings?.animation?.mobile : settings?.animation?.desktop;
+  const animationStyle = animationConfig?.style || "fade-up";
+  const animationDuration = animationConfig?.duration || (isMobile ? 500 : 600);
+
+  if (!animationEnabled) {
+    return <section id={id} className={className}>{children}</section>;
+  }
+
+  return (
+    <section id={id} className={className} style={{ scrollMarginTop: "80px" }}>
+      <div
+        ref={ref}
+        className={`${getInitialClass(animationStyle)} ${inView ? getAnimationClass(animationStyle, inView) : ""}`}
+        style={{ transitionDuration: `${animationDuration}ms`, transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" }}
+      >
+        {children}
+      </div>
+    </section>
+  );
+};
+
+const StaggeredItem = ({ children, settings, index, className = "" }) => {
+  const [ref, inView] = useScrollReveal();
+  const animationEnabled = settings?.animation?.enabled !== false;
+  const isMobile = window.innerWidth < 768;
+  const animationConfig = isMobile ? settings?.animation?.mobile : settings?.animation?.desktop;
+  const animationStyle = animationConfig?.style || "fade-up";
+  const animationDuration = animationConfig?.duration || (isMobile ? 500 : 600);
+  const staggerDelay = animationConfig?.stagger || (isMobile ? 50 : 100);
+  const delay = index * staggerDelay;
+
+  if (!animationEnabled) {
+    return <div className={className}>{children}</div>;
+  }
+
+  return (
+    <div
+      ref={ref}
+      className={`${getInitialClass(animationStyle)} ${inView ? getAnimationClass(animationStyle, inView) : ""} ${className}`}
+      style={{
+        transitionDuration: `${animationDuration}ms`,
+        transitionDelay: `${delay}ms`,
+        transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)"
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+const AboutSection = ({ settings }) => {
+  const [ref, inView] = useScrollReveal();
+  const animationEnabled = settings?.animation?.enabled !== false;
+  const isMobile = window.innerWidth < 768;
+  const animationConfig = isMobile ? settings?.animation?.mobile : settings?.animation?.desktop;
+  const animationStyle = animationConfig?.style || "fade-up";
+  const animationDuration = animationConfig?.duration || (isMobile ? 500 : 600);
+
+  const items = [
+    "Kenya–China B2B linkages",
+    "Technology transfer",
+    "Investment opportunities",
+    "Local manufacturing and assembly",
+    "Skills development",
+    "Standards and quality assurance",
+    "Renewable energy collaboration"
+  ];
+
+  return (
+    <div
+      ref={ref}
+      className={`${getInitialClass(animationStyle)} ${inView ? getAnimationClass(animationStyle, inView) : ""}`}
+      style={{ transitionDuration: `${animationDuration}ms` }}
+    >
+      <div className="text-center mb-12">
+        <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>About the Partnership</h2>
+        <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
+          The Kenya–China Renewable Energy Partnership focuses on strengthening collaboration across key areas:
+        </p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {items.map((item, index) => {
+          const colors = [
+            { bg: "#f0fdf4", border: "#a7f3d0", text: "#065f46" },
+            { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" },
+            { bg: "#ffffff", border: "#e5e7eb", text: "#15803d" },
+            { bg: "#f7fee7", border: "#d9f99d", text: "#3f6212" },
+            { bg: "#f0f9ff", border: "#bae6fd", text: "#0c4a6e" },
+            { bg: "#fafaf9", border: "#e7e5e4", text: "#15803d" },
+            { bg: "#ecfdf5", border: "#a7f3d0", text: "#065f46" }
+          ];
+          const color = colors[index % colors.length];
+
+          // Different shapes for different indices
+          const shapes = [
+            "rounded-2xl",
+            "rounded-tl-3xl rounded-br-3xl rounded-tr-lg rounded-bl-lg",
+            "rounded-3xl",
+            "rounded-tl-lg rounded-tr-3xl rounded-bl-3xl rounded-br-lg",
+            "rounded-2xl",
+            "rounded-tl-3xl rounded-br-3xl rounded-tr-lg rounded-bl-lg",
+            "rounded-3xl"
+          ];
+          const shape = shapes[index % shapes.length];
+
+          return (
+            <StaggeredItem key={index} settings={settings} index={index}>
+              <div className={`border p-4 shadow-sm ${shape}`} style={{ backgroundColor: color.bg, borderColor: color.border }}>
+                <p className="font-medium" style={{ color: color.text }}>{item}</p>
+              </div>
+            </StaggeredItem>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const WriNav = ({ settings, overHero = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [navHidden, setNavHidden] = useState(false);
@@ -43,7 +224,6 @@ const WriNav = ({ settings, overHero = false }) => {
     { label: "About", href: "#about", to: null },
     { label: "Areas", href: "#areas", to: null },
     { label: "B2B", href: "#opportunities", to: null },
-    { label: "Enquiry", href: "#enquiry", to: null },
     { label: "Events", href: "#events", to: null },
     { label: "Partners", href: "#partners", to: null },
     { label: "Resources", href: "#resources", to: null },
@@ -283,16 +463,6 @@ const areasOfInterest = [
   "Other"
 ];
 
-const enquiryTypes = [
-  "General Enquiry",
-  "Partnership Proposal",
-  "Investment Inquiry",
-  "Technology Inquiry",
-  "Market Information",
-  "Event Participation",
-  "Other"
-];
-
 const resourceTypes = [
   "Report",
   "Policy Brief",
@@ -304,26 +474,12 @@ const resourceTypes = [
 
 const WriPartnershipPage = () => {
   const [settings, setSettings] = useState(null);
+  const [overHero, setOverHero] = useState(true);
   const [enquiries, setEnquiries] = useState([]);
   const [businesses, setBusinesses] = useState([]);
   const [events, setEvents] = useState([]);
   const [partners, setPartners] = useState([]);
   const [resources, setResources] = useState([]);
-  const [enquiryForm, setEnquiryForm] = useState({
-    name: "",
-    organisation: "",
-    country: "",
-    email: "",
-    phone: "",
-    organisation_type: "",
-    technology_sector: "",
-    area_of_interest: "",
-    enquiry_type: "",
-    message: ""
-  });
-  const [enquiryAttachment, setEnquiryAttachment] = useState(null);
-  const [enquirySubmitting, setEnquirySubmitting] = useState(false);
-  const [enquirySuccess, setEnquirySuccess] = useState(false);
   const [surveyForm, setSurveyForm] = useState({
     company_name: "",
     contact_person: "",
@@ -341,8 +497,20 @@ const WriPartnershipPage = () => {
     interested_activities: [],
     additional_comments: ""
   });
+  
+  const [otherInputs, setOtherInputs] = useState({
+    nature_of_business_other: "",
+    technologies_other: "",
+    collaboration_types_other: "",
+    challenges_other: "",
+    support_needed_other: "",
+    interested_activities_other: ""
+  });
   const [surveySubmitting, setSurveySubmitting] = useState(false);
   const [surveySuccess, setSurveySuccess] = useState(false);
+  const [surveyStarted, setSurveyStarted] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [surveyQuestions, setSurveyQuestions] = useState([]);
   const [businessFilters, setBusinessFilters] = useState({
     country: "",
     technology: "",
@@ -352,14 +520,27 @@ const WriPartnershipPage = () => {
   });
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // Inject animation styles
+    const style = document.createElement('style');
+    style.textContent = animationStyles;
+    document.head.appendChild(style);
+
+    // Enable smooth scrolling
+    document.documentElement.style.scrollBehavior = 'smooth';
+
     const loadSettings = async () => {
       try {
-        const data = await getSolarMkononiSettings();
-        setSettings(data);
+        const response = await fetch(`${API_URL}/api/wri/public/settings`);
+        const data = await response.json();
+        console.log("Fetched WRI settings:", data);
+        
+        // The API returns { wri: { hero: {...} } }
+        if (data.wri) {
+          setSettings(data.wri);
+        }
       } catch (error) {
-        console.error("Error loading settings:", error);
-      } finally {
-        setLoading(false);
+        console.error("Error loading WRI settings:", error);
       }
     };
     loadSettings();
@@ -367,11 +548,33 @@ const WriPartnershipPage = () => {
     fetchEvents();
     fetchPartners();
     fetchResources();
+
+    // Scroll detection for navigation color change
+    const handleScroll = () => {
+      const heroSection = document.getElementById('hero');
+      if (heroSection) {
+        const heroRect = heroSection.getBoundingClientRect();
+        const heroBottom = heroRect.bottom;
+        const heroTop = heroRect.top;
+        // Consider over hero if hero section is still visible in viewport
+        setOverHero(heroBottom > 0 && heroTop < window.innerHeight);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     fetchBusinesses(businessFilters);
   }, [businessFilters]);
+
+  useEffect(() => {
+    fetchEvents();
+    fetchPartners();
+    fetchResources();
+    fetchSurveyQuestions();
+  }, []);
 
   const fetchBusinesses = async (filters = {}) => {
     try {
@@ -414,43 +617,13 @@ const WriPartnershipPage = () => {
     }
   };
 
-  const handleEnquirySubmit = async (e) => {
-    e.preventDefault();
-    setEnquirySubmitting(true);
+  const fetchSurveyQuestions = async () => {
     try {
-      const formData = new FormData();
-      Object.entries(enquiryForm).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-      if (enquiryAttachment) {
-        formData.append("attachment", enquiryAttachment);
-      }
-
-      const response = await fetch(`${API_URL}/api/wri/enquiries`, {
-        method: "POST",
-        body: formData
-      });
-
-      if (response.ok) {
-        setEnquirySuccess(true);
-        setEnquiryForm({
-          name: "",
-          organisation: "",
-          country: "",
-          email: "",
-          phone: "",
-          organisation_type: "",
-          technology_sector: "",
-          area_of_interest: "",
-          enquiry_type: "",
-          message: ""
-        });
-        setEnquiryAttachment(null);
-      }
+      const response = await fetch(`${API_URL}/api/wri/public/survey-questions`);
+      const data = await response.json();
+      setSurveyQuestions(data);
     } catch (error) {
-      console.error("Error submitting enquiry:", error);
-    } finally {
-      setEnquirySubmitting(false);
+      console.error("Error fetching survey questions:", error);
     }
   };
 
@@ -461,11 +634,20 @@ const WriPartnershipPage = () => {
       const response = await fetch(`${API_URL}/api/wri/survey`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(surveyForm)
+        body: JSON.stringify({
+          ...surveyForm,
+          nature_of_business_other: otherInputs.nature_of_business_other || "",
+          technologies_other: otherInputs.technologies_other || "",
+          collaboration_types_other: otherInputs.collaboration_types_other || "",
+          challenges_other: otherInputs.challenges_other || "",
+          support_needed_other: otherInputs.support_needed_other || "",
+          interested_activities_other: otherInputs.interested_activities_other || ""
+        })
       });
 
       if (response.ok) {
         setSurveySuccess(true);
+        setShowSuccessPopup(true);
         setSurveyForm({
           company_name: "",
           contact_person: "",
@@ -483,6 +665,14 @@ const WriPartnershipPage = () => {
           interested_activities: [],
           additional_comments: ""
         });
+        setOtherInputs({
+          nature_of_business_other: "",
+          technologies_other: "",
+          collaboration_types_other: "",
+          challenges_other: "",
+          support_needed_other: "",
+          interested_activities_other: ""
+        });
       }
     } catch (error) {
       console.error("Error submitting survey:", error);
@@ -492,12 +682,22 @@ const WriPartnershipPage = () => {
   };
 
   const handleCheckboxChange = (field, value) => {
-    setSurveyForm(prev => ({
-      ...prev,
-      [field]: prev[field].includes(value)
+    setSurveyForm(prev => {
+      const newValue = prev[field].includes(value)
         ? prev[field].filter(item => item !== value)
-        : [...prev[field], value]
-    }));
+        : [...prev[field], value];
+      
+      // Handle "Other" checkbox
+      if (value === "Other") {
+        const otherField = `${field}_other`;
+        setOtherInputs(prev => ({
+          ...prev,
+          [otherField]: newValue.includes("Other") ? prev[otherField] : ""
+        }));
+      }
+      
+      return { ...prev, [field]: newValue };
+    });
   };
 
   const scrollToSection = (sectionId) => {
@@ -515,82 +715,91 @@ const WriPartnershipPage = () => {
 
   return (
     <div style={{ backgroundColor: "#f0fdf4", color: "#064e3b" }}>
-      <WriNav settings={settings} overHero />
+      <WriNav settings={settings} overHero={overHero} />
 
-      <section id="hero" className="relative min-h-screen flex flex-col justify-center px-4 overflow-hidden pt-20" style={{ backgroundImage: settings?.wri?.hero?.backgroundImageUrl ? `url(${settings?.wri?.hero?.backgroundImageUrl})` : "linear-gradient(135deg, #059669 0%, #10b981 50%, #065f46 100%)", backgroundSize: "cover", backgroundPosition: "center" }}>
-        <div className="absolute inset-0" style={{ backgroundColor: `rgba(0, 0, 0, ${settings?.wri?.hero?.overlayOpacity ?? 0.3})` }} />
+      <section 
+        id="hero" 
+        className="relative min-h-screen flex flex-col justify-center px-4 overflow-hidden pt-20"
+        style={{
+          backgroundImage: settings?.realHero?.realDesktopBackgroundImageUrl 
+            ? `url(${settings?.realHero?.realDesktopBackgroundImageUrl})` 
+            : "linear-gradient(135deg, #059669 0%, #10b981 50%, #065f46 100%)",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        {/* Mobile background overlay */}
+        <div 
+          className="md:hidden absolute inset-0"
+          style={{
+            backgroundImage: settings?.realHero?.realMobileBackgroundImageUrl 
+              ? `url(${settings?.realHero?.realMobileBackgroundImageUrl})` 
+              : "none",
+            backgroundSize: "cover",
+            backgroundPosition: "center"
+          }}
+        />
+        
+        {/* Overlay with color */}
+        <div 
+          className="absolute inset-0" 
+          style={{ 
+            backgroundColor: hexToRgba(
+              settings?.realHero?.realOverlayColor || "#000000",
+              settings?.realHero?.realOverlayOpacity ?? 0.3
+            )
+          }} 
+        />
+        
         <div className="relative z-10 max-w-4xl mx-auto text-center text-white">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 drop-shadow-lg">
-            {settings?.wri?.hero?.title || "Africa–China Renewable Energy Partnership"}
+            {settings?.realHero?.realTitle || "Africa–China Renewable Energy Partnership"}
           </h1>
           <p className="text-lg md:text-xl mb-6 max-w-3xl mx-auto drop-shadow-md">
-            {settings?.wri?.hero?.subtitle || "Connecting Kenya's Renewable Energy Sector with Chinese Technology, Investment and Business Opportunities."}
+            {settings?.realHero?.realSubtitle || "Connecting Kenya's Renewable Energy Sector with Chinese Technology, Investment and Business Opportunities."}
           </p>
           <p className="text-base md:text-lg mb-10 max-w-3xl mx-auto drop-shadow-md opacity-90">
-            {settings?.wri?.hero?.introduction || "A dedicated hub facilitating B2B linkages, partnership enquiries, events, business opportunities, knowledge sharing, and stakeholder engagement between Kenya and China in the renewable energy sector."}
+            {settings?.realHero?.realIntroduction || "A dedicated hub facilitating B2B linkages, partnership enquiries, events, business opportunities, knowledge sharing, and stakeholder engagement between Kenya and China in the renewable energy sector."}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => scrollToSection("enquiry")}
-              className="px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
-              style={{ backgroundColor: "#ffffff", color: "#059669" }}
+              onClick={() => {
+                const link = settings?.hero?.primaryCtaLink || "#survey";
+                if (link.startsWith("#")) {
+                  scrollToSection(link.substring(1));
+                } else {
+                  window.open(link, "_blank");
+                }
+              }}
+              className="px-5 py-2 md:px-10 md:py-4 mx-auto md:mx-0 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
+              style={{ backgroundColor: "#ffffff", color: "#059669", width: "auto" }}
             >
-              {settings?.wri?.hero?.primaryCta || "Make a Partnership Enquiry"}
+              {settings?.hero?.primaryCta || "KEREA Survey"}
             </button>
             <button
-              onClick={() => scrollToSection("business-database")}
-              className="px-6 py-3 md:px-8 md:py-4 rounded-full font-bold border-2 border-white text-white transition hover:scale-105 backdrop-blur-sm"
+              onClick={() => {
+                const link = settings?.hero?.secondaryCtaLink || "#business-database";
+                if (link.startsWith("#")) {
+                  scrollToSection(link.substring(1));
+                } else {
+                  window.open(link, "_blank");
+                }
+              }}
+              className="px-6 py-3 md:px-10 md:py-4 rounded-full font-bold border-2 border-white text-white transition hover:scale-105 backdrop-blur-sm"
             >
-              {settings?.wri?.hero?.secondaryCta || "Browse Business Database"}
+              {settings?.hero?.secondaryCta || "Browse Business Database"}
             </button>
           </div>
         </div>
       </section>
 
-      <section id="about" className="py-16 md:py-24 px-4">
+      <AnimatedSection id="about" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>About the Partnership</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
-              The Kenya–China Renewable Energy Partnership focuses on strengthening collaboration across key areas:
-            </p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              "Kenya–China B2B linkages",
-              "Technology transfer",
-              "Investment opportunities",
-              "Local manufacturing and assembly",
-              "Skills development",
-              "Standards and quality assurance",
-              "Renewable energy collaboration"
-            ].map((item, index) => {
-              const colors = [
-                { bg: "#f0fdf4", border: "#a7f3d0", text: "#065f46" },
-                { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" },
-                { bg: "#ffffff", border: "#e5e7eb", text: "#15803d" },
-                { bg: "#f7fee7", border: "#d9f99d", text: "#3f6212" },
-                { bg: "#f0f9ff", border: "#bae6fd", text: "#0c4a6e" },
-                { bg: "#fafaf9", border: "#e7e5e4", text: "#15803d" },
-                { bg: "#ecfdf5", border: "#6ee7b7", text: "#047857" }
-              ];
-              const color = colors[index % colors.length];
-              return (
-                <div key={index} className="flex items-start space-x-3 rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: color.bg, borderColor: color.border }}>
-                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: color.border }}>
-                    <svg className="h-4 w-4" style={{ color: color.text }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className="text-sm md:text-base" style={{ color: color.text }}>{item}</span>
-                </div>
-              );
-            })}
-          </div>
+          <AboutSection settings={settings} />
         </div>
-      </section>
+      </AnimatedSection>
 
-      <section id="areas" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }}>
+      <AnimatedSection id="areas" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Technology & Business Areas</h2>
@@ -609,18 +818,98 @@ const WriPartnershipPage = () => {
                 { bg: "#fafaf9", border: "#e7e5e4", text: "#15803d" }
               ];
               const color = colors[index % colors.length];
+
+              // Icons for different technology areas
+              const getIcon = (title) => {
+                const lowerTitle = title.toLowerCase();
+                if (lowerTitle.includes("solar")) {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  );
+                } else if (lowerTitle.includes("storage") || lowerTitle.includes("battery")) {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  );
+                } else if (lowerTitle.includes("mobility") || lowerTitle.includes("electric") || lowerTitle.includes("e-mobility")) {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                    </svg>
+                  );
+                } else if (lowerTitle.includes("productive") || lowerTitle.includes("pure")) {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  );
+                } else if (lowerTitle.includes("manufacturing") || lowerTitle.includes("green")) {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  );
+                } else if (lowerTitle.includes("other") || lowerTitle.includes("cross")) {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  );
+                } else if (lowerTitle.includes("wind")) {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                    </svg>
+                  );
+                } else if (lowerTitle.includes("biogas") || lowerTitle.includes("bio")) {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                    </svg>
+                  );
+                } else if (lowerTitle.includes("hydro") || lowerTitle.includes("water")) {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 14.66V20a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h2.5l2-3.87a1 1 0 011.74 0L10.5 4H14a2 2 0 012 2v.66" />
+                    </svg>
+                  );
+                } else if (lowerTitle.includes("geothermal")) {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                    </svg>
+                  );
+                } else {
+                  return (
+                    <svg className="w-8 h-8 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  );
+                }
+              };
+
               return (
-                <div key={area.id} className="rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all hover:scale-105" style={{ backgroundColor: color.bg, borderColor: color.border }}>
-                  <h3 className="text-xl font-semibold" style={{ color: color.text }}>{area.title}</h3>
-                  <p className="mt-2 text-sm md:text-base" style={{ color: "#065f46" }}>{area.description}</p>
-                </div>
+                <StaggeredItem key={area.id} settings={settings} index={index}>
+                  <div className="rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all hover:scale-105 flex flex-col" style={{ backgroundColor: color.bg, borderColor: color.border, minHeight: "200px" }}>
+                    <div className={`flex ${index % 2 === 0 ? 'justify-start' : 'justify-end'} md:justify-start`} style={{ color: color.text }}>
+                      {getIcon(area.title)}
+                    </div>
+                    <h3 className="text-xl font-semibold" style={{ color: color.text }}>{area.title}</h3>
+                    <p className="mt-2 text-sm md:text-base flex-grow" style={{ color: "#065f46" }}>{area.description}</p>
+                  </div>
+                </StaggeredItem>
               );
             })}
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
-      <section id="opportunities" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ecfdf5" }}>
+      <AnimatedSection id="opportunities" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>B2B Opportunities</h2>
@@ -630,180 +919,20 @@ const WriPartnershipPage = () => {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {b2bOpportunities.map((opportunity, index) => (
-              <div key={index} className="flex items-center space-x-3 rounded-2xl bg-white p-4 shadow-sm hover:shadow-md transition-all">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full text-white font-bold text-lg" style={{ backgroundColor: "#059669" }}>
-                  {index + 1}
+              <StaggeredItem key={index} settings={settings} index={index}>
+                <div className="flex items-center space-x-3 rounded-2xl bg-white p-4 shadow-sm hover:shadow-md transition-all">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full text-white font-bold text-lg" style={{ backgroundColor: "#059669" }}>
+                    {index + 1}
+                  </div>
+                  <span className="text-sm md:text-base font-medium" style={{ color: "#064e3b" }}>{opportunity}</span>
                 </div>
-                <span className="text-sm md:text-base font-medium" style={{ color: "#064e3b" }}>{opportunity}</span>
-              </div>
+              </StaggeredItem>
             ))}
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
-      <section id="enquiry" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }}>
-        <div className="mx-auto max-w-4xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Partnership Enquiry</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
-              Submit your enquiry to explore partnership opportunities with Chinese renewable energy companies and stakeholders.
-            </p>
-          </div>
-          {enquirySuccess && (
-            <div className="mb-8 rounded-2xl border p-4" style={{ backgroundColor: "#f0fdf4", borderColor: "#86efac" }}>
-              <p className="text-center font-medium" style={{ color: "#065f46" }}>Thank you! Your enquiry has been submitted successfully. We will get back to you soon.</p>
-            </div>
-          )}
-          <form onSubmit={handleEnquirySubmit} className="rounded-2xl border p-6 md:p-8 shadow-lg" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-            <div className="grid gap-4 md:gap-6 md:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={enquiryForm.name}
-                  onChange={(e) => setEnquiryForm({ ...enquiryForm, name: e.target.value })}
-                  className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff", focusRingColor: "#059669" }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Organisation/Company *</label>
-                <input
-                  type="text"
-                  required
-                  value={enquiryForm.organisation}
-                  onChange={(e) => setEnquiryForm({ ...enquiryForm, organisation: e.target.value })}
-                  className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Country *</label>
-                <input
-                  type="text"
-                  required
-                  value={enquiryForm.country}
-                  onChange={(e) => setEnquiryForm({ ...enquiryForm, country: e.target.value })}
-                  className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Email *</label>
-                <input
-                  type="email"
-                  required
-                  value={enquiryForm.email}
-                  onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })}
-                  className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Phone</label>
-                <input
-                  type="tel"
-                  value={enquiryForm.phone}
-                  onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
-                  className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Organisation Type *</label>
-                <select
-                  required
-                  value={enquiryForm.organisation_type}
-                  onChange={(e) => setEnquiryForm({ ...enquiryForm, organisation_type: e.target.value })}
-                  className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                >
-                  <option value="">Select organisation type</option>
-                  {organisationTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Technology/Sector *</label>
-                <select
-                  required
-                  value={enquiryForm.technology_sector}
-                  onChange={(e) => setEnquiryForm({ ...enquiryForm, technology_sector: e.target.value })}
-                  className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                >
-                  <option value="">Select technology/sector</option>
-                  {technologySectors.map((sector) => (
-                    <option key={sector} value={sector}>{sector}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Area of Interest *</label>
-                <select
-                  required
-                  value={enquiryForm.area_of_interest}
-                  onChange={(e) => setEnquiryForm({ ...enquiryForm, area_of_interest: e.target.value })}
-                  className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                >
-                  <option value="">Select area of interest</option>
-                  {areasOfInterest.map((area) => (
-                    <option key={area} value={area}>{area}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Type of Enquiry *</label>
-                <select
-                  required
-                  value={enquiryForm.enquiry_type}
-                  onChange={(e) => setEnquiryForm({ ...enquiryForm, enquiry_type: e.target.value })}
-                  className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                >
-                  <option value="">Select enquiry type</option>
-                  {enquiryTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="mt-6">
-              <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Message *</label>
-              <textarea
-                required
-                rows={4}
-                value={enquiryForm.message}
-                onChange={(e) => setEnquiryForm({ ...enquiryForm, message: e.target.value })}
-                className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-              />
-            </div>
-            <div className="mt-6">
-              <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Attachment (Optional)</label>
-              <input
-                type="file"
-                onChange={(e) => setEnquiryAttachment(e.target.files?.[0] || null)}
-                className="w-full text-sm"
-                style={{ color: "#065f46" }}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={enquirySubmitting}
-              className="mt-8 w-full rounded-full px-8 py-4 text-white font-bold text-lg transition hover:scale-105 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: "#059669" }}
-            >
-              {enquirySubmitting ? "Submitting..." : "Submit Enquiry"}
-            </button>
-          </form>
-        </div>
-      </section>
-
-      <section id="events" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }}>
+      <AnimatedSection id="events" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Events</h2>
@@ -815,80 +944,91 @@ const WriPartnershipPage = () => {
             <p className="text-center py-8" style={{ color: "#065f46" }}>No events scheduled at this time.</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {events.map((event) => (
-                <div key={event.id} className="rounded-2xl border bg-white shadow-sm hover:shadow-lg transition-all overflow-hidden" style={{ borderColor: "#a7f3d0" }}>
-                  <div className="h-48 flex items-center justify-center" style={{ backgroundColor: "#f0fdf4" }}>
-                    {event.image_url ? (
-                      <img src={event.image_url} alt={event.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="text-center" style={{ color: "#065f46" }}>
-                        <svg className="w-16 h-16 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              {events.map((event, index) => (
+                <StaggeredItem key={event.id} settings={settings} index={index}>
+                  <div className="rounded-2xl border bg-white shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col" style={{ borderColor: "#a7f3d0", minHeight: "350px" }}>
+                    <div className="h-48 flex items-center justify-center overflow-hidden flex-shrink-0" style={{ backgroundColor: "#f0fdf4" }}>
+                      {event.image_url ? (
+                        <img src={event.image_url} alt={event.title} className="h-full w-full object-contain" />
+                      ) : (
+                        <div className="text-center" style={{ color: "#065f46" }}>
+                          <svg className="w-16 h-16 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-sm opacity-50">Event Image</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-6 flex-grow flex flex-col">
+                      <h3 className="text-xl font-semibold" style={{ color: "#064e3b" }}>{event.title}</h3>
+                      <div className="mt-2 flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <p className="text-sm opacity-50">Event Image</p>
+                        {formatDate(event.event_date)}
                       </div>
-                    )}
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold" style={{ color: "#064e3b" }}>{event.title}</h3>
-                    <div className="mt-2 flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {formatDate(event.event_date)}
+                      <div className="mt-1 flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {event.location}
+                      </div>
+                      <p className="mt-3 text-sm flex-grow" style={{ color: "#064e3b" }}>{event.description}</p>
+                      {event.registration_link && (
+                        <a
+                          href={event.registration_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-4 inline-block rounded-full px-6 py-2 text-sm font-semibold text-white transition hover:scale-105"
+                          style={{ backgroundColor: "#059669" }}
+                        >
+                          Register Now
+                        </a>
+                      )}
                     </div>
-                    <div className="mt-1 flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      {event.location}
-                    </div>
-                    <p className="mt-3 text-sm" style={{ color: "#064e3b" }}>{event.description}</p>
-                    {event.registration_link && (
-                      <a
-                        href={event.registration_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-4 inline-block rounded-full px-6 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                        style={{ backgroundColor: "#059669" }}
-                      >
-                        Register Now
-                      </a>
-                    )}
                   </div>
-                </div>
+                </StaggeredItem>
               ))}
             </div>
           )}
         </div>
-      </section>
+      </AnimatedSection>
 
-      <section id="survey" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }}>
+      <AnimatedSection id="survey" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }} settings={settings}>
         <div className="mx-auto max-w-4xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>KEREA Member Survey</h2>
-            <p className="mt-4 text-lg" style={{ color: "#065f46" }}>
-              Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement
-            </p>
-            <p className="mt-2 text-sm" style={{ color: "#065f46" }}>
-              Estimated completion time: 5–7 minutes
-            </p>
-          </div>
-
-          {surveySuccess ? (
-            <div className="rounded-2xl border p-8 text-center" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-              <svg className="w-16 h-16 mx-auto mb-4" style={{ color: "#059669" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h3 className="text-2xl font-semibold" style={{ color: "#064e3b" }}>Thank You!</h3>
-              <p className="mt-2" style={{ color: "#065f46" }}>Your survey response has been submitted successfully.</p>
+          {!surveyStarted ? (
+            <div className="text-center">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#064e3b" }}>KEREA Survey</h2>
+              <p className="text-lg mb-2" style={{ color: "#065f46" }}>
+                Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement
+              </p>
+              <p className="text-sm mb-8" style={{ color: "#065f46" }}>
+                Estimated completion time: 5–7 minutes
+              </p>
+              <button
+                onClick={() => setSurveyStarted(true)}
+                className="relative px-8 py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
+                style={{ backgroundColor: "#059669", animation: "breathe 2s ease-in-out infinite" }}
+              >
+                <span className="relative z-10">Start Now</span>
+                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-white opacity-50" style={{ animation: "borderSpin 2s linear infinite" }}></div>
+              </button>
             </div>
           ) : (
-            <form onSubmit={handleSurveySubmit} className="space-y-8">
-              <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 1: Company Information</h3>
-                <div className="space-y-4">
+            <>
+              <div className="text-center mb-8">
+                <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>KEREA Survey</h2>
+                <p className="mt-4 text-lg" style={{ color: "#065f46" }}>
+                  Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement
+                </p>
+              </div>
+
+              <form onSubmit={handleSurveySubmit} className="space-y-8">
+              <StaggeredItem settings={settings} index={0}>
+                <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                  <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 1: Company Information</h3>
+                  <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>1. Company Name *</label>
                     <input
@@ -958,6 +1098,16 @@ const WriPartnershipPage = () => {
                         </label>
                       ))}
                     </div>
+                    {surveyForm.nature_of_business.includes("Other") && (
+                      <input
+                        type="text"
+                        value={otherInputs.nature_of_business_other}
+                        onChange={(e) => setOtherInputs(prev => ({ ...prev, nature_of_business_other: e.target.value }))}
+                        placeholder="Please specify"
+                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
+                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>7. Renewable Energy Technologies (Select all that apply) *</label>
@@ -973,13 +1123,25 @@ const WriPartnershipPage = () => {
                         </label>
                       ))}
                     </div>
+                    {surveyForm.technologies.includes("Other") && (
+                      <input
+                        type="text"
+                        value={otherInputs.technologies_other}
+                        onChange={(e) => setOtherInputs(prev => ({ ...prev, technologies_other: e.target.value }))}
+                        placeholder="Please specify"
+                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
+                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
+              </StaggeredItem>
 
-              <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 2: Current Engagement with Chinese Partners</h3>
-                <div className="space-y-4">
+              <StaggeredItem settings={settings} index={1}>
+                <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                  <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 2: Current Engagement with Chinese Partners</h3>
+                  <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>8. Does your organization currently engage with Chinese companies or institutions? *</label>
                     <div className="space-x-4 mt-2">
@@ -1011,6 +1173,16 @@ const WriPartnershipPage = () => {
                         </label>
                       ))}
                     </div>
+                    {surveyForm.collaboration_types.includes("Other") && (
+                      <input
+                        type="text"
+                        value={otherInputs.collaboration_types_other}
+                        onChange={(e) => setOtherInputs(prev => ({ ...prev, collaboration_types_other: e.target.value }))}
+                        placeholder="Please specify"
+                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
+                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>10. How long has your organization been engaging with Chinese partners? *</label>
@@ -1031,10 +1203,12 @@ const WriPartnershipPage = () => {
                   </div>
                 </div>
               </div>
+              </StaggeredItem>
 
-              <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 3: Challenges and Support Needs</h3>
-                <div className="space-y-4">
+              <StaggeredItem settings={settings} index={2}>
+                <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                  <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 3: Challenges and Support Needs</h3>
+                  <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>11. What are the key challenges your organization faces when engaging with Chinese partners? (Select all that apply) *</label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
@@ -1049,6 +1223,16 @@ const WriPartnershipPage = () => {
                         </label>
                       ))}
                     </div>
+                    {surveyForm.challenges.includes("Other") && (
+                      <input
+                        type="text"
+                        value={otherInputs.challenges_other}
+                        onChange={(e) => setOtherInputs(prev => ({ ...prev, challenges_other: e.target.value }))}
+                        placeholder="Please specify"
+                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
+                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>12. What support would you like KEREA to provide? (Select all that apply) *</label>
@@ -1064,13 +1248,25 @@ const WriPartnershipPage = () => {
                         </label>
                       ))}
                     </div>
+                    {surveyForm.support_needed.includes("Other") && (
+                      <input
+                        type="text"
+                        value={otherInputs.support_needed_other}
+                        onChange={(e) => setOtherInputs(prev => ({ ...prev, support_needed_other: e.target.value }))}
+                        placeholder="Please specify"
+                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
+                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
+              </StaggeredItem>
 
-              <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 4: Future Collaboration Opportunities</h3>
-                <div className="space-y-4">
+              <StaggeredItem settings={settings} index={4}>
+                <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                  <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 4: Future Collaboration Opportunities</h3>
+                  <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>13. Would your organization be interested in participating in future Kenya–China B2B engagements organized by KEREA? *</label>
                     <div className="space-x-4 mt-2">
@@ -1091,7 +1287,7 @@ const WriPartnershipPage = () => {
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>14. Which of the following Kenya–China business engagement activities would your organization be interested in participating in? (Select all that apply) *</label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
-                      {["Trade fairs", "Virtual B2B meetings", "Investor forums", "Site visits", "Product exhibitions", "Technical workshops", "Joint pilot projects", "None of the above"].map((option) => (
+                      {["Trade fairs", "Virtual B2B meetings", "Investor forums", "Site visits", "Product exhibitions", "Technical workshops", "Joint pilot projects", "Other"].map((option) => (
                         <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
                           <input
                             type="checkbox"
@@ -1102,6 +1298,16 @@ const WriPartnershipPage = () => {
                         </label>
                       ))}
                     </div>
+                    {surveyForm.interested_activities.includes("Other") && (
+                      <input
+                        type="text"
+                        value={otherInputs.interested_activities_other}
+                        onChange={(e) => setOtherInputs(prev => ({ ...prev, interested_activities_other: e.target.value }))}
+                        placeholder="Please specify"
+                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
+                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>15. Please share any additional comments, recommendations, or partnership interests *</label>
@@ -1116,8 +1322,10 @@ const WriPartnershipPage = () => {
                   </div>
                 </div>
               </div>
+              </StaggeredItem>
 
-              <button
+              <StaggeredItem settings={settings} index={4}>
+                <button
                 type="submit"
                 disabled={surveySubmitting}
                 className="w-full rounded-full py-3 text-lg font-semibold text-white disabled:opacity-50 transition hover:scale-105"
@@ -1125,12 +1333,100 @@ const WriPartnershipPage = () => {
               >
                 {surveySubmitting ? "Submitting..." : "Submit Survey"}
               </button>
+              </StaggeredItem>
             </form>
+            </>
           )}
         </div>
-      </section>
+      </AnimatedSection>
 
-      <section id="partners" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }}>
+      {showSuccessPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="rounded-2xl border p-8 text-center max-w-md mx-4" style={{ backgroundColor: "#ffffff", borderColor: "#a7f3d0" }}>
+            <svg className="w-16 h-16 mx-auto mb-4" style={{ color: "#059669" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-2xl font-semibold mb-2" style={{ color: "#064e3b" }}>Thank You!</h3>
+            <p className="mb-6" style={{ color: "#065f46" }}>Your survey response has been submitted successfully.</p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => setShowSuccessPopup(false)}
+                className="px-6 py-2 rounded-full font-semibold text-white transition hover:scale-105"
+                style={{ backgroundColor: "#059669" }}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowSuccessPopup(false);
+                  setSurveyStarted(false);
+                  setSurveySuccess(false);
+                  setSurveyForm({
+                    company_name: "",
+                    contact_person: "",
+                    position: "",
+                    email: "",
+                    phone: "",
+                    nature_of_business: [],
+                    technologies: [],
+                    engages_chinese_partners: "",
+                    collaboration_types: [],
+                    engagement_duration: "",
+                    challenges: [],
+                    support_needed: [],
+                    future_interest: "",
+                    interested_activities: [],
+                    additional_comments: ""
+                  });
+                  setOtherInputs({
+                    nature_of_business_other: "",
+                    technologies_other: "",
+                    collaboration_types_other: "",
+                    challenges_other: "",
+                    support_needed_other: "",
+                    interested_activities_other: ""
+                  });
+                }}
+                className="px-6 py-2 rounded-full font-semibold text-white transition hover:scale-105"
+                style={{ backgroundColor: "#065f46" }}
+              >
+                Submit Again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {settings?.support?.enabled !== false && (
+        <AnimatedSection id="support" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
+          <div className="mx-auto max-w-4xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Need Support?</h2>
+              <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
+                Have questions or need assistance? Reach out to us directly.
+              </p>
+            </div>
+            <div className="rounded-2xl border p-8 text-center" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+              <svg className="w-16 h-16 mx-auto mb-4" style={{ color: "#059669" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <h3 className="text-2xl font-semibold mb-2" style={{ color: "#064e3b" }}>Contact Us</h3>
+              <p className="mb-6" style={{ color: "#065f46" }}>
+                Send us an email for general inquiries or support
+              </p>
+              <a
+                href={`mailto:${settings?.support?.email || "info@kerea.org"}`}
+                className="inline-block px-8 py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
+                style={{ backgroundColor: "#059669" }}
+              >
+                {settings?.support?.email || "info@kerea.org"}
+              </a>
+            </div>
+          </div>
+        </AnimatedSection>
+      )}
+
+      <AnimatedSection id="partners" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Partners & Stakeholders</h2>
@@ -1143,38 +1439,40 @@ const WriPartnershipPage = () => {
           ) : (
             <div className="relative overflow-hidden">
               <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-                {partners.map((partner) => (
-                  <div key={partner.id} className="flex-shrink-0 w-64 snap-center rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center text-center" style={{ backgroundColor: "#ffffff", borderColor: "#a7f3d0" }}>
-                    <div className="h-24 w-24 flex items-center justify-center rounded-full" style={{ backgroundColor: "#f0fdf4" }}>
-                      {partner.logo_url ? (
-                        <img src={partner.logo_url} alt={partner.name} className="h-20 w-20 object-contain" />
-                      ) : (
-                        <svg className="w-12 h-12" style={{ color: "#065f46", opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
+                {partners.map((partner, index) => (
+                  <StaggeredItem key={partner.id} settings={settings} index={index}>
+                    <div className="flex-shrink-0 w-64 snap-center rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center text-center" style={{ backgroundColor: "#ffffff", borderColor: "#a7f3d0" }}>
+                      <div className="h-24 w-24 flex items-center justify-center rounded-full" style={{ backgroundColor: "#f0fdf4" }}>
+                        {partner.logo_url ? (
+                          <img src={partner.logo_url} alt={partner.name} className="h-20 w-20 object-contain" />
+                        ) : (
+                          <svg className="w-12 h-12" style={{ color: "#065f46", opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                        )}
+                      </div>
+                      <h3 className="mt-4 font-semibold" style={{ color: "#064e3b" }}>{partner.name}</h3>
+                      {partner.website_url && (
+                        <a
+                          href={partner.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-block rounded-full px-4 py-2 text-sm font-medium text-white transition hover:scale-105"
+                          style={{ backgroundColor: "#059669" }}
+                        >
+                          Visit Website
+                        </a>
                       )}
                     </div>
-                    <h3 className="mt-4 font-semibold" style={{ color: "#064e3b" }}>{partner.name}</h3>
-                    {partner.website_url && (
-                      <a
-                        href={partner.website_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-3 inline-block rounded-full px-4 py-2 text-sm font-medium text-white transition hover:scale-105"
-                        style={{ backgroundColor: "#059669" }}
-                      >
-                        Visit Website
-                      </a>
-                    )}
-                  </div>
+                  </StaggeredItem>
                 ))}
               </div>
             </div>
           )}
         </div>
-      </section>
+      </AnimatedSection>
 
-      <section id="resources" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ecfdf5" }}>
+      <AnimatedSection id="resources" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Resources</h2>
@@ -1186,55 +1484,57 @@ const WriPartnershipPage = () => {
             <p className="text-center py-8" style={{ color: "#065f46" }}>No resources available at this time.</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
-              {resources.map((resource) => (
-                <div key={resource.id} className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-lg transition-all" style={{ borderColor: "#a7f3d0" }}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "#f0fdf4", color: "#065f46" }}>
-                        {resource.resource_type}
-                      </span>
-                      <h3 className="mt-3 text-lg font-semibold" style={{ color: "#064e3b" }}>{resource.title}</h3>
-                      <p className="mt-2 text-sm" style={{ color: "#065f46" }}>{resource.description}</p>
-                    </div>
-                    <div className="ml-4 flex flex-col gap-2">
-                      {resource.file_url && (
-                        <a
-                          href={resource.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                          style={{ backgroundColor: "#059669" }}
-                        >
-                          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          Download
-                        </a>
-                      )}
-                      {resource.external_url && (
-                        <a
-                          href={resource.external_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                          style={{ backgroundColor: "#6b7280" }}
-                        >
-                          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          View
-                        </a>
-                      )}
+              {resources.map((resource, index) => (
+                <StaggeredItem key={resource.id} settings={settings} index={index}>
+                  <div className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-lg transition-all" style={{ borderColor: "#a7f3d0" }}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "#f0fdf4", color: "#065f46" }}>
+                          {resource.resource_type}
+                        </span>
+                        <h3 className="mt-3 text-lg font-semibold" style={{ color: "#064e3b" }}>{resource.title}</h3>
+                        <p className="mt-2 text-sm" style={{ color: "#065f46" }}>{resource.description}</p>
+                      </div>
+                      <div className="ml-4 flex flex-col gap-2">
+                        {resource.file_url && (
+                          <a
+                            href={resource.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:scale-105"
+                            style={{ backgroundColor: "#059669" }}
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download
+                          </a>
+                        )}
+                        {resource.external_url && (
+                          <a
+                            href={resource.external_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:scale-105"
+                            style={{ backgroundColor: "#6b7280" }}
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            View
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </StaggeredItem>
               ))}
             </div>
           )}
         </div>
-      </section>
+      </AnimatedSection>
 
-      <section id="business-database" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }}>
+      <AnimatedSection id="business-database" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Business Database</h2>
@@ -1264,9 +1564,20 @@ const WriPartnershipPage = () => {
                   style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
                 >
                   <option value="">All technologies</option>
-                  {technologySectors.map((sector) => (
-                    <option key={sector} value={sector}>{sector}</option>
-                  ))}
+                  <option value="Solar PV">Solar PV</option>
+                  <option value="Wind Power">Wind Power</option>
+                  <option value="Hydropower">Hydropower</option>
+                  <option value="Geothermal">Geothermal</option>
+                  <option value="Biomass">Biomass</option>
+                  <option value="Energy Storage">Energy Storage</option>
+                  <option value="Grid Solutions">Grid Solutions</option>
+                  <option value="E-Mobility">E-Mobility</option>
+                  <option value="PURE">PURE</option>
+                  <option value="Green Manufacturing">Green Manufacturing</option>
+                  <option value="Wind">Wind</option>
+                  <option value="Hydro">Hydro</option>
+                  <option value="Biomass">Biomass</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
               <div>
@@ -1278,9 +1589,14 @@ const WriPartnershipPage = () => {
                   style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
                 >
                   <option value="">All types</option>
-                  {organisationTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
+                  <option value="Company">Company</option>
+                  <option value="Government Agency">Government Agency</option>
+                  <option value="Research Institution">Research Institution</option>
+                  <option value="NGO/Non-profit">NGO/Non-profit</option>
+                  <option value="Financial Institution">Financial Institution</option>
+                  <option value="Development Partner">Development Partner</option>
+                  <option value="Industry Association">Industry Association</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
               <div>
@@ -1337,7 +1653,7 @@ const WriPartnershipPage = () => {
             </div>
           )}
         </div>
-      </section>
+      </AnimatedSection>
 
       <footer className="py-12 px-4" style={{ backgroundColor: "#064e3b", color: "#ffffff" }}>
         <div className="mx-auto max-w-6xl">
@@ -1345,21 +1661,46 @@ const WriPartnershipPage = () => {
             <div>
               <h3 className="text-lg font-semibold">Africa–China Renewable Energy Partnership</h3>
               <p className="mt-2" style={{ color: "#a7f3d0" }}>
-                A dedicated platform connecting Kenya's renewable energy sector with Chinese technology, investment, and business opportunities.
+                {settings?.footer?.description || "A dedicated platform connecting Kenya's renewable energy sector with Chinese technology, investment, and business opportunities."}
               </p>
             </div>
             <div>
               <h3 className="text-lg font-semibold">Quick Links</h3>
               <ul className="mt-2 space-y-2">
-                <li><Link to="/solar-mkononi" className="transition hover:opacity-80" style={{ color: "#a7f3d0" }}>Solar Mkononi</Link></li>
-                <li><button onClick={() => scrollToSection("enquiry")} className="transition hover:opacity-80" style={{ color: "#a7f3d0" }}>Submit Enquiry</button></li>
-                <li><button onClick={() => scrollToSection("business-database")} className="transition hover:opacity-80" style={{ color: "#a7f3d0" }}>Business Database</button></li>
+                {settings?.quickLinks?.map((link, index) => (
+                  <li key={index}>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="transition hover:opacity-80"
+                      style={{ color: "#a7f3d0" }}
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+                <li>
+                  <button
+                    onClick={() => scrollToSection("business-database")}
+                    className="transition hover:opacity-80"
+                    style={{ color: "#a7f3d0" }}
+                  >
+                    Business Database
+                  </button>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="text-lg font-semibold">Contact</h3>
               <p className="mt-2" style={{ color: "#a7f3d0" }}>
-                For partnership enquiries and information, please use the enquiry form above.
+                <a
+                  href={`mailto:${settings?.footer?.contactEmail || "info@kerea.org"}`}
+                  className="transition hover:opacity-80"
+                  style={{ color: "#a7f3d0" }}
+                >
+                  {settings?.footer?.contactEmail || "info@kerea.org"}
+                </a>
               </p>
             </div>
           </div>
