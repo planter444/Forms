@@ -87,7 +87,7 @@ const getInitialClass = (style) => {
   }
 };
 
-const AnimatedSection = ({ children, settings, id, className = "" }) => {
+const AnimatedSection = ({ children, settings, id, className = "", style = {} }) => {
   const [ref, inView] = useScrollReveal();
   const animationEnabled = settings?.animation?.enabled !== false;
   const isMobile = window.innerWidth < 768;
@@ -95,12 +95,17 @@ const AnimatedSection = ({ children, settings, id, className = "" }) => {
   const animationStyle = animationConfig?.style || "fade-up";
   const animationDuration = animationConfig?.duration || (isMobile ? 500 : 600);
 
+  const sectionStyle = {
+    scrollMarginTop: "80px",
+    ...style
+  };
+
   if (!animationEnabled) {
-    return <section id={id} className={className}>{children}</section>;
+    return <section id={id} className={className} style={sectionStyle}>{children}</section>;
   }
 
   return (
-    <section id={id} className={className} style={{ scrollMarginTop: "80px" }}>
+    <section id={id} className={className} style={sectionStyle}>
       <div
         ref={ref}
         className={`${getInitialClass(animationStyle)} ${inView ? getAnimationClass(animationStyle, inView) : ""}`}
@@ -112,14 +117,14 @@ const AnimatedSection = ({ children, settings, id, className = "" }) => {
   );
 };
 
-const StaggeredItem = ({ children, settings, index, className = "" }) => {
+const StaggeredItem = ({ children, settings, index, className = "", enabled = true, customStaggerDelay = null }) => {
   const [ref, inView] = useScrollReveal();
-  const animationEnabled = settings?.animation?.enabled !== false;
+  const animationEnabled = enabled && settings?.animation?.enabled !== false;
   const isMobile = window.innerWidth < 768;
   const animationConfig = isMobile ? settings?.animation?.mobile : settings?.animation?.desktop;
   const animationStyle = animationConfig?.style || "fade-up";
   const animationDuration = animationConfig?.duration || (isMobile ? 500 : 600);
-  const staggerDelay = animationConfig?.stagger || (isMobile ? 50 : 100);
+  const staggerDelay = customStaggerDelay !== null ? customStaggerDelay : (animationConfig?.stagger || 500);
   const delay = index * staggerDelay;
 
   if (!animationEnabled) {
@@ -142,13 +147,6 @@ const StaggeredItem = ({ children, settings, index, className = "" }) => {
 };
 
 const AboutSection = ({ settings }) => {
-  const [ref, inView] = useScrollReveal();
-  const animationEnabled = settings?.animation?.enabled !== false;
-  const isMobile = window.innerWidth < 768;
-  const animationConfig = isMobile ? settings?.animation?.mobile : settings?.animation?.desktop;
-  const animationStyle = animationConfig?.style || "fade-up";
-  const animationDuration = animationConfig?.duration || (isMobile ? 500 : 600);
-
   const items = [
     "Kenya–China B2B linkages",
     "Technology transfer",
@@ -160,18 +158,14 @@ const AboutSection = ({ settings }) => {
   ];
 
   return (
-    <div
-      ref={ref}
-      className={`${getInitialClass(animationStyle)} ${inView ? getAnimationClass(animationStyle, inView) : ""}`}
-      style={{ transitionDuration: `${animationDuration}ms` }}
-    >
+    <div>
       <div className="text-center mb-12">
         <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>About the Partnership</h2>
         <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
           The Kenya–China Renewable Energy Partnership focuses on strengthening collaboration across key areas:
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item, index) => {
           const colors = [
             { bg: "#f0fdf4", border: "#a7f3d0", text: "#065f46" },
@@ -184,21 +178,9 @@ const AboutSection = ({ settings }) => {
           ];
           const color = colors[index % colors.length];
 
-          // Different shapes for different indices
-          const shapes = [
-            "rounded-2xl",
-            "rounded-tl-3xl rounded-br-3xl rounded-tr-lg rounded-bl-lg",
-            "rounded-3xl",
-            "rounded-tl-lg rounded-tr-3xl rounded-bl-3xl rounded-br-lg",
-            "rounded-2xl",
-            "rounded-tl-3xl rounded-br-3xl rounded-tr-lg rounded-bl-lg",
-            "rounded-3xl"
-          ];
-          const shape = shapes[index % shapes.length];
-
           return (
-            <StaggeredItem key={index} settings={settings} index={index}>
-              <div className={`border p-4 shadow-sm ${shape}`} style={{ backgroundColor: color.bg, borderColor: color.border }}>
+            <StaggeredItem key={index} settings={settings} index={index} enabled={true} customStaggerDelay={settings?.animation?.cardStaggerDelay || 500}>
+              <div className="border p-6 shadow-sm rounded-2xl" style={{ backgroundColor: color.bg, borderColor: color.border }}>
                 <p className="font-medium" style={{ color: color.text }}>{item}</p>
               </div>
             </StaggeredItem>
@@ -480,32 +462,7 @@ const WriPartnershipPage = () => {
   const [events, setEvents] = useState([]);
   const [partners, setPartners] = useState([]);
   const [resources, setResources] = useState([]);
-  const [surveyForm, setSurveyForm] = useState({
-    company_name: "",
-    contact_person: "",
-    position: "",
-    email: "",
-    phone: "",
-    nature_of_business: [],
-    technologies: [],
-    engages_chinese_partners: "",
-    collaboration_types: [],
-    engagement_duration: "",
-    challenges: [],
-    support_needed: [],
-    future_interest: "",
-    interested_activities: [],
-    additional_comments: ""
-  });
-  
-  const [otherInputs, setOtherInputs] = useState({
-    nature_of_business_other: "",
-    technologies_other: "",
-    collaboration_types_other: "",
-    challenges_other: "",
-    support_needed_other: "",
-    interested_activities_other: ""
-  });
+  const [surveyForm, setSurveyForm] = useState({});
   const [surveySubmitting, setSurveySubmitting] = useState(false);
   const [surveySuccess, setSurveySuccess] = useState(false);
   const [surveyStarted, setSurveyStarted] = useState(false);
@@ -631,48 +588,33 @@ const WriPartnershipPage = () => {
     e.preventDefault();
     setSurveySubmitting(true);
     try {
+      // Extract dynamic question responses for JSONB storage
+      const responsesJsonb = {};
+      Object.keys(surveyForm).forEach(key => {
+        if (key.startsWith('question_')) {
+          responsesJsonb[key] = surveyForm[key];
+        }
+      });
+
+      // For new dynamic survey, only send responses_jsonb
+      const payload = {
+        responses_jsonb: responsesJsonb
+      };
+
       const response = await fetch(`${API_URL}/api/wri/survey`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...surveyForm,
-          nature_of_business_other: otherInputs.nature_of_business_other || "",
-          technologies_other: otherInputs.technologies_other || "",
-          collaboration_types_other: otherInputs.collaboration_types_other || "",
-          challenges_other: otherInputs.challenges_other || "",
-          support_needed_other: otherInputs.support_needed_other || "",
-          interested_activities_other: otherInputs.interested_activities_other || ""
-        })
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
         setSurveySuccess(true);
         setShowSuccessPopup(true);
-        setSurveyForm({
-          company_name: "",
-          contact_person: "",
-          position: "",
-          email: "",
-          phone: "",
-          nature_of_business: [],
-          technologies: [],
-          engages_chinese_partners: "",
-          collaboration_types: [],
-          engagement_duration: "",
-          challenges: [],
-          support_needed: [],
-          future_interest: "",
-          interested_activities: [],
-          additional_comments: ""
-        });
-        setOtherInputs({
-          nature_of_business_other: "",
-          technologies_other: "",
-          collaboration_types_other: "",
-          challenges_other: "",
-          support_needed_other: "",
-          interested_activities_other: ""
-        });
+        setSurveyForm({});
+        setOtherInputs({});
+      } else {
+        const errorData = await response.json();
+        console.error("Survey submission error:", errorData);
       }
     } catch (error) {
       console.error("Error submitting survey:", error);
@@ -683,18 +625,10 @@ const WriPartnershipPage = () => {
 
   const handleCheckboxChange = (field, value) => {
     setSurveyForm(prev => {
-      const newValue = prev[field].includes(value)
-        ? prev[field].filter(item => item !== value)
-        : [...prev[field], value];
-      
-      // Handle "Other" checkbox
-      if (value === "Other") {
-        const otherField = `${field}_other`;
-        setOtherInputs(prev => ({
-          ...prev,
-          [otherField]: newValue.includes("Other") ? prev[otherField] : ""
-        }));
-      }
+      const currentValues = Array.isArray(prev[field]) ? prev[field] : [];
+      const newValue = currentValues.includes(value)
+        ? currentValues.filter(item => item !== value)
+        : [...currentValues, value];
       
       return { ...prev, [field]: newValue };
     });
@@ -714,7 +648,7 @@ const WriPartnershipPage = () => {
   };
 
   return (
-    <div style={{ backgroundColor: "#f0fdf4", color: "#064e3b" }}>
+    <div style={{ color: "#064e3b" }}>
       <WriNav settings={settings} overHero={overHero} />
 
       <section 
@@ -771,7 +705,7 @@ const WriPartnershipPage = () => {
                   window.open(link, "_blank");
                 }
               }}
-              className="px-5 py-2 md:px-10 md:py-4 mx-auto md:mx-0 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
+              className="px-7 py-2 md:px-10 md:py-4 mx-auto md:mx-0 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
               style={{ backgroundColor: "#ffffff", color: "#059669", width: "auto" }}
             >
               {settings?.hero?.primaryCta || "KEREA Survey"}
@@ -894,7 +828,7 @@ const WriPartnershipPage = () => {
               };
 
               return (
-                <StaggeredItem key={area.id} settings={settings} index={index}>
+                <StaggeredItem key={area.id} settings={settings} index={index} enabled={false}>
                   <div className="rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all hover:scale-105 flex flex-col" style={{ backgroundColor: color.bg, borderColor: color.border, minHeight: "200px" }}>
                     <div className={`flex ${index % 2 === 0 ? 'justify-start' : 'justify-end'} md:justify-start`} style={{ color: color.text }}>
                       {getIcon(area.title)}
@@ -919,7 +853,7 @@ const WriPartnershipPage = () => {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {b2bOpportunities.map((opportunity, index) => (
-              <StaggeredItem key={index} settings={settings} index={index}>
+              <StaggeredItem key={index} settings={settings} index={index} enabled={true} customStaggerDelay={settings?.animation?.cardStaggerDelay || 500}>
                 <div className="flex items-center space-x-3 rounded-2xl bg-white p-4 shadow-sm hover:shadow-md transition-all">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full text-white font-bold text-lg" style={{ backgroundColor: "#059669" }}>
                     {index + 1}
@@ -945,7 +879,7 @@ const WriPartnershipPage = () => {
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {events.map((event, index) => (
-                <StaggeredItem key={event.id} settings={settings} index={index}>
+                <StaggeredItem key={event.id} settings={settings} index={index} enabled={false}>
                   <div className="rounded-2xl border bg-white shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col" style={{ borderColor: "#a7f3d0", minHeight: "350px" }}>
                     <div className="h-48 flex items-center justify-center overflow-hidden flex-shrink-0" style={{ backgroundColor: "#f0fdf4" }}>
                       {event.image_url ? (
@@ -1025,306 +959,156 @@ const WriPartnershipPage = () => {
               </div>
 
               <form onSubmit={handleSurveySubmit} className="space-y-8">
-              <StaggeredItem settings={settings} index={0}>
-                <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                  <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 1: Company Information</h3>
-                  <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>1. Company Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={surveyForm.company_name}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, company_name: e.target.value })}
-                      className="w-full rounded-lg border px-3 py-2"
-                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>2. Contact Person Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={surveyForm.contact_person}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, contact_person: e.target.value })}
-                      className="w-full rounded-lg border px-3 py-2"
-                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>3. Position/Title *</label>
-                    <input
-                      type="text"
-                      required
-                      value={surveyForm.position}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, position: e.target.value })}
-                      className="w-full rounded-lg border px-3 py-2"
-                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>4. Email Address *</label>
-                    <input
-                      type="email"
-                      required
-                      value={surveyForm.email}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, email: e.target.value })}
-                      className="w-full rounded-lg border px-3 py-2"
-                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>5. Phone Number *</label>
-                    <input
-                      type="tel"
-                      required
-                      value={surveyForm.phone}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, phone: e.target.value })}
-                      className="w-full rounded-lg border px-3 py-2"
-                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>6. Nature of Business (Select all that apply) *</label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {["Manufacturing", "Distribution / Supply", "Installation / EPC", "Financing / Investment", "Consultancy", "Research & Innovation", "Product Development", "Importation", "Other"].map((option) => (
-                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                          <input
-                            type="checkbox"
-                            checked={surveyForm.nature_of_business.includes(option)}
-                            onChange={() => handleCheckboxChange("nature_of_business", option)}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </div>
-                    {surveyForm.nature_of_business.includes("Other") && (
-                      <input
-                        type="text"
-                        value={otherInputs.nature_of_business_other}
-                        onChange={(e) => setOtherInputs(prev => ({ ...prev, nature_of_business_other: e.target.value }))}
-                        placeholder="Please specify"
-                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>7. Renewable Energy Technologies (Select all that apply) *</label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {["Solar PV", "Solar Water Heating", "Clean Cooking", "Biogas", "Mini-grids", "Energy Storage (Battery Systems)", "E-mobility", "Productive Use of Renewable Energy (PURE)", "Energy Efficiency", "Cross-cutting / Multiple Technologies", "Other"].map((option) => (
-                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                          <input
-                            type="checkbox"
-                            checked={surveyForm.technologies.includes(option)}
-                            onChange={() => handleCheckboxChange("technologies", option)}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </div>
-                    {surveyForm.technologies.includes("Other") && (
-                      <input
-                        type="text"
-                        value={otherInputs.technologies_other}
-                        onChange={(e) => setOtherInputs(prev => ({ ...prev, technologies_other: e.target.value }))}
-                        placeholder="Please specify"
-                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-              </StaggeredItem>
+              {surveyQuestions && surveyQuestions.length > 0 ? (() => {
+                // Group questions by section_order
+                const groupedQuestions = {};
+                surveyQuestions.forEach(q => {
+                  if (!groupedQuestions[q.section_order]) {
+                    groupedQuestions[q.section_order] = [];
+                  }
+                  groupedQuestions[q.section_order].push(q);
+                });
 
-              <StaggeredItem settings={settings} index={1}>
-                <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                  <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 2: Current Engagement with Chinese Partners</h3>
-                  <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>8. Does your organization currently engage with Chinese companies or institutions? *</label>
-                    <div className="space-x-4 mt-2">
-                      {["Yes", "No", "Planning to engage"].map((option) => (
-                        <label key={option} className="inline-flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                          <input
-                            type="radio"
-                            name="engages_chinese_partners"
-                            value={option}
-                            checked={surveyForm.engages_chinese_partners === option}
-                            onChange={(e) => setSurveyForm({ ...surveyForm, engages_chinese_partners: e.target.value })}
-                          />
-                          {option}
-                        </label>
-                      ))}
+                return Object.entries(groupedQuestions).map(([sectionNum, questions]) => (
+                  <StaggeredItem key={`section-${sectionNum}`} settings={settings} index={parseInt(sectionNum) - 1} enabled={false}>
+                    <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                      <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section {sectionNum}</h3>
+                      <div className="space-y-4">
+                        {questions.map((question, qIndex) => (
+                          <div key={question.id}>
+                            <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>
+                              {question.question_text} {question.required && "*"}
+                            </label>
+                            {question.question_type === "text" && (
+                              <input
+                                type="text"
+                                required={question.required}
+                                value={surveyForm[`question_${question.id}`] || ""}
+                                onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
+                                className="w-full rounded-lg border px-3 py-2"
+                                style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                              />
+                            )}
+                            {question.question_type === "email" && (
+                              <input
+                                type="email"
+                                required={question.required}
+                                value={surveyForm[`question_${question.id}`] || ""}
+                                onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
+                                className="w-full rounded-lg border px-3 py-2"
+                                style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                              />
+                            )}
+                            {question.question_type === "tel" && (
+                              <input
+                                type="tel"
+                                required={question.required}
+                                value={surveyForm[`question_${question.id}`] || ""}
+                                onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
+                                className="w-full rounded-lg border px-3 py-2"
+                                style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                              />
+                            )}
+                            {question.question_type === "textarea" && (
+                              <textarea
+                                required={question.required}
+                                value={surveyForm[`question_${question.id}`] || ""}
+                                onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
+                                className="w-full rounded-lg border px-3 py-2"
+                                style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                                rows={3}
+                              />
+                            )}
+                            {question.question_type === "radio" && (
+                              <div className="space-y-2">
+                                {question.options.map((option, optIndex) => (
+                                  <label key={optIndex} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                                    <input
+                                      type="radio"
+                                      name={`question_${question.id}`}
+                                      required={question.required}
+                                      checked={surveyForm[`question_${question.id}`] === option}
+                                      onChange={() => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: option })}
+                                    />
+                                    {option}
+                                  </label>
+                                ))}
+                                {surveyForm[`question_${question.id}`] === "Other" && (
+                                  <textarea
+                                    placeholder="Please specify"
+                                    value={surveyForm[`question_${question.id}_other`] || ""}
+                                    onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}_other`]: e.target.value })}
+                                    className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
+                                    style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                                    rows={2}
+                                  />
+                                )}
+                              </div>
+                            )}
+                            {question.question_type === "checkbox" && (
+                              <div className="space-y-2">
+                                {question.options.map((option, optIndex) => (
+                                  <label key={optIndex} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={Array.isArray(surveyForm[`question_${question.id}`]) ? surveyForm[`question_${question.id}`].includes(option) : false}
+                                      onChange={() => {
+                                        const currentValues = Array.isArray(surveyForm[`question_${question.id}`]) ? surveyForm[`question_${question.id}`] : [];
+                                        if (currentValues.includes(option)) {
+                                          setSurveyForm({ ...surveyForm, [`question_${question.id}`]: currentValues.filter(v => v !== option) });
+                                        } else {
+                                          setSurveyForm({ ...surveyForm, [`question_${question.id}`]: [...currentValues, option] });
+                                        }
+                                      }}
+                                    />
+                                    {option}
+                                  </label>
+                                ))}
+                                {Array.isArray(surveyForm[`question_${question.id}`]) && surveyForm[`question_${question.id}`].includes("Other") && (
+                                  <textarea
+                                    placeholder="Please specify"
+                                    value={surveyForm[`question_${question.id}_other`] || ""}
+                                    onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}_other`]: e.target.value })}
+                                    className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
+                                    style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                                    rows={2}
+                                  />
+                                )}
+                              </div>
+                            )}
+                            {question.question_type === "scale" && (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-4">
+                                  <span className="text-sm" style={{ color: "#065f46" }}>1 (Lowest)</span>
+                                  <input
+                                    type="range"
+                                    min="1"
+                                    max="10"
+                                    required={question.required}
+                                    value={surveyForm[`question_${question.id}`] || 5}
+                                    onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: parseInt(e.target.value) })}
+                                    className="flex-1"
+                                  />
+                                  <span className="text-sm" style={{ color: "#065f46" }}>10 (Highest)</span>
+                                </div>
+                                <div className="text-center font-bold" style={{ color: "#064e3b" }}>
+                                  {surveyForm[`question_${question.id}`] || 5}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>9. What type of collaboration or support would your organization seek from Chinese partners? (Select all that apply) *</label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {["Technology transfer", "Manufacturing partnerships", "Financing", "Capacity building", "Distribution partnerships", "Research & Development", "Market access", "Investment", "Other"].map((option) => (
-                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                          <input
-                            type="checkbox"
-                            checked={surveyForm.collaboration_types.includes(option)}
-                            onChange={() => handleCheckboxChange("collaboration_types", option)}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </div>
-                    {surveyForm.collaboration_types.includes("Other") && (
-                      <input
-                        type="text"
-                        value={otherInputs.collaboration_types_other}
-                        onChange={(e) => setOtherInputs(prev => ({ ...prev, collaboration_types_other: e.target.value }))}
-                        placeholder="Please specify"
-                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>10. How long has your organization been engaging with Chinese partners? *</label>
-                    <div className="space-x-4 mt-2">
-                      {["Less than 1 year", "1–3 years", "4–7 years", "Over 7 years"].map((option) => (
-                        <label key={option} className="inline-flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                          <input
-                            type="radio"
-                            name="engagement_duration"
-                            value={option}
-                            checked={surveyForm.engagement_duration === option}
-                            onChange={(e) => setSurveyForm({ ...surveyForm, engagement_duration: e.target.value })}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+                  </StaggeredItem>
+                ));
+              })() : (
+                <div className="text-center py-8" style={{ color: "#065f46" }}>
+                  Loading survey questions...
                 </div>
-              </div>
-              </StaggeredItem>
+              )}
 
-              <StaggeredItem settings={settings} index={2}>
-                <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                  <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 3: Challenges and Support Needs</h3>
-                  <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>11. What are the key challenges your organization faces when engaging with Chinese partners? (Select all that apply) *</label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {["Language barriers", "Limited access to trusted partners", "Financing constraints", "Import/logistics challenges", "Regulatory barriers", "Quality assurance concerns", "Limited market information", "Cultural/business practice differences", "Communication delays", "Other"].map((option) => (
-                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                          <input
-                            type="checkbox"
-                            checked={surveyForm.challenges.includes(option)}
-                            onChange={() => handleCheckboxChange("challenges", option)}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </div>
-                    {surveyForm.challenges.includes("Other") && (
-                      <input
-                        type="text"
-                        value={otherInputs.challenges_other}
-                        onChange={(e) => setOtherInputs(prev => ({ ...prev, challenges_other: e.target.value }))}
-                        placeholder="Please specify"
-                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>12. What support would you like KEREA to provide? (Select all that apply) *</label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {["B2B matchmaking", "Trade mission coordination", "Business networking events", "Investment linkages", "Policy advocacy", "Technical training", "Market intelligence", "Supplier verification", "Translation/interpreter support", "Regulatory guidance", "Access to financing opportunities", "Other"].map((option) => (
-                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                          <input
-                            type="checkbox"
-                            checked={surveyForm.support_needed.includes(option)}
-                            onChange={() => handleCheckboxChange("support_needed", option)}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </div>
-                    {surveyForm.support_needed.includes("Other") && (
-                      <input
-                        type="text"
-                        value={otherInputs.support_needed_other}
-                        onChange={(e) => setOtherInputs(prev => ({ ...prev, support_needed_other: e.target.value }))}
-                        placeholder="Please specify"
-                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-              </StaggeredItem>
-
-              <StaggeredItem settings={settings} index={4}>
-                <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                  <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section 4: Future Collaboration Opportunities</h3>
-                  <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>13. Would your organization be interested in participating in future Kenya–China B2B engagements organized by KEREA? *</label>
-                    <div className="space-x-4 mt-2">
-                      {["Yes", "No", "Maybe"].map((option) => (
-                        <label key={option} className="inline-flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                          <input
-                            type="radio"
-                            name="future_interest"
-                            value={option}
-                            checked={surveyForm.future_interest === option}
-                            onChange={(e) => setSurveyForm({ ...surveyForm, future_interest: e.target.value })}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>14. Which of the following Kenya–China business engagement activities would your organization be interested in participating in? (Select all that apply) *</label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {["Trade fairs", "Virtual B2B meetings", "Investor forums", "Site visits", "Product exhibitions", "Technical workshops", "Joint pilot projects", "Other"].map((option) => (
-                        <label key={option} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
-                          <input
-                            type="checkbox"
-                            checked={surveyForm.interested_activities.includes(option)}
-                            onChange={() => handleCheckboxChange("interested_activities", option)}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </div>
-                    {surveyForm.interested_activities.includes("Other") && (
-                      <input
-                        type="text"
-                        value={otherInputs.interested_activities_other}
-                        onChange={(e) => setOtherInputs(prev => ({ ...prev, interested_activities_other: e.target.value }))}
-                        placeholder="Please specify"
-                        className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                        style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>15. Please share any additional comments, recommendations, or partnership interests *</label>
-                    <textarea
-                      required
-                      value={surveyForm.additional_comments}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, additional_comments: e.target.value })}
-                      className="w-full rounded-lg border px-3 py-2"
-                      style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
-                      rows={4}
-                    />
-                  </div>
-                </div>
-              </div>
-              </StaggeredItem>
-
-              <StaggeredItem settings={settings} index={4}>
+              <StaggeredItem settings={settings} index={4} enabled={false}>
                 <button
                 type="submit"
                 disabled={surveySubmitting}
@@ -1361,31 +1145,8 @@ const WriPartnershipPage = () => {
                   setShowSuccessPopup(false);
                   setSurveyStarted(false);
                   setSurveySuccess(false);
-                  setSurveyForm({
-                    company_name: "",
-                    contact_person: "",
-                    position: "",
-                    email: "",
-                    phone: "",
-                    nature_of_business: [],
-                    technologies: [],
-                    engages_chinese_partners: "",
-                    collaboration_types: [],
-                    engagement_duration: "",
-                    challenges: [],
-                    support_needed: [],
-                    future_interest: "",
-                    interested_activities: [],
-                    additional_comments: ""
-                  });
-                  setOtherInputs({
-                    nature_of_business_other: "",
-                    technologies_other: "",
-                    collaboration_types_other: "",
-                    challenges_other: "",
-                    support_needed_other: "",
-                    interested_activities_other: ""
-                  });
+                  setSurveyForm({});
+                  setOtherInputs({});
                 }}
                 className="px-6 py-2 rounded-full font-semibold text-white transition hover:scale-105"
                 style={{ backgroundColor: "#065f46" }}
@@ -1440,7 +1201,7 @@ const WriPartnershipPage = () => {
             <div className="relative overflow-hidden">
               <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 {partners.map((partner, index) => (
-                  <StaggeredItem key={partner.id} settings={settings} index={index}>
+                  <StaggeredItem key={partner.id} settings={settings} index={index} enabled={false}>
                     <div className="flex-shrink-0 w-64 snap-center rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center text-center" style={{ backgroundColor: "#ffffff", borderColor: "#a7f3d0" }}>
                       <div className="h-24 w-24 flex items-center justify-center rounded-full" style={{ backgroundColor: "#f0fdf4" }}>
                         {partner.logo_url ? (
@@ -1485,7 +1246,7 @@ const WriPartnershipPage = () => {
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               {resources.map((resource, index) => (
-                <StaggeredItem key={resource.id} settings={settings} index={index}>
+                <StaggeredItem key={resource.id} settings={settings} index={index} enabled={false}>
                   <div className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-lg transition-all" style={{ borderColor: "#a7f3d0" }}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">

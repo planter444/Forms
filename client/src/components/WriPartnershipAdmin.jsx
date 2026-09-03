@@ -147,6 +147,26 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
     required: false
   });
 
+  const [leadStatus, setLeadStatus] = useState([]);
+  const [leadActivities, setLeadActivities] = useState([]);
+  const [leadScores, setLeadScores] = useState([]);
+  const [matchRecommendations, setMatchRecommendations] = useState([]);
+  const [leadStatusForm, setLeadStatusForm] = useState({
+    business_id: null,
+    status: "new",
+    last_contact_date: "",
+    next_follow_up_date: "",
+    notes: "",
+    assigned_to: ""
+  });
+  const [activityForm, setActivityForm] = useState({
+    business_id: null,
+    activity_type: "call",
+    description: "",
+    performed_by: "",
+    outcome: ""
+  });
+
   const [editingItem, setEditingItem] = useState(null);
 
   const fetchSurveyResponses = async () => {
@@ -158,6 +178,18 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
       setSurveyResponses(data);
     } catch (error) {
       console.error("Error fetching survey responses:", error);
+    }
+  };
+
+  const fetchSurveyQuestions = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/survey-questions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setSurveyQuestions(data);
+    } catch (error) {
+      console.error("Error fetching survey questions:", error);
     }
   };
 
@@ -247,18 +279,6 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
     }
   };
 
-  const fetchSurveyQuestions = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/wri/admin/survey-questions`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      setSurveyQuestions(data);
-    } catch (error) {
-      console.error("Error fetching survey questions:", error);
-    }
-  };
-
   const handleSaveSurveyQuestion = async () => {
     setLoading(true);
     try {
@@ -280,19 +300,110 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
         setNotice(editingItem ? "Survey question updated" : "Survey question created");
         setSurveyQuestionForm({
           section_order: 1,
-          question_order: 1,
+          question_order: surveyQuestions.length + 1,
           question_text: "",
           question_type: "text",
           options: [],
           required: false
         });
         setEditingItem(null);
-        fetchSurveyQuestions();
+        await fetchSurveyQuestions();
+        
+        // Trigger settings update to refresh public page
+        await fetchWriSettings();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || "Failed to save survey question");
       }
     } catch (error) {
+      console.error("Error saving survey question:", error);
       setError("Failed to save survey question");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMoveQuestionUp = async (question) => {
+    const currentIndex = surveyQuestions.findIndex(q => q.id === question.id);
+    if (currentIndex === 0) return; // Already at top
+
+    const previousQuestion = surveyQuestions[currentIndex - 1];
+    
+    // Swap question_order values
+    const newOrder = previousQuestion.question_order;
+    const previousOrder = question.question_order;
+
+    try {
+      await fetch(`${API_URL}/api/wri/admin/survey-questions/${question.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...question,
+          question_order: newOrder
+        })
+      });
+
+      await fetch(`${API_URL}/api/wri/admin/survey-questions/${previousQuestion.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...previousQuestion,
+          question_order: previousOrder
+        })
+      });
+
+      fetchSurveyQuestions();
+      setNotice("Question moved up");
+    } catch (error) {
+      setError("Failed to move question");
+    }
+  };
+
+  const handleMoveQuestionDown = async (question) => {
+    const currentIndex = surveyQuestions.findIndex(q => q.id === question.id);
+    if (currentIndex === surveyQuestions.length - 1) return; // Already at bottom
+
+    const nextQuestion = surveyQuestions[currentIndex + 1];
+    
+    // Swap question_order values
+    const newOrder = nextQuestion.question_order;
+    const nextOrder = question.question_order;
+
+    try {
+      await fetch(`${API_URL}/api/wri/admin/survey-questions/${question.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...question,
+          question_order: newOrder
+        })
+      });
+
+      await fetch(`${API_URL}/api/wri/admin/survey-questions/${nextQuestion.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...nextQuestion,
+          question_order: nextOrder
+        })
+      });
+
+      fetchSurveyQuestions();
+      setNotice("Question moved down");
+    } catch (error) {
+      setError("Failed to move question");
     }
   };
 
@@ -312,6 +423,164 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
     }
   };
 
+  const fetchLeadStatus = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/lead-status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setLeadStatus(data);
+    } catch (error) {
+      console.error("Error fetching lead status:", error);
+    }
+  };
+
+  const fetchLeadActivities = async (businessId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/lead-activities/${businessId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setLeadActivities(data);
+    } catch (error) {
+      console.error("Error fetching lead activities:", error);
+    }
+  };
+
+  const fetchLeadScores = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/lead-scores`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setLeadScores(data);
+    } catch (error) {
+      console.error("Error fetching lead scores:", error);
+    }
+  };
+
+  const fetchMatchRecommendations = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/match-recommendations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setMatchRecommendations(data);
+    } catch (error) {
+      console.error("Error fetching match recommendations:", error);
+    }
+  };
+
+  const handleSaveLeadStatus = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/lead-status/${leadStatusForm.business_id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(leadStatusForm)
+      });
+      if (response.ok) {
+        setNotice("Lead status updated");
+        setLeadStatusForm({
+          business_id: null,
+          status: "new",
+          last_contact_date: "",
+          next_follow_up_date: "",
+          notes: "",
+          assigned_to: ""
+        });
+        fetchLeadStatus();
+      }
+    } catch (error) {
+      setError("Failed to save lead status");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveActivity = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/lead-activities`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(activityForm)
+      });
+      if (response.ok) {
+        setNotice("Activity logged");
+        setActivityForm({
+          business_id: null,
+          activity_type: "call",
+          description: "",
+          performed_by: "",
+          outcome: ""
+        });
+        if (activityForm.business_id) {
+          fetchLeadActivities(activityForm.business_id);
+        }
+      }
+    } catch (error) {
+      setError("Failed to save activity");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRecalculateScore = async (businessId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/lead-scores/recalculate/${businessId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        setNotice("Lead score recalculated");
+        fetchLeadScores();
+      }
+    } catch (error) {
+      setError("Failed to recalculate lead score");
+    }
+  };
+
+  const handleGenerateMatches = async (businessId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/match-recommendations/generate/${businessId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        setNotice("Match recommendations generated");
+        fetchMatchRecommendations();
+      }
+    } catch (error) {
+      setError("Failed to generate match recommendations");
+    }
+  };
+
+  const handleUpdateMatchStatus = async (id, status) => {
+    try {
+      const response = await fetch(`${API_URL}/api/wri/admin/match-recommendations/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+      if (response.ok) {
+        setNotice("Match status updated");
+        fetchMatchRecommendations();
+      }
+    } catch (error) {
+      setError("Failed to update match status");
+    }
+  };
+
   useEffect(() => {
     fetchWriSettings();
     fetchEnquiries();
@@ -321,6 +590,9 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
     fetchResources();
     fetchSurveyResponses();
     fetchSurveyQuestions();
+    fetchLeadStatus();
+    fetchLeadScores();
+    fetchMatchRecommendations();
   }, []);
 
   const fetchWriSettings = async () => {
@@ -804,21 +1076,24 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
         <p className="mt-2 text-sm" style={{ color: palette.mutedTextColor }}>Manage hero content, enquiries, businesses, events, partners, and resources.</p>
       </div>
 
-      <div className="flex gap-2 border-b" style={{ borderColor: palette.borderColor }}>
+      <div className="flex flex-wrap gap-2 border-b pb-2" style={{ borderColor: palette.borderColor }}>
         {[
-          { id: "hero", label: "Hero" },
-          { id: "real-hero", label: "Real Hero" },
-          { id: "animation", label: "Animation" },
-          { id: "support", label: "Support" },
-          { id: "quick-links", label: "Quick Links" },
-          { id: "footer", label: "Footer" },
-          { id: "enquiries", label: "Enquiries" },
-          { id: "businesses", label: "Businesses" },
-          { id: "events", label: "Events" },
-          { id: "partners", label: "Partners" },
-          { id: "resources", label: "Resources" },
-          { id: "survey", label: "Survey Responses" },
-          { id: "survey-questions", label: "Survey Questions" }
+          { id: "real-hero", label: "Real Hero", icon: "⭐" },
+          { id: "animation", label: "Animation", icon: "🎬" },
+          { id: "support", label: "Support", icon: "❓" },
+          { id: "quick-links", label: "Quick Links", icon: "🔗" },
+          { id: "footer", label: "Footer", icon: "📋" },
+          { id: "enquiries", label: "Enquiries", icon: "📧" },
+          { id: "businesses", label: "Businesses", icon: "🏢" },
+          { id: "lead-status", label: "Lead Status", icon: "📊" },
+          { id: "lead-activities", label: "Lead Activities", icon: "📝" },
+          { id: "lead-scores", label: "Lead Scores", icon: "📈" },
+          { id: "match-recommendations", label: "Match Recommendations", icon: "🎯" },
+          { id: "events", label: "Events", icon: "📅" },
+          { id: "partners", label: "Partners", icon: "🤝" },
+          { id: "resources", label: "Resources", icon: "📚" },
+          { id: "survey", label: "Survey Responses", icon: "📋" },
+          { id: "survey-questions", label: "Survey Questions", icon: "❓" }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -827,20 +1102,17 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
               setActiveSubTab(tab.id);
               setEditingItem(null);
             }}
-            className="px-4 py-2 text-sm font-medium transition-colors"
+            className="px-3 py-2 text-sm font-medium transition-colors flex items-center gap-1"
             style={{
               color: activeSubTab === tab.id ? palette.primary : palette.mutedTextColor,
               borderBottom: activeSubTab === tab.id ? `2px solid ${palette.primary}` : "2px solid transparent"
             }}
           >
-            {tab.label}
+            <span>{tab.icon}</span>
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>
-
-      {activeSubTab === "hero" && (
-        <WriHeroAdminSimple token={token} palette={palette} setNotice={setNotice} setError={setError} />
-      )}
 
       {activeSubTab === "real-hero" && (
         <WriRealHeroAdmin token={token} palette={palette} setNotice={setNotice} setError={setError} />
@@ -913,14 +1185,37 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                     value={wriSettings.animation?.desktop?.stagger || 100}
                     onChange={(e) => setWriSettings({
                       ...wriSettings,
-                      animation: { 
-                        ...wriSettings.animation, 
+                      animation: {
+                        ...wriSettings.animation,
                         desktop: { ...wriSettings.animation?.desktop, stagger: parseInt(e.target.value) || 100 }
                       }
                     })}
                     className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
                     style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
                   />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4" style={{ borderColor: palette.borderColor }}>
+              <h4 className="text-md font-semibold mb-3" style={{ color: palette.textColor }}>Card Animation Delay (About & B2B sections)</h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Card Stagger Delay (ms)</label>
+                  <input
+                    type="number"
+                    value={wriSettings.animation?.cardStaggerDelay || 500}
+                    onChange={(e) => setWriSettings({
+                      ...wriSettings,
+                      animation: {
+                        ...wriSettings.animation,
+                        cardStaggerDelay: parseInt(e.target.value) || 500
+                      }
+                    })}
+                    className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
+                    style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}
+                  />
+                  <p className="text-xs mt-1" style={{ color: palette.textColor }}>Delay between card appearances in About Partnership and B2B Opportunities sections (default: 500ms)</p>
                 </div>
               </div>
             </div>
@@ -934,8 +1229,8 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                     value={wriSettings.animation?.mobile?.style || "fade-up"}
                     onChange={(e) => setWriSettings({
                       ...wriSettings,
-                      animation: { 
-                        ...wriSettings.animation, 
+                      animation: {
+                        ...wriSettings.animation,
                         mobile: { ...wriSettings.animation?.mobile, style: e.target.value }
                       }
                     })}
@@ -956,8 +1251,8 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                     value={wriSettings.animation?.mobile?.duration || 500}
                     onChange={(e) => setWriSettings({
                       ...wriSettings,
-                      animation: { 
-                        ...wriSettings.animation, 
+                      animation: {
+                        ...wriSettings.animation,
                         mobile: { ...wriSettings.animation?.mobile, duration: parseInt(e.target.value) || 500 }
                       }
                     })}
@@ -972,8 +1267,8 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                     value={wriSettings.animation?.mobile?.stagger || 50}
                     onChange={(e) => setWriSettings({
                       ...wriSettings,
-                      animation: { 
-                        ...wriSettings.animation, 
+                      animation: {
+                        ...wriSettings.animation,
                         mobile: { ...wriSettings.animation?.mobile, stagger: parseInt(e.target.value) || 50 }
                       }
                     })}
@@ -1349,7 +1644,7 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
               )}
             </div>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {businesses.map((business) => (
+              {businesses && Array.isArray(businesses) && businesses.map((business) => (
                 <div key={business.id} className="rounded-lg border p-3" style={{ borderColor: palette.borderColor }}>
                   <div className="flex items-start justify-between">
                     <div>
@@ -1382,6 +1677,306 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                   </span>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeSubTab === "lead-status" && (
+        <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+          <h3 className="text-lg font-semibold mb-4" style={{ color: palette.textColor }}>Lead Status Tracking</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              <select
+                value={leadStatusForm.business_id || ""}
+                onChange={(e) => setLeadStatusForm({ ...leadStatusForm, business_id: parseInt(e.target.value) })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              >
+                <option value="">Select Business</option>
+                {businesses && Array.isArray(businesses) && businesses.map(business => (
+                  <option key={business.id} value={business.id}>{business.name}</option>
+                ))}
+              </select>
+              <select
+                value={leadStatusForm.status}
+                onChange={(e) => setLeadStatusForm({ ...leadStatusForm, status: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              >
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="qualified">Qualified</option>
+                <option value="negotiating">Negotiating</option>
+                <option value="closed">Closed</option>
+              </select>
+              <input
+                type="date"
+                placeholder="Last Contact Date"
+                value={leadStatusForm.last_contact_date}
+                onChange={(e) => setLeadStatusForm({ ...leadStatusForm, last_contact_date: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <input
+                type="date"
+                placeholder="Next Follow-up Date"
+                value={leadStatusForm.next_follow_up_date}
+                onChange={(e) => setLeadStatusForm({ ...leadStatusForm, next_follow_up_date: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <input
+                type="text"
+                placeholder="Assigned To"
+                value={leadStatusForm.assigned_to}
+                onChange={(e) => setLeadStatusForm({ ...leadStatusForm, assigned_to: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <textarea
+                placeholder="Notes"
+                value={leadStatusForm.notes}
+                onChange={(e) => setLeadStatusForm({ ...leadStatusForm, notes: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+                rows={3}
+              />
+              <button
+                onClick={handleSaveLeadStatus}
+                disabled={loading}
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-white"
+                style={{ backgroundColor: palette.primary }}
+              >
+                {loading ? "Saving..." : "Update Status"}
+              </button>
+            </div>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {leadStatus && Array.isArray(leadStatus) && leadStatus.map((status) => (
+                <div key={status.id} className="rounded-lg border p-3" style={{ borderColor: palette.borderColor }}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium" style={{ color: palette.textColor }}>{status.business_name}</p>
+                      <p className="text-xs" style={{ color: palette.mutedTextColor }}>Status: {status.status}</p>
+                      {status.next_follow_up_date && (
+                        <p className="text-xs" style={{ color: palette.mutedTextColor }}>Follow-up: {formatDate(status.next_follow_up_date)}</p>
+                      )}
+                    </div>
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${
+                      status.status === 'new' ? 'bg-blue-100 text-blue-800' :
+                      status.status === 'contacted' ? 'bg-yellow-100 text-yellow-800' :
+                      status.status === 'qualified' ? 'bg-green-100 text-green-800' :
+                      status.status === 'negotiating' ? 'bg-purple-100 text-purple-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {status.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {(!leadStatus || leadStatus.length === 0) && (
+                <p className="py-4 text-center" style={{ color: palette.mutedTextColor }}>No lead status records yet. Select a business to update its status.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeSubTab === "lead-activities" && (
+        <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+          <h3 className="text-lg font-semibold mb-4" style={{ color: palette.textColor }}>Lead Activities</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              <select
+                value={activityForm.business_id || ""}
+                onChange={(e) => setActivityForm({ ...activityForm, business_id: parseInt(e.target.value) })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              >
+                <option value="">Select Business</option>
+                {businesses && Array.isArray(businesses) && businesses.map(business => (
+                  <option key={business.id} value={business.id}>{business.name}</option>
+                ))}
+              </select>
+              <select
+                value={activityForm.activity_type}
+                onChange={(e) => setActivityForm({ ...activityForm, activity_type: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              >
+                <option value="call">Call</option>
+                <option value="email">Email</option>
+                <option value="meeting">Meeting</option>
+                <option value="visit">Site Visit</option>
+                <option value="event">Event</option>
+                <option value="other">Other</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Description"
+                value={activityForm.description}
+                onChange={(e) => setActivityForm({ ...activityForm, description: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <input
+                type="text"
+                placeholder="Performed By"
+                value={activityForm.performed_by}
+                onChange={(e) => setActivityForm({ ...activityForm, performed_by: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <input
+                type="text"
+                placeholder="Outcome"
+                value={activityForm.outcome}
+                onChange={(e) => setActivityForm({ ...activityForm, outcome: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              />
+              <button
+                onClick={handleSaveActivity}
+                disabled={loading}
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-white"
+                style={{ backgroundColor: palette.primary }}
+              >
+                {loading ? "Saving..." : "Log Activity"}
+              </button>
+            </div>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {leadActivities && Array.isArray(leadActivities) && leadActivities.map((activity) => (
+                <div key={activity.id} className="rounded-lg border p-3" style={{ borderColor: palette.borderColor }}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium" style={{ color: palette.textColor }}>{activity.activity_type}</p>
+                      <p className="text-xs" style={{ color: palette.mutedTextColor }}>{activity.description}</p>
+                      {activity.performed_by && (
+                        <p className="text-xs" style={{ color: palette.mutedTextColor }}>By: {activity.performed_by}</p>
+                      )}
+                      {activity.outcome && (
+                        <p className="text-xs" style={{ color: palette.mutedTextColor }}>Outcome: {activity.outcome}</p>
+                      )}
+                    </div>
+                    <p className="text-xs" style={{ color: palette.mutedTextColor }}>{formatDate(activity.created_at)}</p>
+                  </div>
+                </div>
+              ))}
+              {(!leadActivities || leadActivities.length === 0) && (
+                <p className="py-4 text-center" style={{ color: palette.mutedTextColor }}>No activities logged yet. Select a business and log an activity.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeSubTab === "lead-scores" && (
+        <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+          <h3 className="text-lg font-semibold mb-4" style={{ color: palette.textColor }}>Lead Scores</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              <p className="text-sm" style={{ color: palette.mutedTextColor }}>Click "Recalculate" on any business to generate or update lead scores.</p>
+            </div>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {leadScores && Array.isArray(leadScores) && leadScores.map((score) => (
+                <div key={score.id} className="rounded-lg border p-3" style={{ borderColor: palette.borderColor }}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium" style={{ color: palette.textColor }}>{score.business_name}</p>
+                      <p className="text-sm" style={{ color: palette.mutedTextColor }}>Total Score: {score.total_score}/100</p>
+                      <div className="text-xs mt-1" style={{ color: palette.mutedTextColor }}>
+                        <div>Partnership Interest: {score.partnership_interest_score}/25</div>
+                        <div>Company Size: {score.company_size_score}/25</div>
+                        <div>Readiness: {score.readiness_score}/25</div>
+                        <div>Budget: {score.budget_score}/25</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => handleRecalculateScore(score.business_id)}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Recalculate
+                      </button>
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${
+                        score.total_score >= 75 ? 'bg-green-100 text-green-800' :
+                        score.total_score >= 50 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {score.total_score >= 75 ? 'High' : score.total_score >= 50 ? 'Medium' : 'Low'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(!leadScores || leadScores.length === 0) && (
+                <p className="py-4 text-center" style={{ color: palette.mutedTextColor }}>No lead scores yet. Click "Recalculate" on any business to generate scores.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeSubTab === "match-recommendations" && (
+        <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+          <h3 className="text-lg font-semibold mb-4" style={{ color: palette.textColor }}>Match Recommendations</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleGenerateMatches(parseInt(e.target.value));
+                  }
+                }}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              >
+                <option value="">Select Business to Generate Matches</option>
+                {businesses && Array.isArray(businesses) && businesses.map(business => (
+                  <option key={business.id} value={business.id}>{business.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {matchRecommendations && Array.isArray(matchRecommendations) && matchRecommendations.map((match) => (
+                <div key={match.id} className="rounded-lg border p-3" style={{ borderColor: palette.borderColor }}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium" style={{ color: palette.textColor }}>
+                        {match.business_name_1} ↔ {match.business_name_2}
+                      </p>
+                      <p className="text-sm" style={{ color: palette.mutedTextColor }}>Match Score: {match.match_score}/100</p>
+                      <div className="text-xs mt-1" style={{ color: palette.mutedTextColor }}>
+                        {Array.isArray(match.match_reasons) ? match.match_reasons.join(', ') : match.match_reasons}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <select
+                        value={match.status}
+                        onChange={(e) => handleUpdateMatchStatus(match.id, e.target.value)}
+                        className="text-xs rounded border px-2 py-1"
+                        style={{ borderColor: palette.borderColor }}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${
+                        match.match_score >= 70 ? 'bg-green-100 text-green-800' :
+                        match.match_score >= 50 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {match.match_score >= 70 ? 'High Match' : match.match_score >= 50 ? 'Medium Match' : 'Low Match'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(!matchRecommendations || matchRecommendations.length === 0) && (
+                <p className="py-4 text-center" style={{ color: palette.mutedTextColor }}>No match recommendations yet. Select a business and click "Generate Matches".</p>
+              )}
             </div>
           </div>
         </div>
@@ -1673,319 +2268,138 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
             <div className="mt-4 space-y-3">
               <h4 className="text-md font-medium" style={{ color: palette.textColor }}>Edit Survey Response</h4>
               
-              <div className="border-b pb-4 mb-4" style={{ borderColor: palette.borderColor }}>
-                <h5 className="text-sm font-semibold mb-2" style={{ color: palette.textColor }}>Section 1: Company Information</h5>
-                <input
-                  type="text"
-                  placeholder="Company Name"
-                  value={surveyForm.company_name}
-                  onChange={(e) => setSurveyForm({ ...surveyForm, company_name: e.target.value })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                />
-                <input
-                  type="text"
-                  placeholder="Contact Person"
-                  value={surveyForm.contact_person}
-                  onChange={(e) => setSurveyForm({ ...surveyForm, contact_person: e.target.value })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                />
-                <input
-                  type="text"
-                  placeholder="Position"
-                  value={surveyForm.position}
-                  onChange={(e) => setSurveyForm({ ...surveyForm, position: e.target.value })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={surveyForm.email}
-                  onChange={(e) => setSurveyForm({ ...surveyForm, email: e.target.value })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                />
-                <input
-                  type="text"
-                  placeholder="Phone"
-                  value={surveyForm.phone}
-                  onChange={(e) => setSurveyForm({ ...surveyForm, phone: e.target.value })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                />
-                <div>
-                  <label className="block text-sm mb-1" style={{ color: palette.textColor }}>Nature of Business</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["Manufacturing", "Distribution / Supply", "Installation / EPC", "Financing / Investment", "Consultancy", "Research & Innovation", "Product Development", "Importation", "Other"].map((option) => (
-                      <label key={option} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={surveyForm.nature_of_business.includes(option)}
-                          onChange={(e) => {
-                            const newValue = e.target.checked
-                              ? [...surveyForm.nature_of_business, option]
-                              : surveyForm.nature_of_business.filter(item => item !== option);
-                            setSurveyForm({ ...surveyForm, nature_of_business: newValue });
-                          }}
-                        />
-                        {option}
-                      </label>
-                    ))}
-                  </div>
-                  {surveyForm.nature_of_business.includes("Other") && (
-                    <input
-                      type="text"
-                      placeholder="Please specify"
-                      value={surveyForm.nature_of_business_other}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, nature_of_business_other: e.target.value })}
-                      className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                    />
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm mb-1" style={{ color: palette.textColor }}>Renewable Energy Technologies</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["Solar PV", "Solar Water Heating", "Clean Cooking", "Biogas", "Mini-grids", "Energy Storage (Battery Systems)", "E-mobility", "Productive Use of Renewable Energy (PURE)", "Energy Efficiency", "Cross-cutting / Multiple Technologies", "Other"].map((option) => (
-                      <label key={option} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={surveyForm.technologies.includes(option)}
-                          onChange={(e) => {
-                            const newValue = e.target.checked
-                              ? [...surveyForm.technologies, option]
-                              : surveyForm.technologies.filter(item => item !== option);
-                            setSurveyForm({ ...surveyForm, technologies: newValue });
-                          }}
-                        />
-                        {option}
-                      </label>
-                    ))}
-                  </div>
-                  {surveyForm.technologies.includes("Other") && (
-                    <input
-                      type="text"
-                      placeholder="Please specify"
-                      value={surveyForm.technologies_other}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, technologies_other: e.target.value })}
-                      className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                    />
-                  )}
-                </div>
-              </div>
+              {surveyQuestions && surveyQuestions.length > 0 ? (() => {
+                const groupedQuestions = {};
+                surveyQuestions.forEach(q => {
+                  if (!groupedQuestions[q.section_order]) {
+                    groupedQuestions[q.section_order] = [];
+                  }
+                  groupedQuestions[q.section_order].push(q);
+                });
 
-              <div className="border-b pb-4 mb-4" style={{ borderColor: palette.borderColor }}>
-                <h5 className="text-sm font-semibold mb-2" style={{ color: palette.textColor }}>Section 2: Current Engagement with Chinese Partners</h5>
-                <select
-                  value={surveyForm.engages_chinese_partners}
-                  onChange={(e) => setSurveyForm({ ...surveyForm, engages_chinese_partners: e.target.value })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                >
-                  <option value="">Select option</option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                  <option value="Planning to">Planning to</option>
-                </select>
-                <div>
-                  <label className="block text-sm mb-1" style={{ color: palette.textColor }}>Collaboration Types</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["Trade and Import", "Technology Transfer", "Joint Ventures", "Investment Partnerships", "R&D Collaboration", "Training and Skills Development", "Market Expansion", "Other"].map((option) => (
-                      <label key={option} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={surveyForm.collaboration_types.includes(option)}
-                          onChange={(e) => {
-                            const newValue = e.target.checked
-                              ? [...surveyForm.collaboration_types, option]
-                              : surveyForm.collaboration_types.filter(item => item !== option);
-                            setSurveyForm({ ...surveyForm, collaboration_types: newValue });
-                          }}
-                        />
-                        {option}
-                      </label>
+                return Object.entries(groupedQuestions).map(([sectionNum, questions]) => (
+                  <div key={`section-${sectionNum}`} className="border-b pb-4 mb-4" style={{ borderColor: palette.borderColor }}>
+                    <h5 className="text-sm font-semibold mb-2" style={{ color: palette.textColor }}>Section {sectionNum}</h5>
+                    {questions.map((question) => (
+                      <div key={question.id} className="mb-3">
+                        <label className="block text-sm mb-1" style={{ color: palette.textColor }}>
+                          {question.question_text} {question.required && "*"}
+                        </label>
+                        {question.question_type === "text" && (
+                          <input
+                            type="text"
+                            value={surveyForm[`question_${question.id}`] || ""}
+                            disabled
+                            className="w-full rounded-lg border px-3 py-2 text-sm bg-gray-50"
+                            style={{ borderColor: palette.borderColor }}
+                          />
+                        )}
+                        {question.question_type === "email" && (
+                          <input
+                            type="email"
+                            value={surveyForm[`question_${question.id}`] || ""}
+                            disabled
+                            className="w-full rounded-lg border px-3 py-2 text-sm bg-gray-50"
+                            style={{ borderColor: palette.borderColor }}
+                          />
+                        )}
+                        {question.question_type === "tel" && (
+                          <input
+                            type="tel"
+                            value={surveyForm[`question_${question.id}`] || ""}
+                            disabled
+                            className="w-full rounded-lg border px-3 py-2 text-sm bg-gray-50"
+                            style={{ borderColor: palette.borderColor }}
+                          />
+                        )}
+                        {question.question_type === "textarea" && (
+                          <textarea
+                            value={surveyForm[`question_${question.id}`] || ""}
+                            disabled
+                            className="w-full rounded-lg border px-3 py-2 text-sm bg-gray-50"
+                            style={{ borderColor: palette.borderColor }}
+                            rows={3}
+                          />
+                        )}
+                        {question.question_type === "radio" && (
+                          <div className="space-y-1">
+                            {question.options.map((option) => (
+                              <label key={option} className="flex items-center gap-2 text-sm">
+                                <input
+                                  type="radio"
+                                  name={`question_${question.id}`}
+                                  checked={surveyForm[`question_${question.id}`] === option}
+                                  disabled
+                                />
+                                {option}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                        {question.question_type === "checkbox" && (
+                          <div className="grid grid-cols-2 gap-1">
+                            {question.options.map((option) => (
+                              <label key={option} className="flex items-center gap-2 text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={Array.isArray(surveyForm[`question_${question.id}`]) ? surveyForm[`question_${question.id}`].includes(option) : false}
+                                  disabled
+                                />
+                                {option}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                        {question.question_type === "checkbox" && Array.isArray(surveyForm[`question_${question.id}`]) && surveyForm[`question_${question.id}`].includes("Other") && (
+                          <div className="mt-2 p-2 rounded bg-gray-50 text-sm">
+                            <span className="font-medium">Other:</span> {surveyForm[`question_${question.id}_other`] || "Not specified"}
+                          </div>
+                        )}
+                        {question.question_type === "radio" && surveyForm[`question_${question.id}`] === "Other" && (
+                          <div className="mt-2 p-2 rounded bg-gray-50 text-sm">
+                            <span className="font-medium">Other:</span> {surveyForm[`question_${question.id}_other`] || "Not specified"}
+                          </div>
+                        )}
+                        {question.question_type === "scale" && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-4">
+                              <span className="text-sm">1 (Lowest)</span>
+                              <input
+                                type="range"
+                                min="1"
+                                max="10"
+                                value={surveyForm[`question_${question.id}`] || 5}
+                                onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: parseInt(e.target.value) })}
+                                className="flex-1"
+                              />
+                              <span className="text-sm">10 (Highest)</span>
+                            </div>
+                            <div className="text-center font-bold" style={{ color: palette.textColor }}>
+                              {surveyForm[`question_${question.id}`] || 5}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
-                  {surveyForm.collaboration_types.includes("Other") && (
-                    <input
-                      type="text"
-                      placeholder="Please specify"
-                      value={surveyForm.collaboration_types_other}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, collaboration_types_other: e.target.value })}
-                      className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                    />
-                  )}
-                </div>
-                <select
-                  value={surveyForm.engagement_duration}
-                  onChange={(e) => setSurveyForm({ ...surveyForm, engagement_duration: e.target.value })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                >
-                  <option value="">Select duration</option>
-                  <option value="Less than 1 year">Less than 1 year</option>
-                  <option value="1-3 years">1-3 years</option>
-                  <option value="4-7 years">4-7 years</option>
-                  <option value="Over 7 years">Over 7 years</option>
-                </select>
-              </div>
+                ));
+              })() : (
+                <p className="text-sm" style={{ color: palette.mutedTextColor }}>No survey questions configured.</p>
+              )}
 
-              <div className="border-b pb-4 mb-4" style={{ borderColor: palette.borderColor }}>
-                <h5 className="text-sm font-semibold mb-2" style={{ color: palette.textColor }}>Section 3: Challenges and Support Needs</h5>
-                <div>
-                  <label className="block text-sm mb-1" style={{ color: palette.textColor }}>Challenges</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["Language barriers", "Limited access to trusted partners", "Financing constraints", "Import/logistics challenges", "Regulatory barriers", "Quality assurance concerns", "Limited market information", "Cultural/business practice differences", "Communication delays", "Other"].map((option) => (
-                      <label key={option} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={surveyForm.challenges.includes(option)}
-                          onChange={(e) => {
-                            const newValue = e.target.checked
-                              ? [...surveyForm.challenges, option]
-                              : surveyForm.challenges.filter(item => item !== option);
-                            setSurveyForm({ ...surveyForm, challenges: newValue });
-                          }}
-                        />
-                        {option}
-                      </label>
-                    ))}
-                  </div>
-                  {surveyForm.challenges.includes("Other") && (
-                    <input
-                      type="text"
-                      placeholder="Please specify"
-                      value={surveyForm.challenges_other}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, challenges_other: e.target.value })}
-                      className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                    />
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm mb-1" style={{ color: palette.textColor }}>Support Needed</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["B2B matchmaking", "Trade mission coordination", "Business networking events", "Investment linkages", "Policy advocacy", "Technical training", "Market intelligence", "Supplier verification", "Translation/interpreter support", "Regulatory guidance", "Access to financing opportunities", "Other"].map((option) => (
-                      <label key={option} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={surveyForm.support_needed.includes(option)}
-                          onChange={(e) => {
-                            const newValue = e.target.checked
-                              ? [...surveyForm.support_needed, option]
-                              : surveyForm.support_needed.filter(item => item !== option);
-                            setSurveyForm({ ...surveyForm, support_needed: newValue });
-                          }}
-                        />
-                        {option}
-                      </label>
-                    ))}
-                  </div>
-                  {surveyForm.support_needed.includes("Other") && (
-                    <input
-                      type="text"
-                      placeholder="Please specify"
-                      value={surveyForm.support_needed_other}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, support_needed_other: e.target.value })}
-                      className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="border-b pb-4 mb-4" style={{ borderColor: palette.borderColor }}>
-                <h5 className="text-sm font-semibold mb-2" style={{ color: palette.textColor }}>Section 4: Future Collaboration Opportunities</h5>
-                <select
-                  value={surveyForm.future_interest}
-                  onChange={(e) => setSurveyForm({ ...surveyForm, future_interest: e.target.value })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingItem(null);
+                    setSurveyForm({});
+                  }}
+                  className="w-full rounded-lg border py-2 text-sm font-semibold"
+                  style={{ borderColor: palette.borderColor, color: palette.textColor }}
                 >
-                  <option value="">Select interest level</option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                  <option value="Maybe">Maybe</option>
-                </select>
-                <div>
-                  <label className="block text-sm mb-1" style={{ color: palette.textColor }}>Interested Activities</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["Trade fairs", "Virtual B2B meetings", "Investor forums", "Site visits", "Product exhibitions", "Technical workshops", "Joint pilot projects", "Other"].map((option) => (
-                      <label key={option} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={surveyForm.interested_activities.includes(option)}
-                          onChange={(e) => {
-                            const newValue = e.target.checked
-                              ? [...surveyForm.interested_activities, option]
-                              : surveyForm.interested_activities.filter(item => item !== option);
-                            setSurveyForm({ ...surveyForm, interested_activities: newValue });
-                          }}
-                        />
-                        {option}
-                      </label>
-                    ))}
-                  </div>
-                  {surveyForm.interested_activities.includes("Other") && (
-                    <input
-                      type="text"
-                      placeholder="Please specify"
-                      value={surveyForm.interested_activities_other}
-                      onChange={(e) => setSurveyForm({ ...surveyForm, interested_activities_other: e.target.value })}
-                      className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                      style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                    />
-                  )}
-                </div>
-                <textarea
-                  placeholder="Additional Comments"
-                  value={surveyForm.additional_comments}
-                  onChange={(e) => setSurveyForm({ ...surveyForm, additional_comments: e.target.value })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}
-                  rows={3}
-                />
+                  Close
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleSaveSurvey}
-                disabled={loading}
-                className="w-full rounded-lg py-2 text-sm font-semibold text-white disabled:opacity-50"
-                style={{ backgroundColor: palette.primary }}
-              >
-                {loading ? "Saving..." : "Update Survey Response"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingItem(null);
-                  setSurveyForm({
-                    company_name: "",
-                    contact_person: "",
-                    position: "",
-                    email: "",
-                    phone: "",
-                    nature_of_business: [],
-                    technologies: [],
-                    engages_chinese_partners: "",
-                    collaboration_types: [],
-                    engagement_duration: "",
-                    challenges: [],
-                    support_needed: [],
-                    future_interest: "",
-                    interested_activities: [],
-                    additional_comments: ""
-                  });
-                }}
-                className="w-full rounded-lg border py-2 text-sm font-semibold"
-                style={{ borderColor: palette.borderColor, color: palette.textColor }}
-              >
-                Cancel Edit
-              </button>
             </div>
           ) : (
             <div className="mt-4 overflow-x-auto">
@@ -1997,6 +2411,7 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                     <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Contact</th>
                     <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Email</th>
                     <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Engages Chinese Partners</th>
+                    <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Dynamic Responses</th>
                     <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Submitted At</th>
                     <th className="px-4 py-2 text-left font-medium" style={{ color: palette.textColor }}>Actions</th>
                   </tr>
@@ -2009,6 +2424,13 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                       <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.contact_person}</td>
                       <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.email}</td>
                       <td className="px-4 py-2" style={{ color: palette.textColor }}>{response.engages_chinese_partners}</td>
+                      <td className="px-4 py-2" style={{ color: palette.textColor }}>
+                        {response.responses_jsonb ? (
+                          <div className="text-xs truncate max-w-xs">
+                            {Object.keys(response.responses_jsonb).length} responses
+                          </div>
+                        ) : '-'}
+                      </td>
                       <td className="px-4 py-2" style={{ color: palette.textColor }}>{new Date(response.submitted_at).toLocaleDateString()}</td>
                       <td className="px-4 py-2">
                         <div className="flex gap-2">
@@ -2016,29 +2438,14 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                             type="button"
                             onClick={() => {
                               setEditingItem(response);
-                              setSurveyForm({
-                                company_name: response.company_name || "",
-                                contact_person: response.contact_person || "",
-                                position: response.position || "",
-                                email: response.email || "",
-                                phone: response.phone || "",
-                                nature_of_business: response.nature_of_business || [],
-                                technologies: response.technologies || [],
-                                engages_chinese_partners: response.engages_chinese_partners || "",
-                                collaboration_types: response.collaboration_types || [],
-                                engagement_duration: response.engagement_duration || "",
-                                challenges: response.challenges || [],
-                                support_needed: response.support_needed || [],
-                                future_interest: response.future_interest || "",
-                                interested_activities: response.interested_activities || [],
-                                additional_comments: response.additional_comments || "",
-                                nature_of_business_other: response.nature_of_business_other || "",
-                                technologies_other: response.technologies_other || "",
-                                collaboration_types_other: response.collaboration_types_other || "",
-                                challenges_other: response.challenges_other || "",
-                                support_needed_other: response.support_needed_other || "",
-                                interested_activities_other: response.interested_activities_other || ""
-                              });
+                              // For dynamic survey, use responses_jsonb data
+                              const dynamicForm = {};
+                              if (response.responses_jsonb) {
+                                Object.entries(response.responses_jsonb).forEach(([key, value]) => {
+                                  dynamicForm[key] = value;
+                                });
+                              }
+                              setSurveyForm(dynamicForm);
                             }}
                             className="text-xs text-blue-600 hover:underline"
                           >
@@ -2152,9 +2559,10 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                 <button
                   onClick={() => {
                     setEditingItem(null);
+                    const nextOrder = surveyQuestions.length > 0 ? Math.max(...surveyQuestions.map(q => q.question_order)) + 1 : 1;
                     setSurveyQuestionForm({
                       section_order: 1,
-                      question_order: 1,
+                      question_order: nextOrder,
                       question_text: "",
                       question_type: "text",
                       options: [],
@@ -2176,9 +2584,10 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                 <button
                   onClick={() => {
                     setEditingItem(null);
+                    const nextOrder = surveyQuestions.length > 0 ? Math.max(...surveyQuestions.map(q => q.question_order)) + 1 : 1;
                     setSurveyQuestionForm({
                       section_order: 1,
-                      question_order: 1,
+                      question_order: nextOrder,
                       question_text: "",
                       question_type: "text",
                       options: [],
@@ -2212,6 +2621,22 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
                       </div>
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => handleMoveQuestionUp(question)}
+                        disabled={surveyQuestions.findIndex(q => q.id === question.id) === 0}
+                        className="rounded px-2 py-1 text-xs font-semibold"
+                        style={{ backgroundColor: palette.surfaceMuted, color: palette.textColor }}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        onClick={() => handleMoveQuestionDown(question)}
+                        disabled={surveyQuestions.findIndex(q => q.id === question.id) === surveyQuestions.length - 1}
+                        className="rounded px-2 py-1 text-xs font-semibold"
+                        style={{ backgroundColor: palette.surfaceMuted, color: palette.textColor }}
+                      >
+                        ↓
+                      </button>
                       <button
                         onClick={() => {
                           setEditingItem(question);

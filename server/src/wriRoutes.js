@@ -237,41 +237,90 @@ router.post("/survey", async (req, res) => {
       support_needed,
       future_interest,
       interested_activities,
-      additional_comments
+      additional_comments,
+      responses_jsonb
     } = req.body;
 
-    if (!company_name || !contact_person || !position || !email || !phone || !engages_chinese_partners || !engagement_duration || !future_interest) {
-      return res.status(400).json({ error: "Missing required fields" });
+    // For new dynamic surveys, all data is in responses_jsonb
+    // Extract from responses_jsonb if old fields are not provided
+    let finalCompanyName = company_name;
+    let finalContactPerson = contact_person;
+    let finalPosition = position;
+    let finalEmail = email;
+    let finalPhone = phone;
+    let finalNatureOfBusiness = nature_of_business;
+    let finalTechnologies = technologies;
+    let finalEngagesChinesePartners = engages_chinese_partners;
+    let finalCollaborationTypes = collaboration_types;
+    let finalEngagementDuration = engagement_duration;
+    let finalChallenges = challenges;
+    let finalSupportNeeded = support_needed;
+    let finalFutureInterest = future_interest;
+    let finalInterestedActivities = interested_activities;
+    let finalAdditionalComments = additional_comments;
+
+    // Extract from responses_jsonb if provided
+    if (responses_jsonb && Object.keys(responses_jsonb).length > 0) {
+      Object.entries(responses_jsonb).forEach(([key, value]) => {
+        if (key.includes('company_name') && !finalCompanyName) finalCompanyName = value;
+        if (key.includes('contact_person') && !finalContactPerson) finalContactPerson = value;
+        if (key.includes('position') && !finalPosition) finalPosition = value;
+        if (key.includes('email') && !finalEmail) finalEmail = value;
+        if (key.includes('phone') && !finalPhone) finalPhone = value;
+        if (key.includes('nature_of_business') && !finalNatureOfBusiness) finalNatureOfBusiness = value;
+        if (key.includes('technologies') && !finalTechnologies) finalTechnologies = value;
+        if (key.includes('engages_chinese_partners') && !finalEngagesChinesePartners) finalEngagesChinesePartners = value;
+        if (key.includes('collaboration_types') && !finalCollaborationTypes) finalCollaborationTypes = value;
+        if (key.includes('engagement_duration') && !finalEngagementDuration) finalEngagementDuration = value;
+        if (key.includes('challenges') && !finalChallenges) finalChallenges = value;
+        if (key.includes('support_needed') && !finalSupportNeeded) finalSupportNeeded = value;
+        if (key.includes('future_interest') && !finalFutureInterest) finalFutureInterest = value;
+        if (key.includes('interested_activities') && !finalInterestedActivities) finalInterestedActivities = value;
+        if (key.includes('additional_comments') && !finalAdditionalComments) finalAdditionalComments = value;
+      });
     }
 
+    // Accept submission if responses_jsonb has data, even if old fields are missing
+    // If responses_jsonb is empty or missing, validate old fields
+    if (!responses_jsonb || Object.keys(responses_jsonb).length === 0) {
+      // Old format validation
+      if (!finalCompanyName || !finalContactPerson || !finalPosition || !finalEmail || !finalPhone || !finalEngagesChinesePartners || !finalEngagementDuration || !finalFutureInterest) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+    }
+
+    // For dynamic surveys, use placeholder values for NOT NULL columns if they're missing
     const result = await pool.query(
-      `INSERT INTO wri_survey_responses 
-       (company_name, contact_person, position, email, phone, nature_of_business, technologies, engages_chinese_partners, collaboration_types, engagement_duration, challenges, support_needed, future_interest, interested_activities, additional_comments)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      `INSERT INTO wri_survey_responses
+       (company_name, contact_person, position, email, phone, nature_of_business, technologies, engages_chinese_partners, collaboration_types, engagement_duration, challenges, support_needed, future_interest, interested_activities, additional_comments, responses_jsonb)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
        RETURNING *`,
       [
-        company_name,
-        contact_person,
-        position,
-        email,
-        phone,
-        nature_of_business || [],
-        technologies || [],
-        engages_chinese_partners,
-        collaboration_types || [],
-        engagement_duration,
-        challenges || [],
-        support_needed || [],
-        future_interest,
-        interested_activities || [],
-        additional_comments || ""
+        finalCompanyName || "Dynamic Survey",
+        finalContactPerson || "Dynamic Survey",
+        finalPosition || "Dynamic Survey",
+        finalEmail || "dynamic@survey.local",
+        finalPhone || "0000000000",
+        Array.isArray(finalNatureOfBusiness) ? finalNatureOfBusiness : [],
+        Array.isArray(finalTechnologies) ? finalTechnologies : [],
+        finalEngagesChinesePartners || "Not specified",
+        Array.isArray(finalCollaborationTypes) ? finalCollaborationTypes : [],
+        finalEngagementDuration || "Not specified",
+        Array.isArray(finalChallenges) ? finalChallenges : [],
+        Array.isArray(finalSupportNeeded) ? finalSupportNeeded : [],
+        finalFutureInterest || "Not specified",
+        Array.isArray(finalInterestedActivities) ? finalInterestedActivities : [],
+        finalAdditionalComments || "",
+        responses_jsonb || {}
       ]
     );
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error("Error creating survey response:", error);
-    res.status(500).json({ error: "Failed to submit survey" });
+    console.error("Error details:", error.message);
+    console.error("Error stack:", error.stack);
+    res.status(500).json({ error: "Failed to submit survey", details: error.message });
   }
 });
 
@@ -290,114 +339,94 @@ router.get("/admin/survey-responses/excel", async (req, res) => {
     const result = await pool.query("SELECT * FROM wri_survey_responses ORDER BY submitted_at DESC");
     const responses = result.rows;
 
-    // Get survey questions for proper column headers
+    // Get survey questions to map IDs to question text and order them
     const questionsResult = await pool.query("SELECT * FROM wri_survey_questions ORDER BY section_order, question_order");
     const questions = questionsResult.rows;
+
+    // Create mapping from question ID to question text
+    const questionMap = {};
+    questions.forEach(q => {
+      questionMap[`question_${q.id}`] = q.question_text;
+      questionMap[`question_${q.id}_other`] = `${q.question_text} (Other)`;
+    });
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Survey Responses");
 
-    // Build column headers based on questions
+    // Define base columns
     const columns = [
       { header: "ID", key: "id", width: 10 },
       { header: "Submitted At", key: "submitted_at", width: 20 }
     ];
 
-    // Add question columns
-    questions.forEach(q => {
+    // Add question columns in order (Q1, Q2, Q3 to last)
+    questions.forEach((q, index) => {
+      const questionKey = `question_${q.id}`;
+      const questionOtherKey = `question_${q.id}_other`;
+
+      // Add main question column
       columns.push({
-        header: `${q.question_text} ${q.required ? '*' : ''}`,
-        key: `q_${q.id}`,
-        width: 30
+        header: `Q${index + 1}: ${q.question_text}`,
+        key: questionKey,
+        width: 35
       });
+
+      // Add "Other" column if any response has "Other" selected
+      const hasOther = responses.some(response => {
+        if (response.responses_jsonb) {
+          const value = response.responses_jsonb[questionKey];
+          return Array.isArray(value) ? value.includes("Other") : value === "Other";
+        }
+        return false;
+      });
+
+      if (hasOther) {
+        columns.push({
+          header: `Q${index + 1}: ${q.question_text} (Other)`,
+          key: questionOtherKey,
+          width: 35
+        });
+      }
     });
 
     worksheet.columns = columns;
 
-    // Map responses to question-based format
-    const rows = responses.map(response => {
+    // Format rows with dynamic responses
+    const formattedRows = responses.map(response => {
       const row = {
         id: response.id,
         submitted_at: response.submitted_at
       };
 
-      // Map field names to questions
-      const fieldMapping = {
-        'company_name': 'Company Name',
-        'contact_person': 'Contact Person',
-        'position': 'Position',
-        'email': 'Email',
-        'phone': 'Phone',
-        'nature_of_business': 'Nature of Business',
-        'technologies': 'Technologies',
-        'engages_chinese_partners': 'Engages Chinese Partners',
-        'collaboration_types': 'Collaboration Types',
-        'engagement_duration': 'Engagement Duration',
-        'challenges': 'Challenges',
-        'support_needed': 'Support Needed',
-        'future_interest': 'Future Interest',
-        'interested_activities': 'Interested Activities',
-        'additional_comments': 'Additional Comments'
-      };
+      // Add dynamic question values in order
+      questions.forEach((q, index) => {
+        const questionKey = `question_${q.id}`;
+        const questionOtherKey = `question_${q.id}_other`;
 
-      // For now, use the current field mapping
-      // TODO: Update to use dynamic question mapping once questions are configured
-      Object.keys(fieldMapping).forEach(field => {
-        const value = response[field];
-        if (Array.isArray(value)) {
-          row[field] = value.join(', ');
-        } else {
-          row[field] = value;
+        if (response.responses_jsonb) {
+          const value = response.responses_jsonb[questionKey];
+          const otherValue = response.responses_jsonb[questionOtherKey];
+
+          // Format the main question value
+          if (Array.isArray(value)) {
+            row[questionKey] = value.join(', ');
+          } else if (value !== undefined && value !== null) {
+            row[questionKey] = String(value);
+          } else {
+            row[questionKey] = '';
+          }
+
+          // Format the "Other" value
+          if (otherValue !== undefined && otherValue !== null) {
+            row[questionOtherKey] = String(otherValue);
+          } else {
+            row[questionOtherKey] = '';
+          }
         }
       });
 
       return row;
     });
-
-    // Add all response columns for backward compatibility
-    worksheet.columns = [
-      { header: "ID", key: "id", width: 10 },
-      { header: "Company Name", key: "company_name", width: 25 },
-      { header: "Contact Person", key: "contact_person", width: 20 },
-      { header: "Position", key: "position", width: 20 },
-      { header: "Email", key: "email", width: 25 },
-      { header: "Phone", key: "phone", width: 15 },
-      { header: "Nature of Business", key: "nature_of_business", width: 30 },
-      { header: "Nature of Business (Other)", key: "nature_of_business_other", width: 30 },
-      { header: "Technologies", key: "technologies", width: 30 },
-      { header: "Technologies (Other)", key: "technologies_other", width: 30 },
-      { header: "Engages Chinese Partners", key: "engages_chinese_partners", width: 25 },
-      { header: "Collaboration Types", key: "collaboration_types", width: 30 },
-      { header: "Collaboration Types (Other)", key: "collaboration_types_other", width: 30 },
-      { header: "Engagement Duration", key: "engagement_duration", width: 20 },
-      { header: "Challenges", key: "challenges", width: 30 },
-      { header: "Challenges (Other)", key: "challenges_other", width: 30 },
-      { header: "Support Needed", key: "support_needed", width: 30 },
-      { header: "Support Needed (Other)", key: "support_needed_other", width: 30 },
-      { header: "Future Interest", key: "future_interest", width: 20 },
-      { header: "Interested Activities", key: "interested_activities", width: 30 },
-      { header: "Interested Activities (Other)", key: "interested_activities_other", width: 30 },
-      { header: "Additional Comments", key: "additional_comments", width: 40 },
-      { header: "Submitted At", key: "submitted_at", width: 20 }
-    ];
-
-    // Convert array fields to comma-separated strings
-    const formattedRows = responses.map(response => ({
-      ...response,
-      nature_of_business: Array.isArray(response.nature_of_business) ? response.nature_of_business.join(', ') : response.nature_of_business,
-      technologies: Array.isArray(response.technologies) ? response.technologies.join(', ') : response.technologies,
-      collaboration_types: Array.isArray(response.collaboration_types) ? response.collaboration_types.join(', ') : response.collaboration_types,
-      challenges: Array.isArray(response.challenges) ? response.challenges.join(', ') : response.challenges,
-      support_needed: Array.isArray(response.support_needed) ? response.support_needed.join(', ') : response.support_needed,
-      interested_activities: Array.isArray(response.interested_activities) ? response.interested_activities.join(', ') : response.interested_activities,
-      // Add "Other" custom text fields
-      nature_of_business_other: response.nature_of_business_other || '',
-      technologies_other: response.technologies_other || '',
-      collaboration_types_other: response.collaboration_types_other || '',
-      challenges_other: response.challenges_other || '',
-      support_needed_other: response.support_needed_other || '',
-      interested_activities_other: response.interested_activities_other || ''
-    }));
 
     worksheet.addRows(formattedRows);
 
@@ -409,7 +438,16 @@ router.get("/admin/survey-responses/excel", async (req, res) => {
       pattern: 'solid',
       fgColor: { argb: 'FF059669' }
     };
-    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+    headerRow.height = 30;
+
+    // Style data rows
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 1) {
+        row.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+        row.height = 20;
+      }
+    });
 
     // Auto-fit column widths
     worksheet.columns.forEach(column => {
@@ -419,7 +457,7 @@ router.get("/admin/survey-responses/excel", async (req, res) => {
           const value = row[column.key];
           return value ? value.toString().length : 0;
         }));
-        column.width = Math.max(headerWidth, dataWidth) + 2;
+        column.width = Math.max(headerWidth, dataWidth) + 5;
       }
     });
 
@@ -964,5 +1002,404 @@ router.delete("/admin/resources/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete resource" });
   }
 });
+
+// Lead Status Management
+router.get("/admin/lead-status", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT ls.*, b.name as business_name
+      FROM wri_lead_status ls
+      JOIN wri_businesses b ON ls.business_id = b.id
+      ORDER BY ls.next_follow_up_date ASC NULLS LAST, ls.updated_at DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching lead status:", error);
+    res.status(500).json({ error: "Failed to fetch lead status" });
+  }
+});
+
+router.get("/admin/lead-status/:businessId", async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const result = await pool.query("SELECT * FROM wri_lead_status WHERE business_id = $1", [businessId]);
+    if (result.rows.length === 0) {
+      // Create default lead status if doesn't exist
+      const newStatus = await pool.query(
+        "INSERT INTO wri_lead_status (business_id, status) VALUES ($1, 'new') RETURNING *",
+        [businessId]
+      );
+      res.json(newStatus.rows[0]);
+    } else {
+      res.json(result.rows[0]);
+    }
+  } catch (error) {
+    console.error("Error fetching lead status:", error);
+    res.status(500).json({ error: "Failed to fetch lead status" });
+  }
+});
+
+router.put("/admin/lead-status/:businessId", async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const { status, last_contact_date, next_follow_up_date, notes, assigned_to } = req.body;
+
+    const result = await pool.query(
+      `UPDATE wri_lead_status 
+       SET status = $1, last_contact_date = $2, next_follow_up_date = $3, notes = $4, assigned_to = $5, updated_at = CURRENT_TIMESTAMP
+       WHERE business_id = $6
+       RETURNING *`,
+      [status, last_contact_date, next_follow_up_date, notes, assigned_to, businessId]
+    );
+
+    if (result.rows.length === 0) {
+      // Create if doesn't exist
+      const newStatus = await pool.query(
+        `INSERT INTO wri_lead_status (business_id, status, last_contact_date, next_follow_up_date, notes, assigned_to)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [businessId, status, last_contact_date, next_follow_up_date, notes, assigned_to]
+      );
+      res.json(newStatus.rows[0]);
+    } else {
+      res.json(result.rows[0]);
+    }
+  } catch (error) {
+    console.error("Error updating lead status:", error);
+    res.status(500).json({ error: "Failed to update lead status" });
+  }
+});
+
+// Lead Activities
+router.get("/admin/lead-activities/:businessId", async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM wri_lead_activities WHERE business_id = $1 ORDER BY created_at DESC",
+      [businessId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching lead activities:", error);
+    res.status(500).json({ error: "Failed to fetch lead activities" });
+  }
+});
+
+router.post("/admin/lead-activities", async (req, res) => {
+  try {
+    const { business_id, activity_type, description, performed_by, outcome } = req.body;
+
+    if (!business_id || !activity_type || !description) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO wri_lead_activities (business_id, activity_type, description, performed_by, outcome)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [business_id, activity_type, description, performed_by || "", outcome || ""]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating lead activity:", error);
+    res.status(500).json({ error: "Failed to create lead activity" });
+  }
+});
+
+// Lead Scoring
+router.get("/admin/lead-scores", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT ls.*, b.name as business_name
+      FROM wri_lead_scores ls
+      JOIN wri_businesses b ON ls.business_id = b.id
+      ORDER BY ls.total_score DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching lead scores:", error);
+    res.status(500).json({ error: "Failed to fetch lead scores" });
+  }
+});
+
+router.get("/admin/lead-scores/:businessId", async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const result = await pool.query("SELECT * FROM wri_lead_scores WHERE business_id = $1", [businessId]);
+    if (result.rows.length === 0) {
+      // Calculate and create score if doesn't exist
+      const score = await calculateLeadScore(businessId);
+      res.json(score);
+    } else {
+      res.json(result.rows[0]);
+    }
+  } catch (error) {
+    console.error("Error fetching lead score:", error);
+    res.status(500).json({ error: "Failed to fetch lead score" });
+  }
+});
+
+router.post("/admin/lead-scores/recalculate/:businessId", async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const score = await calculateLeadScore(businessId);
+    res.json(score);
+  } catch (error) {
+    console.error("Error recalculating lead score:", error);
+    res.status(500).json({ error: "Failed to recalculate lead score" });
+  }
+});
+
+// Match Recommendations
+router.get("/admin/match-recommendations", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT mr.*, 
+             b1.name as business_name_1,
+             b2.name as business_name_2
+      FROM wri_match_recommendations mr
+      JOIN wri_businesses b1 ON mr.business_id_1 = b1.id
+      JOIN wri_businesses b2 ON mr.business_id_2 = b2.id
+      ORDER BY mr.match_score DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching match recommendations:", error);
+    res.status(500).json({ error: "Failed to fetch match recommendations" });
+  }
+});
+
+router.get("/admin/match-recommendations/:businessId", async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const result = await pool.query(`
+      SELECT mr.*, 
+             b1.name as business_name_1,
+             b2.name as business_name_2
+      FROM wri_match_recommendations mr
+      JOIN wri_businesses b1 ON mr.business_id_1 = b1.id
+      JOIN wri_businesses b2 ON mr.business_id_2 = b2.id
+      WHERE mr.business_id_1 = $1 OR mr.business_id_2 = $1
+      ORDER BY mr.match_score DESC
+    `, [businessId]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching match recommendations:", error);
+    res.status(500).json({ error: "Failed to fetch match recommendations" });
+  }
+});
+
+router.post("/admin/match-recommendations/generate/:businessId", async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const recommendations = await generateMatchRecommendations(businessId);
+    res.json(recommendations);
+  } catch (error) {
+    console.error("Error generating match recommendations:", error);
+    res.status(500).json({ error: "Failed to generate match recommendations" });
+  }
+});
+
+router.put("/admin/match-recommendations/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const result = await pool.query(
+      "UPDATE wri_match_recommendations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *",
+      [status, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Match recommendation not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error updating match recommendation:", error);
+    res.status(500).json({ error: "Failed to update match recommendation" });
+  }
+});
+
+// Helper function to calculate lead score
+async function calculateLeadScore(businessId) {
+  try {
+    // Get business details
+    const businessResult = await pool.query("SELECT * FROM wri_businesses WHERE id = $1", [businessId]);
+    if (businessResult.rows.length === 0) {
+      throw new Error("Business not found");
+    }
+    const business = businessResult.rows[0];
+
+    // Get survey response if exists
+    const surveyResult = await pool.query(
+      "SELECT * FROM wri_survey_responses WHERE company_name ILIKE $1 LIMIT 1",
+      [`%${business.company}%`]
+    );
+    const survey = surveyResult.rows[0] || {};
+
+    // Calculate scores
+    let partnershipInterestScore = 0;
+    let companySizeScore = 0;
+    let readinessScore = 0;
+    let budgetScore = 0;
+
+    // Partnership interest score (0-25)
+    if (business.partnership_interest === 'high') partnershipInterestScore = 25;
+    else if (business.partnership_interest === 'medium') partnershipInterestScore = 15;
+    else if (business.partnership_interest === 'low') partnershipInterestScore = 5;
+    else partnershipInterestScore = 10; // default
+
+    // Company size score (0-25)
+    if (business.organisation_type === 'Large Corporation') companySizeScore = 25;
+    else if (business.organisation_type === 'SME') companySizeScore = 15;
+    else if (business.organisation_type === 'Startup') companySizeScore = 10;
+    else companySizeScore = 15; // default
+
+    // Readiness score based on survey (0-25)
+    if (survey.engages_chinese_partners === 'Yes') readinessScore = 25;
+    else if (survey.engages_chinese_partners === 'Planning to') readinessScore = 15;
+    else readinessScore = 5;
+
+    // Budget score (estimated from company size and sector) (0-25)
+    if (business.organisation_type === 'Large Corporation') budgetScore = 25;
+    else if (business.organisation_type === 'SME') budgetScore = 15;
+    else budgetScore = 10;
+
+    const totalScore = partnershipInterestScore + companySizeScore + readinessScore + budgetScore;
+
+    // Upsert lead score
+    const existingScore = await pool.query("SELECT * FROM wri_lead_scores WHERE business_id = $1", [businessId]);
+    
+    let scoreResult;
+    if (existingScore.rows.length > 0) {
+      scoreResult = await pool.query(
+        `UPDATE wri_lead_scores 
+         SET total_score = $1, partnership_interest_score = $2, company_size_score = $3, readiness_score = $4, budget_score = $5,
+             last_calculated = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+         WHERE business_id = $6 RETURNING *`,
+        [totalScore, partnershipInterestScore, companySizeScore, readinessScore, budgetScore, businessId]
+      );
+    } else {
+      scoreResult = await pool.query(
+        `INSERT INTO wri_lead_scores (business_id, total_score, partnership_interest_score, company_size_score, readiness_score, budget_score)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [businessId, totalScore, partnershipInterestScore, companySizeScore, readinessScore, budgetScore]
+      );
+    }
+
+    return scoreResult.rows[0];
+  } catch (error) {
+    console.error("Error calculating lead score:", error);
+    throw error;
+  }
+}
+
+// Helper function to generate match recommendations
+async function generateMatchRecommendations(businessId) {
+  try {
+    // Get target business
+    const targetResult = await pool.query("SELECT * FROM wri_businesses WHERE id = $1", [businessId]);
+    if (targetResult.rows.length === 0) {
+      throw new Error("Business not found");
+    }
+    const target = targetResult.rows[0];
+
+    // Get all other approved businesses
+    const allBusinessesResult = await pool.query(
+      "SELECT * FROM wri_businesses WHERE id != $1 AND is_approved = true",
+      [businessId]
+    );
+    const allBusinesses = allBusinessesResult.rows;
+
+    const recommendations = [];
+
+    for (const business of allBusinesses) {
+      let matchScore = 0;
+      const matchReasons = [];
+
+      // Technology complementarity (0-30)
+      if (target.technology === business.technology) {
+        matchScore += 30;
+        matchReasons.push("Same technology focus");
+      } else {
+        // Check for complementary technologies
+        const complementaryTechs = {
+          'Solar PV': ['Energy Storage', 'Solar Water Heating'],
+          'Energy Storage': ['Solar PV', 'Wind', 'Mini-grids'],
+          'Wind': ['Energy Storage', 'Mini-grids'],
+          'Mini-grids': ['Energy Storage', 'Solar PV', 'Wind'],
+          'Clean Cooking': ['Biogas', 'Solar Water Heating'],
+          'Biogas': ['Clean Cooking', 'Energy Storage'],
+          'E-mobility': ['Energy Storage', 'Charging Infrastructure'],
+          'Productive Use': ['Solar PV', 'Energy Storage']
+        };
+
+        if (complementaryTechs[target.technology]?.includes(business.technology)) {
+          matchScore += 20;
+          matchReasons.push("Complementary technology");
+        }
+      }
+
+      // Geographic proximity (0-20)
+      if (target.country === business.country) {
+        matchScore += 20;
+        matchReasons.push("Same country");
+      } else if (target.country === 'Kenya' && business.country === 'China') {
+        matchScore += 15;
+        matchReasons.push("Kenya-China partnership potential");
+      }
+
+      // Partnership interest alignment (0-25)
+      if (target.partnership_interest === 'high' && business.partnership_interest === 'high') {
+        matchScore += 25;
+        matchReasons.push("Both highly interested in partnerships");
+      } else if (target.partnership_interest === business.partnership_interest) {
+        matchScore += 15;
+        matchReasons.push("Similar partnership interest level");
+      }
+
+      // Organization type complementarity (0-15)
+      const typeComplementarity = {
+        'Large Corporation': ['SME', 'Startup'],
+        'SME': ['Large Corporation', 'Startup'],
+        'Startup': ['Large Corporation', 'SME'],
+        'Government Agency': ['Large Corporation', 'SME'],
+        'Research Institution': ['Large Corporation', 'Startup']
+      };
+
+      if (typeComplementarity[target.organisation_type]?.includes(business.organisation_type)) {
+        matchScore += 15;
+        matchReasons.push("Complementary organization types");
+      }
+
+      // Nature of business alignment (0-10)
+      if (target.nature_of_business === business.nature_of_business) {
+        matchScore += 10;
+        matchReasons.push("Similar business nature");
+      }
+
+      // Only save if match score is above threshold
+      if (matchScore >= 30) {
+        // Upsert match recommendation
+        const upsertResult = await pool.query(
+          `INSERT INTO wri_match_recommendations (business_id_1, business_id_2, match_score, match_reasons, status)
+           VALUES ($1, $2, $3, $4, 'pending')
+           ON CONFLICT (business_id_1, business_id_2) DO UPDATE SET
+             match_score = EXCLUDED.match_score,
+             match_reasons = EXCLUDED.match_reasons,
+             updated_at = CURRENT_TIMESTAMP
+           RETURNING *`,
+          [businessId, business.id, matchScore, matchReasons]
+        );
+        recommendations.push(upsertResult.rows[0]);
+      }
+    }
+
+    return recommendations;
+  } catch (error) {
+    console.error("Error generating match recommendations:", error);
+    throw error;
+  }
+}
 
 export default router;
