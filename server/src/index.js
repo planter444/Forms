@@ -16,6 +16,11 @@ import {
   resetSolarMkononiSettings,
   updateSolarMkononiSettings
 } from "./solarMkononiSettingsStore.js";
+import {
+  getTermsConditionsSettings,
+  resetTermsConditionsSettings,
+  updateTermsConditionsSettings
+} from "./termsConditionsSettingsStore.js";
 import resourceLibraryRouter from "./resourceLibraryRoutes.js";
 import marketplaceRouter from "./marketplaceRoutes.js";
 import wriRouter from "./wriRoutes.js";
@@ -181,6 +186,29 @@ app.put("/api/solar-mkononi-settings", requireAdmin, async (request, response) =
 
 app.post("/api/solar-mkononi-settings/reset", requireAdmin, async (_request, response) => {
   const settings = await resetSolarMkononiSettings();
+  response.json({ settings });
+});
+
+app.get("/api/terms-conditions-settings", async (_request, response) => {
+  const settings = await getTermsConditionsSettings();
+  response.set("Cache-Control", "no-store");
+  response.json({ settings });
+});
+
+app.put("/api/terms-conditions-settings", requireAdmin, async (request, response) => {
+  try {
+    const settings = await updateTermsConditionsSettings(request.body || {});
+    response.json({ settings });
+  } catch (error) {
+    response.status(500).json({
+      message: "Unable to save Terms and Conditions settings.",
+      detail: error?.message || "Unknown settings save error."
+    });
+  }
+});
+
+app.post("/api/terms-conditions-settings/reset", requireAdmin, async (_request, response) => {
+  const settings = await resetTermsConditionsSettings();
   response.json({ settings });
 });
 

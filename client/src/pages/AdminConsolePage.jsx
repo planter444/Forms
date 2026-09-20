@@ -9,7 +9,10 @@ import {
   uploadAdminMedia,
   getSolarMkononiSettings,
   updateSolarMkononiSettings,
-  resetSolarMkononiSettings
+  resetSolarMkononiSettings,
+  getTermsConditionsSettings,
+  updateTermsConditionsSettings,
+  resetTermsConditionsSettings
 } from "../lib/api.js";
 import { clearAdminAccess, getAdminAccess, grantAdminAccess } from "../lib/adminAccess.js";
 import { useSiteSettings } from "../context/SiteSettingsContext.jsx";
@@ -277,7 +280,8 @@ const tabs = [
   { id: "solar-mkononi", label: "Solar Mkononi" },
   { id: "resource-library", label: "Resource library" },
   { id: "marketplace", label: "Marketplace vendors" },
-  { id: "wri", label: "WRI Partnership" }
+  { id: "wri", label: "WRI Partnership" },
+  { id: "terms-conditions", label: "Terms & Conditions" }
 ];
 
 const cardClass = "rounded-[28px] border p-5 shadow-sm";
@@ -322,6 +326,10 @@ const AdminConsolePage = () => {
   const [solarMkononiEditor, setSolarMkononiEditor] = useState(null);
   const [savingSolarMkononi, setSavingSolarMkononi] = useState(false);
   const [solarMkononiSubTab, setSolarMkononiSubTab] = useState("hero");
+  const [termsConditionsSettings, setTermsConditionsSettings] = useState(null);
+  const [termsConditionsEditor, setTermsConditionsEditor] = useState(null);
+  const [savingTermsConditions, setSavingTermsConditions] = useState(false);
+  const [termsConditionsSubTab, setTermsConditionsSubTab] = useState("content");
 
   const gatedEmail = useMemo(() => {
     const fromState = location.state?.prefillEmail || "";
@@ -372,6 +380,22 @@ const AdminConsolePage = () => {
   useEffect(() => {
     if (activeTab === "solar-mkononi" && !solarMkononiSettings) {
       loadSolarMkononiSettings();
+    }
+  }, [activeTab]);
+
+  const loadTermsConditionsSettings = async () => {
+    try {
+      const data = await getTermsConditionsSettings();
+      setTermsConditionsSettings(data.settings);
+      setTermsConditionsEditor(data.settings);
+    } catch (error) {
+      console.error("Failed to load Terms and Conditions settings:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "terms-conditions" && !termsConditionsSettings) {
+      loadTermsConditionsSettings();
     }
   }, [activeTab]);
 
@@ -720,6 +744,42 @@ const AdminConsolePage = () => {
       setError(requestError.message || "Unable to reset Solar Mkononi settings.");
     } finally {
       setSavingSolarMkononi(false);
+    }
+  };
+
+  const handleSaveTermsConditionsSettings = async () => {
+    setSavingTermsConditions(true);
+    setError("");
+
+    try {
+      const updated = await updateTermsConditionsSettings(token, termsConditionsEditor);
+      setTermsConditionsSettings(updated.settings);
+      setTermsConditionsEditor(updated.settings);
+      setNotice("Terms and Conditions settings saved successfully.");
+    } catch (requestError) {
+      setError(requestError.message || "Unable to save Terms and Conditions settings.");
+    } finally {
+      setSavingTermsConditions(false);
+    }
+  };
+
+  const handleResetTermsConditionsSettings = async () => {
+    if (!confirm("Are you sure you want to reset Terms and Conditions settings to defaults? This cannot be undone.")) {
+      return;
+    }
+
+    setSavingTermsConditions(true);
+    setError("");
+
+    try {
+      const updated = await resetTermsConditionsSettings(token);
+      setTermsConditionsSettings(updated.settings);
+      setTermsConditionsEditor(updated.settings);
+      setNotice("Terms and Conditions settings reset to defaults.");
+    } catch (requestError) {
+      setError(requestError.message || "Unable to reset Terms and Conditions settings.");
+    } finally {
+      setSavingTermsConditions(false);
     }
   };
 
@@ -1125,6 +1185,951 @@ const AdminConsolePage = () => {
 
             {activeTab === "wri" ? (
               <WriPartnershipAdmin token={token} palette={palette} setNotice={setNotice} setError={setError} />
+            ) : null}
+
+            {activeTab === "terms-conditions" ? (
+              <section className={cardClass} style={{ backgroundColor: palette.surfaceBackground, borderColor: palette.borderColor }}>
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-semibold" style={{ color: palette.textColor }}>Terms and Conditions Settings</h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-6" style={{ color: palette.mutedTextColor }}>
+                      Manage the Terms and Conditions page with customizable content, styling, and branding.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleResetTermsConditionsSettings}
+                      disabled={savingTermsConditions}
+                      className="rounded-2xl border px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                    >
+                      Reset to defaults
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveTermsConditionsSettings}
+                      disabled={savingTermsConditions}
+                      className="rounded-2xl px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ backgroundColor: palette.primary }}
+                    >
+                      {savingTermsConditions ? "Saving..." : "Save changes"}
+                    </button>
+                  </div>
+                </div>
+
+                {!termsConditionsEditor ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600 mx-auto" />
+                      <p className="text-sm" style={{ color: palette.mutedTextColor }}>Loading Terms and Conditions settings...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-6">
+                    <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2">
+                      {[
+                        { id: "header", label: "Header" },
+                        { id: "content", label: "Content" },
+                        { id: "footer", label: "Footer" },
+                        { id: "theme", label: "Theme" },
+                        { id: "seo", label: "SEO" }
+                      ].map((subTab) => (
+                        <button
+                          key={subTab.id}
+                          onClick={() => setTermsConditionsSubTab(subTab.id)}
+                          className="rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition"
+                          style={{
+                            backgroundColor: termsConditionsSubTab === subTab.id ? palette.primary : palette.surfaceMuted,
+                            color: termsConditionsSubTab === subTab.id ? "#ffffff" : palette.textColor
+                          }}
+                        >
+                          {subTab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {termsConditionsSubTab === "header" && (
+                      <div className="space-y-6">
+                        <div className="grid gap-6 lg:grid-cols-2">
+                          <div className="space-y-4">
+                            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                              <input
+                                type="checkbox"
+                                checked={termsConditionsEditor.header?.enabled !== false}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  header: { ...termsConditionsEditor.header, enabled: e.target.checked }
+                                })}
+                                className="mr-2"
+                              />
+                              Enable Header Section
+                            </label>
+                            
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Title</span>
+                              <input
+                                type="text"
+                                value={termsConditionsEditor.header?.title || ""}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  header: { ...termsConditionsEditor.header, title: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              />
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Subtitle</span>
+                              <textarea
+                                value={termsConditionsEditor.header?.subtitle || ""}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  header: { ...termsConditionsEditor.header, subtitle: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm min-h-[80px]"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              />
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Logo URL</span>
+                              <input
+                                type="text"
+                                value={termsConditionsEditor.header?.logoUrl || ""}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  header: { ...termsConditionsEditor.header, logoUrl: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                placeholder="https://example.com/logo.png"
+                              />
+                            </label>
+                          </div>
+
+                          <div className="space-y-4">
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.header?.backgroundColor || "#ffffff"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    header: { ...termsConditionsEditor.header, backgroundColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.header?.backgroundColor || "#ffffff"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    header: { ...termsConditionsEditor.header, backgroundColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Text Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.header?.textColor || "#0f172a"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    header: { ...termsConditionsEditor.header, textColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.header?.textColor || "#0f172a"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    header: { ...termsConditionsEditor.header, textColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Subtitle Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.header?.subtitleColor || "#475569"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    header: { ...termsConditionsEditor.header, subtitleColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.header?.subtitleColor || "#475569"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    header: { ...termsConditionsEditor.header, subtitleColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Pattern</span>
+                              <select
+                                value={termsConditionsEditor.header?.backgroundPattern || "none"}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  header: { ...termsConditionsEditor.header, backgroundPattern: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              >
+                                <option value="none">None</option>
+                                <option value="dots">Dots</option>
+                                <option value="grid">Grid</option>
+                                <option value="waves">Waves</option>
+                                <option value="zigzag">Zigzag</option>
+                              </select>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                            <input
+                              type="checkbox"
+                              checked={termsConditionsEditor.header?.animationEnabled !== false}
+                              onChange={(e) => setTermsConditionsEditor({
+                              ...termsConditionsEditor,
+                              header: { ...termsConditionsEditor.header, animationEnabled: e.target.checked }
+                            })}
+                              className="mr-2"
+                            />
+                            Enable Animation
+                          </label>
+
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Animation Style</span>
+                            <select
+                              value={termsConditionsEditor.header?.animationStyle || "fade-down"}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                header: { ...termsConditionsEditor.header, animationStyle: e.target.value }
+                              })}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                            >
+                              <option value="fade-down">Fade Down</option>
+                              <option value="fade-up">Fade Up</option>
+                              <option value="fade-left">Fade Left</option>
+                              <option value="fade-right">Fade Right</option>
+                              <option value="bounce">Bounce</option>
+                              <option value="pulse">Pulse</option>
+                            </select>
+                          </label>
+
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Animation Delay (ms)</span>
+                            <input
+                              type="number"
+                              value={termsConditionsEditor.header?.animationDelay || 100}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                header: { ...termsConditionsEditor.header, animationDelay: parseInt(e.target.value) || 100 }
+                              })}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {termsConditionsSubTab === "content" && (
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                            <input
+                              type="checkbox"
+                              checked={termsConditionsEditor.content?.enabled !== false}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                content: { ...termsConditionsEditor.content, enabled: e.target.checked }
+                              })}
+                              className="mr-2"
+                            />
+                            Enable Content Section
+                          </label>
+
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>
+                              Terms and Conditions Content
+                              <span className="text-xs ml-2" style={{ color: palette.mutedTextColor }}>
+                                Use **text** for bold, *text* for italic, # for headings
+                              </span>
+                            </span>
+                            <textarea
+                              value={termsConditionsEditor.content?.terms || ""}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                content: { ...termsConditionsEditor.content, terms: e.target.value }
+                              })}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm min-h-[300px] font-mono"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                            />
+                          </label>
+                        </div>
+
+                        <div className="grid gap-6 lg:grid-cols-2">
+                          <div className="space-y-4">
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.content?.backgroundColor || "#f8fafc"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    content: { ...termsConditionsEditor.content, backgroundColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.content?.backgroundColor || "#f8fafc"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    content: { ...termsConditionsEditor.content, backgroundColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Text Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.content?.textColor || "#0f172a"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    content: { ...termsConditionsEditor.content, textColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.content?.textColor || "#0f172a"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    content: { ...termsConditionsEditor.content, textColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Font Size</span>
+                              <select
+                                value={termsConditionsEditor.content?.fontSize || "base"}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  content: { ...termsConditionsEditor.content, fontSize: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              >
+                                <option value="sm">Small</option>
+                                <option value="base">Base</option>
+                                <option value="lg">Large</option>
+                                <option value="xl">Extra Large</option>
+                              </select>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Line Height</span>
+                              <select
+                                value={termsConditionsEditor.content?.lineHeight || "relaxed"}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  content: { ...termsConditionsEditor.content, lineHeight: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              >
+                                <option value="tight">Tight</option>
+                                <option value="normal">Normal</option>
+                                <option value="relaxed">Relaxed</option>
+                                <option value="loose">Loose</option>
+                              </select>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Padding</span>
+                              <select
+                                value={termsConditionsEditor.content?.padding || "comfortable"}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  content: { ...termsConditionsEditor.content, padding: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              >
+                                <option value="compact">Compact</option>
+                                <option value="comfortable">Comfortable</option>
+                                <option value="spacious">Spacious</option>
+                              </select>
+                            </label>
+                          </div>
+
+                          <div className="space-y-4">
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Pattern</span>
+                              <select
+                                value={termsConditionsEditor.content?.backgroundPattern || "none"}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  content: { ...termsConditionsEditor.content, backgroundPattern: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              >
+                                <option value="none">None</option>
+                                <option value="dots">Dots</option>
+                                <option value="grid">Grid</option>
+                                <option value="waves">Waves</option>
+                                <option value="zigzag">Zigzag</option>
+                              </select>
+                            </label>
+
+                            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                              <input
+                                type="checkbox"
+                                checked={termsConditionsEditor.content?.animationEnabled !== false}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  content: { ...termsConditionsEditor.content, animationEnabled: e.target.checked }
+                                })}
+                                className="mr-2"
+                              />
+                              Enable Animation
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Animation Style</span>
+                              <select
+                                value={termsConditionsEditor.content?.animationStyle || "fade-up"}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  content: { ...termsConditionsEditor.content, animationStyle: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              >
+                                <option value="fade-down">Fade Down</option>
+                                <option value="fade-up">Fade Up</option>
+                                <option value="fade-left">Fade Left</option>
+                                <option value="fade-right">Fade Right</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="pulse">Pulse</option>
+                              </select>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Animation Delay (ms)</span>
+                              <input
+                                type="number"
+                                value={termsConditionsEditor.content?.animationDelay || 200}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  content: { ...termsConditionsEditor.content, animationDelay: parseInt(e.target.value) || 200 }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {termsConditionsSubTab === "footer" && (
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                            <input
+                              type="checkbox"
+                              checked={termsConditionsEditor.footer?.enabled !== false}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                footer: { ...termsConditionsEditor.footer, enabled: e.target.checked }
+                              })}
+                              className="mr-2"
+                            />
+                            Enable Footer Section
+                          </label>
+
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Title</span>
+                            <input
+                              type="text"
+                              value={termsConditionsEditor.footer?.title || ""}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                footer: { ...termsConditionsEditor.footer, title: e.target.value }
+                              })}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Body</span>
+                            <textarea
+                              value={termsConditionsEditor.footer?.body || ""}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                footer: { ...termsConditionsEditor.footer, body: e.target.value }
+                              })}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm min-h-[80px]"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Email</span>
+                            <input
+                              type="email"
+                              value={termsConditionsEditor.footer?.email || ""}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                footer: { ...termsConditionsEditor.footer, email: e.target.value }
+                              })}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Phone</span>
+                            <input
+                              type="tel"
+                              value={termsConditionsEditor.footer?.phone || ""}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                footer: { ...termsConditionsEditor.footer, phone: e.target.value }
+                              })}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Copyright</span>
+                            <input
+                              type="text"
+                              value={termsConditionsEditor.footer?.copyright || ""}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                footer: { ...termsConditionsEditor.footer, copyright: e.target.value }
+                              })}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                            />
+                          </label>
+                        </div>
+
+                        <div className="grid gap-6 lg:grid-cols-2">
+                          <div className="space-y-4">
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.footer?.backgroundColor || "#0f172a"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    footer: { ...termsConditionsEditor.footer, backgroundColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.footer?.backgroundColor || "#0f172a"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    footer: { ...termsConditionsEditor.footer, backgroundColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Text Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.footer?.textColor || "#ffffff"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    footer: { ...termsConditionsEditor.footer, textColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.footer?.textColor || "#ffffff"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    footer: { ...termsConditionsEditor.footer, textColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Link Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.footer?.linkColor || "#93c5fd"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    footer: { ...termsConditionsEditor.footer, linkColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.footer?.linkColor || "#93c5fd"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    footer: { ...termsConditionsEditor.footer, linkColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+                          </div>
+
+                          <div className="space-y-4">
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Pattern</span>
+                              <select
+                                value={termsConditionsEditor.footer?.backgroundPattern || "none"}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  footer: { ...termsConditionsEditor.footer, backgroundPattern: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              >
+                                <option value="none">None</option>
+                                <option value="dots">Dots</option>
+                                <option value="grid">Grid</option>
+                                <option value="waves">Waves</option>
+                                <option value="zigzag">Zigzag</option>
+                              </select>
+                            </label>
+
+                            <label className="block text-sm font-medium" style={{ color: palette.textColor }}>
+                              <input
+                                type="checkbox"
+                                checked={termsConditionsEditor.footer?.animationEnabled !== false}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  footer: { ...termsConditionsEditor.footer, animationEnabled: e.target.checked }
+                                })}
+                                className="mr-2"
+                              />
+                              Enable Animation
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Animation Style</span>
+                              <select
+                                value={termsConditionsEditor.footer?.animationStyle || "fade-up"}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  footer: { ...termsConditionsEditor.footer, animationStyle: e.target.value }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              >
+                                <option value="fade-down">Fade Down</option>
+                                <option value="fade-up">Fade Up</option>
+                                <option value="fade-left">Fade Left</option>
+                                <option value="fade-right">Fade Right</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="pulse">Pulse</option>
+                              </select>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Animation Delay (ms)</span>
+                              <input
+                                type="number"
+                                value={termsConditionsEditor.footer?.animationDelay || 300}
+                                onChange={(e) => setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  footer: { ...termsConditionsEditor.footer, animationDelay: parseInt(e.target.value) || 300 }
+                                })}
+                                className="w-full rounded-2xl border px-4 py-3 text-sm"
+                                style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Footer Links (one per line: Label | URL)</span>
+                            <textarea
+                              value={(termsConditionsEditor.footer?.links || []).map(link => `${link.label} | ${link.href}`).join('\n')}
+                              onChange={(e) => {
+                                const links = e.target.value.split('\n')
+                                  .map(line => {
+                                    const [label = "", href = ""] = line.split('|').map(item => item.trim());
+                                    return { label, href };
+                                  })
+                                  .filter(link => link.label && link.href);
+                                setTermsConditionsEditor({
+                                  ...termsConditionsEditor,
+                                  footer: { ...termsConditionsEditor.footer, links }
+                                });
+                              }}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm min-h-[120px]"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                              placeholder="Privacy Policy | /privacy&#10;Contact Us | /contact"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {termsConditionsSubTab === "theme" && (
+                      <div className="space-y-6">
+                        <div className="grid gap-6 lg:grid-cols-2">
+                          <div className="space-y-4">
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Primary Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.theme?.primaryColor || "#2563eb"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    theme: { ...termsConditionsEditor.theme, primaryColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.theme?.primaryColor || "#2563eb"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    theme: { ...termsConditionsEditor.theme, primaryColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Accent Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.theme?.accentColor || "#dbeafe"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    theme: { ...termsConditionsEditor.theme, accentColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.theme?.accentColor || "#dbeafe"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    theme: { ...termsConditionsEditor.theme, accentColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+                          </div>
+
+                          <div className="space-y-4">
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.theme?.backgroundColor || "#ffffff"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    theme: { ...termsConditionsEditor.theme, backgroundColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.theme?.backgroundColor || "#ffffff"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    theme: { ...termsConditionsEditor.theme, backgroundColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Text Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.theme?.textColor || "#0f172a"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    theme: { ...termsConditionsEditor.theme, textColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.theme?.textColor || "#0f172a"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    theme: { ...termsConditionsEditor.theme, textColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+
+                            <label className="block">
+                              <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Border Color</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  value={termsConditionsEditor.theme?.borderColor || "#e2e8f0"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    theme: { ...termsConditionsEditor.theme, borderColor: e.target.value }
+                                  })}
+                                  className="h-10 w-16 rounded cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={termsConditionsEditor.theme?.borderColor || "#e2e8f0"}
+                                  onChange={(e) => setTermsConditionsEditor({
+                                    ...termsConditionsEditor,
+                                    theme: { ...termsConditionsEditor.theme, borderColor: e.target.value }
+                                  })}
+                                  className="flex-1 rounded-2xl border px-4 py-3 text-sm"
+                                  style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                                />
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {termsConditionsSubTab === "seo" && (
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Page Title</span>
+                            <input
+                              type="text"
+                              value={termsConditionsEditor.seo?.title || ""}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                seo: { ...termsConditionsEditor.seo, title: e.target.value }
+                              })}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Meta Description</span>
+                            <textarea
+                              value={termsConditionsEditor.seo?.description || ""}
+                              onChange={(e) => setTermsConditionsEditor({
+                                ...termsConditionsEditor,
+                                seo: { ...termsConditionsEditor.seo, description: e.target.value }
+                              })}
+                              className="w-full rounded-2xl border px-4 py-3 text-sm min-h-[80px]"
+                              style={{ borderColor: palette.borderColor, backgroundColor: palette.fieldBackground, color: palette.textColor }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-8 space-y-4">
+                      <div className="rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                        <div className="text-sm font-semibold mb-4" style={{ color: palette.textColor }}>Quick Actions</div>
+                        <div className="space-y-3">
+                          <a
+                            href="/tc"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full rounded-2xl border px-4 py-3 text-center text-sm font-semibold transition hover:scale-105"
+                            style={{ borderColor: palette.borderColor, color: palette.textColor }}
+                          >
+                            View Terms and Conditions Page
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="rounded-[28px] border p-5" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceMuted }}>
+                        <div className="text-sm font-semibold mb-4" style={{ color: palette.textColor }}>Page Info</div>
+                        <div className="space-y-2 text-sm" style={{ color: palette.mutedTextColor }}>
+                          <div>
+                            <span className="font-semibold" style={{ color: palette.textColor }}>URL:</span> /tc
+                          </div>
+                          <div>
+                            <span className="font-semibold" style={{ color: palette.textColor }}>Status:</span> Standalone page
+                          </div>
+                          <div>
+                            <span className="font-semibold" style={{ color: palette.textColor }}>Features:</span> Customizable content, styling, animations
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </section>
             ) : null}
 
             {activeTab === "content" ? (
