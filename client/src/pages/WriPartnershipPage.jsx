@@ -96,6 +96,19 @@ const AnimatedSection = ({ children, settings, id, className = "", style = {} })
   const animationStyle = animationConfig?.style || "fade-up";
   const animationDuration = animationConfig?.duration || (isMobile ? 500 : 600);
 
+  const themeColors = settings?.colors || {
+    primary: "#8bc046",
+    primaryDark: "#6b9a32",
+    primaryLight: "#a8d658",
+    textDark: "#4a7022",
+    textMedium: "#6b9a32",
+    backgroundLight: "#e8f5d0",
+    border: "#c5e8a3",
+    footerBackground: "#4a7022",
+    footerText: "#ffffff",
+    footerLink: "#c5e8a3"
+  };
+
   const sectionStyle = {
     scrollMarginTop: "80px",
     ...style
@@ -127,6 +140,19 @@ const StaggeredItem = ({ children, settings, index, className = "", enabled = tr
   const animationDuration = animationConfig?.duration || (isMobile ? 500 : 600);
   const staggerDelay = customStaggerDelay !== null ? customStaggerDelay : (animationConfig?.stagger || 500);
   const delay = index * staggerDelay;
+
+  const themeColors = settings?.colors || {
+    primary: "#8bc046",
+    primaryDark: "#6b9a32",
+    primaryLight: "#a8d658",
+    textDark: "#4a7022",
+    textMedium: "#6b9a32",
+    backgroundLight: "#e8f5d0",
+    border: "#c5e8a3",
+    footerBackground: "#4a7022",
+    footerText: "#ffffff",
+    footerLink: "#c5e8a3"
+  };
 
   if (!animationEnabled) {
     return <div className={className}>{children}</div>;
@@ -207,6 +233,20 @@ const WriNav = ({ settings, overHero = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [navHidden, setNavHidden] = useState(false);
   const lastScrollY = useRef(0);
+
+  const themeColors = settings?.colors || {
+    primary: "#8bc046",
+    primaryDark: "#6b9a32",
+    primaryLight: "#a8d658",
+    textDark: "#4a7022",
+    textMedium: "#6b9a32",
+    backgroundLight: "#e8f5d0",
+    border: "#c5e8a3",
+    footerBackground: "#4a7022",
+    footerText: "#ffffff",
+    footerLink: "#c5e8a3"
+  };
+
   const primaryColor = overHero ? "#ffffff" : themeColors.primary;
   const textColor = overHero ? "#ffffff" : themeColors.textDark;
   const backgroundColor = themeColors.backgroundLight;
@@ -786,6 +826,18 @@ const WriPartnershipPage = () => {
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {technologyAreas.map((area, index) => {
+              const themeColors = settings?.colors || {
+                primary: "#8bc046",
+                primaryDark: "#6b9a32",
+                primaryLight: "#a8d658",
+                textDark: "#4a7022",
+                textMedium: "#6b9a32",
+                backgroundLight: "#e8f5d0",
+                border: "#c5e8a3",
+                footerBackground: "#4a7022",
+                footerText: "#ffffff",
+                footerLink: "#c5e8a3"
+              };
               const areaColors = [
                 { bg: themeColors.backgroundLight, border: themeColors.border, text: themeColors.textMedium },
                 { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" },
