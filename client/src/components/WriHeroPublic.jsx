@@ -106,7 +106,8 @@ const WriHeroPublic = ({ settings, onScrollToSection }) => {
           
           <button
             onClick={() => scrollToSection("business-database")}
-            className="px-6 py-3 md:px-8 md:py-4 rounded-full font-bold border-2 border-white text-white transition hover:scale-105 backdrop-blur-sm"
+            className="px-6 py-3 md:px-8 md:py-4 rounded-full font-bold border-2 border-white transition hover:scale-105 backdrop-blur-sm"
+            style={{ color: colors.primary }}
           >
             {heroSettings.secondaryCta}
           </button>
