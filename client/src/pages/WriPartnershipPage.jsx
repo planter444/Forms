@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import ParticleBackground from "../components/ParticleBackground";
 
@@ -88,7 +88,7 @@ const getInitialClass = (style) => {
   }
 };
 
-const AnimatedSection = ({ children, settings, id, className = "", style = {} }) => {
+const AnimatedSection = ({ children, settings, id, className = "", style = {}, themeColors }) => {
   const [ref, inView] = useScrollReveal();
   const animationEnabled = settings?.animation?.enabled !== false;
   const isMobile = window.innerWidth < 768;
@@ -147,7 +147,7 @@ const StaggeredItem = ({ children, settings, index, className = "", enabled = tr
   );
 };
 
-const AboutSection = ({ settings }) => {
+const AboutSection = ({ settings, themeColors }) => {
   const items = [
     "Kenya–China B2B linkages",
     "Technology transfer",
@@ -158,35 +158,22 @@ const AboutSection = ({ settings }) => {
     "Renewable energy collaboration"
   ];
 
-  const getThemeColors = () => settings?.colors || {
-    primary: "#8bc046",
-    primaryDark: "#6b9a32",
-    primaryLight: "#a8d658",
-    textDark: "#4a7022",
-    textMedium: "#6b9a32",
-    backgroundLight: "#e8f5d0",
-    border: "#c5e8a3",
-    footerBackground: "#4a7022",
-    footerText: "#ffffff",
-    footerLink: "#c5e8a3"
-  };
-
   return (
     <div>
       <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-bold" style={{ color: getThemeColors().textDark }}>About the Partnership</h2>
-        <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: getThemeColors().textMedium }}>
+        <h2 className="text-3xl md:text-4xl font-bold" style={{ color: themeColors.textDark }}>About the Partnership</h2>
+        <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: themeColors.textMedium }}>
           The Kenya–China Renewable Energy Partnership focuses on strengthening collaboration across key areas:
         </p>
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item, index) => {
           const itemColors = [
-            { bg: getThemeColors().backgroundLight, border: getThemeColors().border, text: getThemeColors().textMedium },
+            { bg: themeColors.backgroundLight, border: themeColors.border, text: themeColors.textMedium },
             { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" },
-            { bg: "#ffffff", border: "#e5e7eb", text: getThemeColors().primary },
+            { bg: "#ffffff", border: "#e5e7eb", text: themeColors.primary },
             { bg: "#f0f9ff", border: "#bae6fd", text: "#0c4a6e" },
-            { bg: "#fafaf9", border: "#e7e5e4", text: getThemeColors().primary }
+            { bg: "#fafaf9", border: "#e7e5e4", text: themeColors.primary }
           ];
           const color = itemColors[index % itemColors.length];
 
@@ -203,28 +190,15 @@ const AboutSection = ({ settings }) => {
   );
 };
 
-const WriNav = ({ settings, overHero = false }) => {
+const WriNav = ({ settings, overHero = false, themeColors }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [navHidden, setNavHidden] = useState(false);
   const lastScrollY = useRef(0);
 
-  const getThemeColors = () => settings?.colors || {
-    primary: "#8bc046",
-    primaryDark: "#6b9a32",
-    primaryLight: "#a8d658",
-    textDark: "#4a7022",
-    textMedium: "#6b9a32",
-    backgroundLight: "#e8f5d0",
-    border: "#c5e8a3",
-    footerBackground: "#4a7022",
-    footerText: "#ffffff",
-    footerLink: "#c5e8a3"
-  };
-
-  const primaryColor = overHero ? "#ffffff" : getThemeColors().primary;
-  const textColor = overHero ? "#ffffff" : getThemeColors().textDark;
-  const backgroundColor = getThemeColors().backgroundLight;
-  const borderColor = overHero ? "rgba(255,255,255,0.3)" : getThemeColors().border;
+  const primaryColor = overHero ? "#ffffff" : themeColors.primary;
+  const textColor = overHero ? "#ffffff" : themeColors.textDark;
+  const backgroundColor = themeColors.backgroundLight;
+  const borderColor = overHero ? "rgba(255,255,255,0.3)" : themeColors.border;
   const navOpacity = overHero ? 1 : 0.85;
   const slideDirection = "left";
 
@@ -484,8 +458,8 @@ const WriPartnershipPage = () => {
   const [settings, setSettings] = useState(null);
   const [overHero, setOverHero] = useState(true);
 
-  // Helper to get theme colors - called fresh each time
-  const getThemeColors = () => {
+  // Use useMemo to memoize theme colors - only recalculates when settings change
+  const themeColors = useMemo(() => {
     const colors = settings?.colors || {
       primary: "#8bc046",
       primaryDark: "#6b9a32",
@@ -498,29 +472,20 @@ const WriPartnershipPage = () => {
       footerText: "#ffffff",
       footerLink: "#c5e8a3"
     };
-    console.log("getThemeColors called, using:", colors);
+    console.log("themeColors recalculated:", colors);
     return colors;
-  };
-    primary: "#8bc046",
-    primaryDark: "#6b9a32",
-    primaryLight: "#a8d658",
-    textDark: "#4a7022",
-    textMedium: "#6b9a32",
-    backgroundLight: "#e8f5d0",
-    border: "#c5e8a3",
-    footerBackground: "#4a7022",
-    footerText: "#ffffff",
-    footerLink: "#c5e8a3"
-  };
+  }, [settings?.colors]);
 
-  // Helper to get survey text - called fresh each time
-  const getSurveyText = () => settings?.survey || {
-    title: "KEREA Survey",
-    description: "Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement",
-    estimatedTime: "Estimated completion time: 5–7 minutes",
-    startButtonText: "Start Now",
-    submitButtonText: "Submit Survey"
-  };
+  // Use useMemo to memoize survey text - only recalculates when settings change
+  const surveyText = useMemo(() => {
+    return settings?.survey || {
+      title: "KEREA Survey",
+      description: "Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement",
+      estimatedTime: "Estimated completion time: 5–7 minutes",
+      startButtonText: "Start Now",
+      submitButtonText: "Submit Survey"
+    };
+  }, [settings?.survey]);
 
   const [enquiries, setEnquiries] = useState([]);
   const [businesses, setBusinesses] = useState([]);
@@ -562,6 +527,7 @@ const WriPartnershipPage = () => {
 
         // The API returns { wri: { hero: {...} } }
         if (data.wri) {
+          console.log("Setting settings state with:", data.wri);
           setSettings(data.wri);
         }
       } catch (error) {
@@ -716,15 +682,15 @@ const WriPartnershipPage = () => {
   };
 
   return (
-    <div style={{ color: getThemeColors().textDark }}>
+    <div style={{ color: themeColors.textDark }}>
       {settings?.patterns?.enabled !== false && (
         <ParticleBackground
-          color={settings?.patterns?.color || getThemeColors().primary}
+          color={settings?.patterns?.color || themeColors.primary}
           opacity={(settings?.patterns?.opacity || 30) / 100}
           thickness={settings?.patterns?.thickness || 1}
         />
       )}
-      <WriNav settings={settings} overHero={overHero} />
+      <WriNav settings={settings} overHero={overHero} themeColors={themeColors} />
 
       <section 
         id="hero" 
@@ -732,7 +698,7 @@ const WriPartnershipPage = () => {
         style={{
           backgroundImage: settings?.realHero?.realDesktopBackgroundImageUrl
             ? `url(${settings?.realHero?.realDesktopBackgroundImageUrl})`
-            : `linear-gradient(135deg, ${getThemeColors().primary} 0%, ${getThemeColors().primaryLight} 50%, ${getThemeColors().primaryDark} 100%)`,
+            : `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryLight} 50%, ${themeColors.primaryDark} 100%)`,
           backgroundSize: "cover",
           backgroundPosition: "center"
         }}
@@ -781,7 +747,7 @@ const WriPartnershipPage = () => {
                 }
               }}
               className="px-7 py-2 md:px-10 md:py-4 mx-auto md:mx-0 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
-              style={{ backgroundColor: "#ffffff", color: getThemeColors().primary, width: "auto" }}
+              style={{ backgroundColor: "#ffffff", color: themeColors.primary, width: "auto" }}
             >
               {settings?.hero?.primaryCta || "KEREA Survey"}
             </button>
@@ -802,28 +768,28 @@ const WriPartnershipPage = () => {
         </div>
       </section>
 
-      <AnimatedSection id="about" className="py-16 md:py-24 px-4" style={{ backgroundColor: getThemeColors().backgroundLight }} settings={settings}>
+      <AnimatedSection id="about" className="py-16 md:py-24 px-4" style={{ backgroundColor: themeColors.backgroundLight }} settings={settings} themeColors={themeColors}>
         <div className="mx-auto max-w-6xl">
-          <AboutSection settings={settings} />
+          <AboutSection settings={settings} themeColors={themeColors} />
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="areas" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
+      <AnimatedSection id="areas" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings} themeColors={themeColors}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: getThemeColors().textDark }}>Technology & Business Areas</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: getThemeColors().textMedium }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: themeColors.textDark }}>Technology & Business Areas</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: themeColors.textMedium }}>
               Explore the key technology sectors and business areas where Kenya and China can collaborate.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {technologyAreas.map((area, index) => {
               const areaColors = [
-                { bg: getThemeColors().backgroundLight, border: getThemeColors().border, text: getThemeColors().textMedium },
+                { bg: themeColors.backgroundLight, border: themeColors.border, text: themeColors.textMedium },
                 { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" },
-                { bg: "#ffffff", border: "#e5e7eb", text: getThemeColors().primary },
+                { bg: "#ffffff", border: "#e5e7eb", text: themeColors.primary },
                 { bg: "#f0f9ff", border: "#bae6fd", text: "#0c4a6e" },
-                { bg: "#fafaf9", border: "#e7e5e4", text: getThemeColors().primary }
+                { bg: "#fafaf9", border: "#e7e5e4", text: themeColors.primary }
               ];
               const color = areaColors[index % areaColors.length];
 
@@ -908,7 +874,7 @@ const WriPartnershipPage = () => {
                       {getIcon(area.title)}
                     </div>
                     <h3 className="text-xl font-semibold" style={{ color: color.text }}>{area.title}</h3>
-                    <p className="mt-2 text-sm md:text-base flex-grow" style={{ color: getThemeColors().textMedium }}>{area.description}</p>
+                    <p className="mt-2 text-sm md:text-base flex-grow" style={{ color: themeColors.textMedium }}>{area.description}</p>
                   </div>
                 </StaggeredItem>
               );
@@ -917,11 +883,11 @@ const WriPartnershipPage = () => {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="opportunities" className="py-16 md:py-24 px-4" style={{ backgroundColor: getThemeColors().backgroundLight }} settings={settings}>
+      <AnimatedSection id="opportunities" className="py-16 md:py-24 px-4" style={{ backgroundColor: themeColors.backgroundLight }} settings={settings} themeColors={themeColors}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: getThemeColors().textDark }}>B2B Opportunities</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: getThemeColors().textMedium }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: themeColors.textDark }}>B2B Opportunities</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: themeColors.textMedium }}>
               Discover the types of partnership and business opportunities available through this platform.
             </p>
           </div>
@@ -929,10 +895,10 @@ const WriPartnershipPage = () => {
             {b2bOpportunities.map((opportunity, index) => (
               <StaggeredItem key={index} settings={settings} index={index} enabled={true} customStaggerDelay={settings?.animation?.cardStaggerDelay || 500}>
                 <div className="flex items-center space-x-3 rounded-2xl bg-white p-4 shadow-sm hover:shadow-md transition-all">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full text-white font-bold text-lg" style={{ backgroundColor: getThemeColors().primary }}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full text-white font-bold text-lg" style={{ backgroundColor: themeColors.primary }}>
                     {index + 1}
                   </div>
-                  <span className="text-sm md:text-base font-medium" style={{ color: getThemeColors().textDark }}>{opportunity}</span>
+                  <span className="text-sm md:text-base font-medium" style={{ color: themeColors.textDark }}>{opportunity}</span>
                 </div>
               </StaggeredItem>
             ))}
@@ -940,26 +906,26 @@ const WriPartnershipPage = () => {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="events" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
+      <AnimatedSection id="events" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings} themeColors={themeColors}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: getThemeColors().textDark }}>Events</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: getThemeColors().textMedium }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: themeColors.textDark }}>Events</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: themeColors.textMedium }}>
               Stay updated on upcoming Kenya–China partnership events and activities.
             </p>
           </div>
           {events.length === 0 ? (
-            <p className="text-center py-8" style={{ color: getThemeColors().textMedium }}>No events scheduled at this time.</p>
+            <p className="text-center py-8" style={{ color: themeColors.textMedium }}>No events scheduled at this time.</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {events.map((event, index) => (
                 <StaggeredItem key={event.id} settings={settings} index={index} enabled={false}>
-                  <div className="rounded-2xl border bg-white shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col" style={{ borderColor: getThemeColors().border, minHeight: "350px" }}>
-                    <div className="h-48 flex items-center justify-center overflow-hidden flex-shrink-0" style={{ backgroundColor: getThemeColors().backgroundLight }}>
+                  <div className="rounded-2xl border bg-white shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col" style={{ borderColor: themeColors.border, minHeight: "350px" }}>
+                    <div className="h-48 flex items-center justify-center overflow-hidden flex-shrink-0" style={{ backgroundColor: themeColors.backgroundLight }}>
                       {event.image_url ? (
                         <img src={event.image_url} alt={event.title} className="h-full w-full object-contain" />
                       ) : (
-                        <div className="text-center" style={{ color: getThemeColors().textMedium }}>
+                        <div className="text-center" style={{ color: themeColors.textMedium }}>
                           <svg className="w-16 h-16 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
@@ -968,28 +934,28 @@ const WriPartnershipPage = () => {
                       )}
                     </div>
                     <div className="p-6 flex-grow flex flex-col">
-                      <h3 className="text-xl font-semibold" style={{ color: getThemeColors().textDark }}>{event.title}</h3>
-                      <div className="mt-2 flex items-center gap-2 text-sm" style={{ color: getThemeColors().textMedium }}>
+                      <h3 className="text-xl font-semibold" style={{ color: themeColors.textDark }}>{event.title}</h3>
+                      <div className="mt-2 flex items-center gap-2 text-sm" style={{ color: themeColors.textMedium }}>
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         {formatDate(event.event_date)}
                       </div>
-                      <div className="mt-1 flex items-center gap-2 text-sm" style={{ color: getThemeColors().textMedium }}>
+                      <div className="mt-1 flex items-center gap-2 text-sm" style={{ color: themeColors.textMedium }}>
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         {event.location}
                       </div>
-                      <p className="mt-3 text-sm flex-grow" style={{ color: getThemeColors().textDark }}>{event.description}</p>
+                      <p className="mt-3 text-sm flex-grow" style={{ color: themeColors.textDark }}>{event.description}</p>
                       {event.registration_link && (
                         <a
                           href={event.registration_link}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-4 inline-block rounded-full px-6 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                          style={{ backgroundColor: getThemeColors().primary }}
+                          style={{ backgroundColor: themeColors.primary }}
                         >
                           Register Now
                         </a>
@@ -1003,35 +969,35 @@ const WriPartnershipPage = () => {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="survey" className="py-16 md:py-24 px-4" style={{ backgroundColor: getThemeColors().backgroundLight }} settings={settings}>
+      <AnimatedSection id="survey" className="py-16 md:py-24 px-4" style={{ backgroundColor: themeColors.backgroundLight }} settings={settings} themeColors={themeColors}>
         <div className="mx-auto max-w-4xl">
           {!surveyStarted ? (
             <div className="text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: getThemeColors().textDark }}>{getSurveyText().title}</h2>
-              <p className="text-lg mb-2" style={{ color: getThemeColors().textMedium }}>
-                {getSurveyText().description}
+              <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: themeColors.textDark }}>{surveyText.title}</h2>
+              <p className="text-lg mb-2" style={{ color: themeColors.textMedium }}>
+                {surveyText.description}
               </p>
-              <p className="text-sm mb-8" style={{ color: getThemeColors().textMedium }}>
-                {getSurveyText().estimatedTime}
+              <p className="text-sm mb-8" style={{ color: themeColors.textMedium }}>
+                {surveyText.estimatedTime}
               </p>
               <button
                 onClick={() => setSurveyStarted(true)}
                 className="relative px-8 py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
                 style={{ 
-                  backgroundColor: getThemeColors().primary, 
+                  backgroundColor: themeColors.primary, 
                   animation: "breathe 2s ease-in-out infinite"
                 }}
               >
-                <span className="relative z-10">{getSurveyText().startButtonText}</span>
+                <span className="relative z-10">{surveyText.startButtonText}</span>
                 <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-white opacity-50" style={{ animation: "borderSpin 2s linear infinite" }}></div>
               </button>
             </div>
           ) : (
             <>
               <div className="text-center mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold" style={{ color: getThemeColors().textDark }}>{getSurveyText().title}</h2>
-                <p className="mt-4 text-lg" style={{ color: getThemeColors().textMedium }}>
-                  {getSurveyText().description}
+                <h2 className="text-3xl md:text-4xl font-bold" style={{ color: themeColors.textDark }}>{surveyText.title}</h2>
+                <p className="mt-4 text-lg" style={{ color: themeColors.textMedium }}>
+                  {surveyText.description}
                 </p>
               </div>
 
@@ -1048,12 +1014,12 @@ const WriPartnershipPage = () => {
 
                 return Object.entries(groupedQuestions).map(([sectionNum, questions]) => (
                   <StaggeredItem key={`section-${sectionNum}`} settings={settings} index={parseInt(sectionNum) - 1} enabled={false}>
-                    <div className="rounded-2xl border p-6" style={{ backgroundColor: getThemeColors().backgroundLight, borderColor: getThemeColors().border }}>
-                      <h3 className="text-xl font-semibold mb-4" style={{ color: getThemeColors().textDark }}>Section {sectionNum}</h3>
+                    <div className="rounded-2xl border p-6" style={{ backgroundColor: themeColors.backgroundLight, borderColor: themeColors.border }}>
+                      <h3 className="text-xl font-semibold mb-4" style={{ color: themeColors.textDark }}>Section {sectionNum}</h3>
                       <div className="space-y-4">
                         {questions.map((question, qIndex) => (
                           <div key={question.id}>
-                            <label className="block text-sm font-medium mb-2" style={{ color: getThemeColors().textDark }}>
+                            <label className="block text-sm font-medium mb-2" style={{ color: themeColors.textDark }}>
                               {question.question_text} {question.required && "*"}
                             </label>
                             {question.question_type === "text" && (
@@ -1063,7 +1029,7 @@ const WriPartnershipPage = () => {
                                 value={surveyForm[`question_${question.id}`] || ""}
                                 onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
                                 className="w-full rounded-lg border px-3 py-2"
-                                style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                                style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                               />
                             )}
                             {question.question_type === "email" && (
@@ -1073,7 +1039,7 @@ const WriPartnershipPage = () => {
                                 value={surveyForm[`question_${question.id}`] || ""}
                                 onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
                                 className="w-full rounded-lg border px-3 py-2"
-                                style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                                style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                               />
                             )}
                             {question.question_type === "tel" && (
@@ -1083,7 +1049,7 @@ const WriPartnershipPage = () => {
                                 value={surveyForm[`question_${question.id}`] || ""}
                                 onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
                                 className="w-full rounded-lg border px-3 py-2"
-                                style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                                style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                               />
                             )}
                             {question.question_type === "textarea" && (
@@ -1092,14 +1058,14 @@ const WriPartnershipPage = () => {
                                 value={surveyForm[`question_${question.id}`] || ""}
                                 onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
                                 className="w-full rounded-lg border px-3 py-2"
-                                style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                                style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                                 rows={3}
                               />
                             )}
                             {question.question_type === "radio" && (
                               <div className="space-y-2">
                                 {question.options.map((option, optIndex) => (
-                                  <label key={optIndex} className="flex items-center gap-2 text-sm" style={{ color: getThemeColors().textMedium }}>
+                                  <label key={optIndex} className="flex items-center gap-2 text-sm" style={{ color: themeColors.textMedium }}>
                                     <input
                                       type="radio"
                                       name={`question_${question.id}`}
@@ -1116,7 +1082,7 @@ const WriPartnershipPage = () => {
                                     value={surveyForm[`question_${question.id}_other`] || ""}
                                     onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}_other`]: e.target.value })}
                                     className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                                    style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                                    style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                                     rows={2}
                                   />
                                 )}
@@ -1125,7 +1091,7 @@ const WriPartnershipPage = () => {
                             {question.question_type === "checkbox" && (
                               <div className="space-y-2">
                                 {question.options.map((option, optIndex) => (
-                                  <label key={optIndex} className="flex items-center gap-2 text-sm" style={{ color: getThemeColors().textMedium }}>
+                                  <label key={optIndex} className="flex items-center gap-2 text-sm" style={{ color: themeColors.textMedium }}>
                                     <input
                                       type="checkbox"
                                       checked={Array.isArray(surveyForm[`question_${question.id}`]) ? surveyForm[`question_${question.id}`].includes(option) : false}
@@ -1147,7 +1113,7 @@ const WriPartnershipPage = () => {
                                     value={surveyForm[`question_${question.id}_other`] || ""}
                                     onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}_other`]: e.target.value })}
                                     className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                                    style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                                    style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                                     rows={2}
                                   />
                                 )}
@@ -1156,7 +1122,7 @@ const WriPartnershipPage = () => {
                             {question.question_type === "scale" && (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-4">
-                                  <span className="text-sm" style={{ color: getThemeColors().textMedium }}>1 (Lowest)</span>
+                                  <span className="text-sm" style={{ color: themeColors.textMedium }}>1 (Lowest)</span>
                                   <input
                                     type="range"
                                     min="1"
@@ -1166,9 +1132,9 @@ const WriPartnershipPage = () => {
                                     onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: parseInt(e.target.value) })}
                                     className="flex-1"
                                   />
-                                  <span className="text-sm" style={{ color: getThemeColors().textMedium }}>10 (Highest)</span>
+                                  <span className="text-sm" style={{ color: themeColors.textMedium }}>10 (Highest)</span>
                                 </div>
-                                <div className="text-center font-bold" style={{ color: getThemeColors().textDark }}>
+                                <div className="text-center font-bold" style={{ color: themeColors.textDark }}>
                                   {surveyForm[`question_${question.id}`] || 5}
                                 </div>
                               </div>
@@ -1190,9 +1156,9 @@ const WriPartnershipPage = () => {
                 type="submit"
                 disabled={surveySubmitting}
                 className="w-full rounded-full py-3 text-lg font-semibold text-white disabled:opacity-50 transition hover:scale-105"
-                style={{ backgroundColor: getThemeColors().primary }}
+                style={{ backgroundColor: themeColors.primary }}
               >
-                {surveySubmitting ? "Submitting..." : getSurveyText().submitButtonText}
+                {surveySubmitting ? "Submitting..." : surveyText.submitButtonText}
               </button>
               </StaggeredItem>
             </form>
@@ -1203,17 +1169,17 @@ const WriPartnershipPage = () => {
 
       {showSuccessPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="rounded-2xl border p-8 text-center max-w-md mx-4" style={{ backgroundColor: "#ffffff", borderColor: getThemeColors().border }}>
-            <svg className="w-16 h-16 mx-auto mb-4" style={{ color: getThemeColors().primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="rounded-2xl border p-8 text-center max-w-md mx-4" style={{ backgroundColor: "#ffffff", borderColor: themeColors.border }}>
+            <svg className="w-16 h-16 mx-auto mb-4" style={{ color: themeColors.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 className="text-2xl font-semibold mb-2" style={{ color: getThemeColors().textDark }}>Thank You!</h3>
-            <p className="mb-6" style={{ color: getThemeColors().textMedium }}>Your survey response has been submitted successfully.</p>
+            <h3 className="text-2xl font-semibold mb-2" style={{ color: themeColors.textDark }}>Thank You!</h3>
+            <p className="mb-6" style={{ color: themeColors.textMedium }}>Your survey response has been submitted successfully.</p>
             <div className="flex gap-4 justify-center">
               <button
                 onClick={() => setShowSuccessPopup(false)}
                 className="px-6 py-2 rounded-full font-semibold text-white transition hover:scale-105"
-                style={{ backgroundColor: getThemeColors().primary }}
+                style={{ backgroundColor: themeColors.primary }}
               >
                 Close
               </button>
@@ -1226,7 +1192,7 @@ const WriPartnershipPage = () => {
                   setOtherInputs({});
                 }}
                 className="px-6 py-2 rounded-full font-semibold text-white transition hover:scale-105"
-                style={{ backgroundColor: getThemeColors().primaryDark }}
+                style={{ backgroundColor: themeColors.primaryDark }}
               >
                 Submit Again
               </button>
@@ -1239,23 +1205,23 @@ const WriPartnershipPage = () => {
         <AnimatedSection id="support" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
           <div className="mx-auto max-w-4xl">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold" style={{ color: getThemeColors().textDark }}>Need Support?</h2>
-              <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: getThemeColors().textMedium }}>
+              <h2 className="text-3xl md:text-4xl font-bold" style={{ color: themeColors.textDark }}>Need Support?</h2>
+              <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: themeColors.textMedium }}>
                 Have questions or need assistance? Reach out to us directly.
               </p>
             </div>
-            <div className="rounded-2xl border p-8 text-center" style={{ backgroundColor: getThemeColors().backgroundLight, borderColor: getThemeColors().border }}>
-              <svg className="w-16 h-16 mx-auto mb-4" style={{ color: getThemeColors().primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="rounded-2xl border p-8 text-center" style={{ backgroundColor: themeColors.backgroundLight, borderColor: themeColors.border }}>
+              <svg className="w-16 h-16 mx-auto mb-4" style={{ color: themeColors.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <h3 className="text-2xl font-semibold mb-2" style={{ color: getThemeColors().textDark }}>Contact Us</h3>
-              <p className="mb-6" style={{ color: getThemeColors().textMedium }}>
+              <h3 className="text-2xl font-semibold mb-2" style={{ color: themeColors.textDark }}>Contact Us</h3>
+              <p className="mb-6" style={{ color: themeColors.textMedium }}>
                 Send us an email for general inquiries or support
               </p>
               <a
                 href={`mailto:${settings?.support?.email || "info@kerea.org"}`}
                 className="inline-block px-8 py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
-                style={{ backgroundColor: getThemeColors().primary }}
+                style={{ backgroundColor: themeColors.primary }}
               >
                 {settings?.support?.email || "info@kerea.org"}
               </a>
@@ -1264,39 +1230,39 @@ const WriPartnershipPage = () => {
         </AnimatedSection>
       )}
 
-      <AnimatedSection id="partners" className="py-16 md:py-24 px-4" style={{ backgroundColor: getThemeColors().backgroundLight }} settings={settings}>
+      <AnimatedSection id="partners" className="py-16 md:py-24 px-4" style={{ backgroundColor: themeColors.backgroundLight }} settings={settings} themeColors={themeColors}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: getThemeColors().textDark }}>Partners & Stakeholders</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: getThemeColors().textMedium }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: themeColors.textDark }}>Partners & Stakeholders</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: themeColors.textMedium }}>
               Approved organisations and partners participating in the Kenya–China Renewable Energy Partnership.
             </p>
           </div>
           {partners.length === 0 ? (
-            <p className="text-center py-8" style={{ color: getThemeColors().textMedium }}>No partners listed at this time.</p>
+            <p className="text-center py-8" style={{ color: themeColors.textMedium }}>No partners listed at this time.</p>
           ) : (
             <div className="relative overflow-hidden">
               <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 {partners.map((partner, index) => (
                   <StaggeredItem key={partner.id} settings={settings} index={index} enabled={false}>
-                    <div className="flex-shrink-0 w-64 snap-center rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center text-center" style={{ backgroundColor: "#ffffff", borderColor: getThemeColors().border }}>
-                      <div className="h-24 w-24 flex items-center justify-center rounded-full" style={{ backgroundColor: getThemeColors().backgroundLight }}>
+                    <div className="flex-shrink-0 w-64 snap-center rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center text-center" style={{ backgroundColor: "#ffffff", borderColor: themeColors.border }}>
+                      <div className="h-24 w-24 flex items-center justify-center rounded-full" style={{ backgroundColor: themeColors.backgroundLight }}>
                         {partner.logo_url ? (
                           <img src={partner.logo_url} alt={partner.name} className="h-20 w-20 object-contain" />
                         ) : (
-                          <svg className="w-12 h-12" style={{ color: getThemeColors().textMedium, opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-12 h-12" style={{ color: themeColors.textMedium, opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
                         )}
                       </div>
-                      <h3 className="mt-4 font-semibold" style={{ color: getThemeColors().textDark }}>{partner.name}</h3>
+                      <h3 className="mt-4 font-semibold" style={{ color: themeColors.textDark }}>{partner.name}</h3>
                       {partner.website_url && (
                         <a
                           href={partner.website_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-3 inline-block rounded-full px-4 py-2 text-sm font-medium text-white transition hover:scale-105"
-                          style={{ backgroundColor: getThemeColors().primary }}
+                          style={{ backgroundColor: themeColors.primary }}
                         >
                           Visit Website
                         </a>
@@ -1310,28 +1276,28 @@ const WriPartnershipPage = () => {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="resources" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
+      <AnimatedSection id="resources" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings} themeColors={themeColors}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: getThemeColors().textDark }}>Resources</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: getThemeColors().textMedium }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: themeColors.textDark }}>Resources</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: themeColors.textMedium }}>
               Access reports, policy briefs, research, publications, and event reports.
             </p>
           </div>
           {resources.length === 0 ? (
-            <p className="text-center py-8" style={{ color: getThemeColors().textMedium }}>No resources available at this time.</p>
+            <p className="text-center py-8" style={{ color: themeColors.textMedium }}>No resources available at this time.</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               {resources.map((resource, index) => (
                 <StaggeredItem key={resource.id} settings={settings} index={index} enabled={false}>
-                  <div className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-lg transition-all" style={{ borderColor: getThemeColors().border }}>
+                  <div className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-lg transition-all" style={{ borderColor: themeColors.border }}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: getThemeColors().backgroundLight, color: getThemeColors().textMedium }}>
+                        <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: themeColors.backgroundLight, color: themeColors.textMedium }}>
                           {resource.resource_type}
                         </span>
-                        <h3 className="mt-3 text-lg font-semibold" style={{ color: getThemeColors().textDark }}>{resource.title}</h3>
-                        <p className="mt-2 text-sm" style={{ color: getThemeColors().textMedium }}>{resource.description}</p>
+                        <h3 className="mt-3 text-lg font-semibold" style={{ color: themeColors.textDark }}>{resource.title}</h3>
+                        <p className="mt-2 text-sm" style={{ color: themeColors.textMedium }}>{resource.description}</p>
                       </div>
                       <div className="ml-4 flex flex-col gap-2">
                         {resource.file_url && (
@@ -1340,7 +1306,7 @@ const WriPartnershipPage = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                            style={{ backgroundColor: getThemeColors().primary }}
+                            style={{ backgroundColor: themeColors.primary }}
                           >
                             <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -1372,34 +1338,34 @@ const WriPartnershipPage = () => {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="business-database" className="py-16 md:py-24 px-4" style={{ backgroundColor: getThemeColors().backgroundLight }} settings={settings}>
+      <AnimatedSection id="business-database" className="py-16 md:py-24 px-4" style={{ backgroundColor: themeColors.backgroundLight }} settings={settings} themeColors={themeColors}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: getThemeColors().textDark }}>Business Database</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: getThemeColors().textMedium }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: themeColors.textDark }}>Business Database</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: themeColors.textMedium }}>
               Search the directory of participating businesses approved for public display.
             </p>
           </div>
-          <div className="rounded-2xl border p-6 mb-8" style={{ backgroundColor: getThemeColors().backgroundLight, borderColor: getThemeColors().border }}>
+          <div className="rounded-2xl border p-6 mb-8" style={{ backgroundColor: themeColors.backgroundLight, borderColor: themeColors.border }}>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: getThemeColors().textDark }}>Country</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: themeColors.textDark }}>Country</label>
                 <input
                   type="text"
                   value={businessFilters.country}
                   onChange={(e) => setBusinessFilters({ ...businessFilters, country: e.target.value })}
                   placeholder="Filter by country"
                   className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                  style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: getThemeColors().textDark }}>Technology</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: themeColors.textDark }}>Technology</label>
                 <select
                   value={businessFilters.technology}
                   onChange={(e) => setBusinessFilters({ ...businessFilters, technology: e.target.value })}
                   className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                  style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                 >
                   <option value="">All technologies</option>
                   <option value="Solar PV">Solar PV</option>
@@ -1419,12 +1385,12 @@ const WriPartnershipPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: getThemeColors().textDark }}>Organisation Type</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: themeColors.textDark }}>Organisation Type</label>
                 <select
                   value={businessFilters.organisation_type}
                   onChange={(e) => setBusinessFilters({ ...businessFilters, organisation_type: e.target.value })}
                   className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                  style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                 >
                   <option value="">All types</option>
                   <option value="Company">Company</option>
@@ -1438,50 +1404,50 @@ const WriPartnershipPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: getThemeColors().textDark }}>Nature of Business</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: themeColors.textDark }}>Nature of Business</label>
                 <input
                   type="text"
                   value={businessFilters.nature_of_business}
                   onChange={(e) => setBusinessFilters({ ...businessFilters, nature_of_business: e.target.value })}
                   placeholder="Filter by business nature"
                   className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                  style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: getThemeColors().textDark }}>Partnership Interest</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: themeColors.textDark }}>Partnership Interest</label>
                 <input
                   type="text"
                   value={businessFilters.partnership_interest}
                   onChange={(e) => setBusinessFilters({ ...businessFilters, partnership_interest: e.target.value })}
                   placeholder="Filter by interest"
                   className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: getThemeColors().border, backgroundColor: "#ffffff" }}
+                  style={{ borderColor: themeColors.border, backgroundColor: "#ffffff" }}
                 />
               </div>
             </div>
           </div>
           {businesses.length === 0 ? (
-            <p className="text-center py-8" style={{ color: getThemeColors().textMedium }}>No businesses found matching your filters.</p>
+            <p className="text-center py-8" style={{ color: themeColors.textMedium }}>No businesses found matching your filters.</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {businesses.map((business) => (
-                <div key={business.id} className="rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all" style={{ backgroundColor: getThemeColors().backgroundLight, borderColor: getThemeColors().border }}>
+                <div key={business.id} className="rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all" style={{ backgroundColor: themeColors.backgroundLight, borderColor: themeColors.border }}>
                   {business.logo_url && (
                     <img src={business.logo_url} alt={business.name} className="h-20 w-20 object-contain" />
                   )}
-                  <h3 className="mt-4 text-lg font-semibold" style={{ color: getThemeColors().textDark }}>{business.name}</h3>
-                  <p className="mt-1 text-sm" style={{ color: getThemeColors().textMedium }}>{business.country}</p>
-                  <p className="mt-1 text-sm" style={{ color: getThemeColors().textMedium }}>{business.technology}</p>
-                  <p className="mt-1 text-sm" style={{ color: getThemeColors().textMedium }}>{business.organisation_type}</p>
-                  <p className="mt-2" style={{ color: getThemeColors().textDark }}>{business.description}</p>
+                  <h3 className="mt-4 text-lg font-semibold" style={{ color: themeColors.textDark }}>{business.name}</h3>
+                  <p className="mt-1 text-sm" style={{ color: themeColors.textMedium }}>{business.country}</p>
+                  <p className="mt-1 text-sm" style={{ color: themeColors.textMedium }}>{business.technology}</p>
+                  <p className="mt-1 text-sm" style={{ color: themeColors.textMedium }}>{business.organisation_type}</p>
+                  <p className="mt-2" style={{ color: themeColors.textDark }}>{business.description}</p>
                   {business.website_url && (
                     <a
                       href={business.website_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-4 inline-block rounded-full px-6 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                      style={{ backgroundColor: getThemeColors().primary }}
+                      style={{ backgroundColor: themeColors.primary }}
                     >
                       Visit Website
                     </a>
@@ -1493,12 +1459,12 @@ const WriPartnershipPage = () => {
         </div>
       </AnimatedSection>
 
-      <footer className="py-12 px-4" style={{ backgroundColor: getThemeColors().footerBackground, color: getThemeColors().footerText }}>
+      <footer className="py-12 px-4" style={{ backgroundColor: themeColors.footerBackground, color: themeColors.footerText }}>
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-8 md:grid-cols-3">
             <div>
               <h3 className="text-lg font-semibold">Africa–China Renewable Energy Partnership</h3>
-              <p className="mt-2" style={{ color: getThemeColors().footerLink }}>
+              <p className="mt-2" style={{ color: themeColors.footerLink }}>
                 {settings?.footer?.description || "A dedicated platform connecting Kenya's renewable energy sector with Chinese technology, investment, and business opportunities."}
               </p>
             </div>
@@ -1512,7 +1478,7 @@ const WriPartnershipPage = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="transition hover:opacity-80"
-                      style={{ color: getThemeColors().footerLink }}
+                      style={{ color: themeColors.footerLink }}
                     >
                       {link.label}
                     </a>
@@ -1522,7 +1488,7 @@ const WriPartnershipPage = () => {
                   <button
                     onClick={() => scrollToSection("business-database")}
                     className="transition hover:opacity-80"
-                    style={{ color: getThemeColors().footerLink }}
+                    style={{ color: themeColors.footerLink }}
                   >
                     Business Database
                   </button>
@@ -1531,18 +1497,18 @@ const WriPartnershipPage = () => {
             </div>
             <div>
               <h3 className="text-lg font-semibold">Contact</h3>
-              <p className="mt-2" style={{ color: getThemeColors().footerLink }}>
+              <p className="mt-2" style={{ color: themeColors.footerLink }}>
                 <a
                   href={`mailto:${settings?.footer?.contactEmail || "info@kerea.org"}`}
                   className="transition hover:opacity-80"
-                  style={{ color: getThemeColors().footerLink }}
+                  style={{ color: themeColors.footerLink }}
                 >
                   {settings?.footer?.contactEmail || "info@kerea.org"}
                 </a>
               </p>
             </div>
           </div>
-          <div className="mt-8 border-t pt-8 text-center" style={{ borderColor: getThemeColors().footerLink, color: getThemeColors().footerLink }}>
+          <div className="mt-8 border-t pt-8 text-center" style={{ borderColor: themeColors.footerLink, color: themeColors.footerLink }}>
             <p>© 2026 Kenya Renewable Energy Association (KEREA). All rights reserved.</p>
           </div>
         </div>
