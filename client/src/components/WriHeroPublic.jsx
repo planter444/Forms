@@ -56,9 +56,9 @@ const WriHeroPublic = ({ settings, onScrollToSection }) => {
       id="hero" 
       className="relative min-h-screen flex flex-col justify-center px-4 overflow-hidden pt-20"
       style={{
-        backgroundImage: heroSettings.backgroundImageUrl 
-          ? `url(${heroSettings.backgroundImageUrl})` 
-          : "linear-gradient(135deg, #059669 0%, #10b981 50%, #065f46 100%)",
+        backgroundImage: heroSettings.backgroundImageUrl
+          ? `url(${heroSettings.backgroundImageUrl})`
+          : "linear-gradient(135deg, #8bc046 0%, #a8d658 50%, #6b9a32 100%)",
         backgroundSize: "cover",
         backgroundPosition: "center"
       }}
@@ -85,7 +85,7 @@ const WriHeroPublic = ({ settings, onScrollToSection }) => {
           <button
             onClick={() => scrollToSection("enquiry")}
             className="px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
-            style={{ backgroundColor: "#ffffff", color: "#059669" }}
+            style={{ backgroundColor: "#ffffff", color: "#8bc046" }}
           >
             {heroSettings.primaryCta}
           </button>

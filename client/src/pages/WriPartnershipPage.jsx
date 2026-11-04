@@ -11,8 +11,8 @@ const animationStyles = `
     to { transform: rotate(360deg); }
   }
   @keyframes breathe {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7); }
-    50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(5, 150, 105, 0); }
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(139, 192, 70, 0.7); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(139, 192, 70, 0); }
   }
   @keyframes borderSpin {
     0% { transform: rotate(0deg); }
@@ -161,21 +161,20 @@ const AboutSection = ({ settings }) => {
   return (
     <div>
       <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>About the Partnership</h2>
-        <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
+        <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#4a7022" }}>About the Partnership</h2>
+        <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#6b9a32" }}>
           The Kenya–China Renewable Energy Partnership focuses on strengthening collaboration across key areas:
         </p>
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item, index) => {
           const colors = [
-            { bg: "#f0fdf4", border: "#a7f3d0", text: "#065f46" },
+            { bg: "#e8f5d0", border: "#c5e8a3", text: "#6b9a32" },
             { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" },
-            { bg: "#ffffff", border: "#e5e7eb", text: "#15803d" },
-            { bg: "#f7fee7", border: "#d9f99d", text: "#3f6212" },
+            { bg: "#ffffff", border: "#e5e7eb", text: "#8bc046" },
             { bg: "#f0f9ff", border: "#bae6fd", text: "#0c4a6e" },
-            { bg: "#fafaf9", border: "#e7e5e4", text: "#15803d" },
-            { bg: "#ecfdf5", border: "#a7f3d0", text: "#065f46" }
+            { bg: "#fafaf9", border: "#e7e5e4", text: "#8bc046" },
+            { bg: "#f5f0ff", border: "#e0d0f0", text: "#6b9a32" }
           ];
           const color = colors[index % colors.length];
 
@@ -196,10 +195,10 @@ const WriNav = ({ settings, overHero = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [navHidden, setNavHidden] = useState(false);
   const lastScrollY = useRef(0);
-  const primaryColor = overHero ? "#ffffff" : "#059669";
-  const textColor = overHero ? "#ffffff" : "#064e3b";
-  const backgroundColor = "#f0fdf4";
-  const borderColor = overHero ? "rgba(255,255,255,0.3)" : "#a7f3d0";
+  const primaryColor = overHero ? "#ffffff" : "#8bc046";
+  const textColor = overHero ? "#ffffff" : "#4a7022";
+  const backgroundColor = "#e8f5d0";
+  const borderColor = overHero ? "rgba(255,255,255,0.3)" : "#c5e8a3";
   const navOpacity = overHero ? 1 : 0.85;
   const slideDirection = "left";
 
@@ -649,10 +648,10 @@ const WriPartnershipPage = () => {
   };
 
   return (
-    <div style={{ color: "#064e3b" }}>
+    <div style={{ color: "#4a7022" }}>
       {settings?.patterns?.enabled !== false && (
-        <ParticleBackground 
-          color={settings?.patterns?.color || "#059669"}
+        <ParticleBackground
+          color={settings?.patterns?.color || "#8bc046"}
           opacity={(settings?.patterns?.opacity || 30) / 100}
           thickness={settings?.patterns?.thickness || 1}
         />
@@ -663,9 +662,9 @@ const WriPartnershipPage = () => {
         id="hero" 
         className="relative min-h-screen flex flex-col justify-center px-4 overflow-hidden pt-20"
         style={{
-          backgroundImage: settings?.realHero?.realDesktopBackgroundImageUrl 
-            ? `url(${settings?.realHero?.realDesktopBackgroundImageUrl})` 
-            : "linear-gradient(135deg, #059669 0%, #10b981 50%, #065f46 100%)",
+          backgroundImage: settings?.realHero?.realDesktopBackgroundImageUrl
+            ? `url(${settings?.realHero?.realDesktopBackgroundImageUrl})`
+            : "linear-gradient(135deg, #8bc046 0%, #a8d658 50%, #6b9a32 100%)",
           backgroundSize: "cover",
           backgroundPosition: "center"
         }}
@@ -714,7 +713,7 @@ const WriPartnershipPage = () => {
                 }
               }}
               className="px-7 py-2 md:px-10 md:py-4 mx-auto md:mx-0 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
-              style={{ backgroundColor: "#ffffff", color: "#059669", width: "auto" }}
+              style={{ backgroundColor: "#ffffff", color: "#8bc046", width: "auto" }}
             >
               {settings?.hero?.primaryCta || "KEREA Survey"}
             </button>
@@ -735,7 +734,7 @@ const WriPartnershipPage = () => {
         </div>
       </section>
 
-      <AnimatedSection id="about" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }} settings={settings}>
+      <AnimatedSection id="about" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#e8f5d0" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <AboutSection settings={settings} />
         </div>
@@ -744,20 +743,19 @@ const WriPartnershipPage = () => {
       <AnimatedSection id="areas" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Technology & Business Areas</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#4a7022" }}>Technology & Business Areas</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#6b9a32" }}>
               Explore the key technology sectors and business areas where Kenya and China can collaborate.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {technologyAreas.map((area, index) => {
               const colors = [
-                { bg: "#f0fdf4", border: "#a7f3d0", text: "#065f46" },
+                { bg: "#e8f5d0", border: "#c5e8a3", text: "#6b9a32" },
                 { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" },
-                { bg: "#ffffff", border: "#e5e7eb", text: "#15803d" },
-                { bg: "#f7fee7", border: "#d9f99d", text: "#3f6212" },
+                { bg: "#ffffff", border: "#e5e7eb", text: "#8bc046" },
                 { bg: "#f0f9ff", border: "#bae6fd", text: "#0c4a6e" },
-                { bg: "#fafaf9", border: "#e7e5e4", text: "#15803d" }
+                { bg: "#fafaf9", border: "#e7e5e4", text: "#8bc046" }
               ];
               const color = colors[index % colors.length];
 
@@ -842,7 +840,7 @@ const WriPartnershipPage = () => {
                       {getIcon(area.title)}
                     </div>
                     <h3 className="text-xl font-semibold" style={{ color: color.text }}>{area.title}</h3>
-                    <p className="mt-2 text-sm md:text-base flex-grow" style={{ color: "#065f46" }}>{area.description}</p>
+                    <p className="mt-2 text-sm md:text-base flex-grow" style={{ color: "#6b9a32" }}>{area.description}</p>
                   </div>
                 </StaggeredItem>
               );
@@ -851,11 +849,11 @@ const WriPartnershipPage = () => {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="opportunities" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }} settings={settings}>
+      <AnimatedSection id="opportunities" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#e8f5d0" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>B2B Opportunities</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#4a7022" }}>B2B Opportunities</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#6b9a32" }}>
               Discover the types of partnership and business opportunities available through this platform.
             </p>
           </div>
@@ -863,10 +861,10 @@ const WriPartnershipPage = () => {
             {b2bOpportunities.map((opportunity, index) => (
               <StaggeredItem key={index} settings={settings} index={index} enabled={true} customStaggerDelay={settings?.animation?.cardStaggerDelay || 500}>
                 <div className="flex items-center space-x-3 rounded-2xl bg-white p-4 shadow-sm hover:shadow-md transition-all">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full text-white font-bold text-lg" style={{ backgroundColor: "#059669" }}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full text-white font-bold text-lg" style={{ backgroundColor: "#8bc046" }}>
                     {index + 1}
                   </div>
-                  <span className="text-sm md:text-base font-medium" style={{ color: "#064e3b" }}>{opportunity}</span>
+                  <span className="text-sm md:text-base font-medium" style={{ color: "#4a7022" }}>{opportunity}</span>
                 </div>
               </StaggeredItem>
             ))}
@@ -877,23 +875,23 @@ const WriPartnershipPage = () => {
       <AnimatedSection id="events" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Events</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#4a7022" }}>Events</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#6b9a32" }}>
               Stay updated on upcoming Kenya–China partnership events and activities.
             </p>
           </div>
           {events.length === 0 ? (
-            <p className="text-center py-8" style={{ color: "#065f46" }}>No events scheduled at this time.</p>
+            <p className="text-center py-8" style={{ color: "#6b9a32" }}>No events scheduled at this time.</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {events.map((event, index) => (
                 <StaggeredItem key={event.id} settings={settings} index={index} enabled={false}>
-                  <div className="rounded-2xl border bg-white shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col" style={{ borderColor: "#a7f3d0", minHeight: "350px" }}>
-                    <div className="h-48 flex items-center justify-center overflow-hidden flex-shrink-0" style={{ backgroundColor: "#f0fdf4" }}>
+                  <div className="rounded-2xl border bg-white shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col" style={{ borderColor: "#c5e8a3", minHeight: "350px" }}>
+                    <div className="h-48 flex items-center justify-center overflow-hidden flex-shrink-0" style={{ backgroundColor: "#e8f5d0" }}>
                       {event.image_url ? (
                         <img src={event.image_url} alt={event.title} className="h-full w-full object-contain" />
                       ) : (
-                        <div className="text-center" style={{ color: "#065f46" }}>
+                        <div className="text-center" style={{ color: "#6b9a32" }}>
                           <svg className="w-16 h-16 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
@@ -902,28 +900,28 @@ const WriPartnershipPage = () => {
                       )}
                     </div>
                     <div className="p-6 flex-grow flex flex-col">
-                      <h3 className="text-xl font-semibold" style={{ color: "#064e3b" }}>{event.title}</h3>
-                      <div className="mt-2 flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                      <h3 className="text-xl font-semibold" style={{ color: "#4a7022" }}>{event.title}</h3>
+                      <div className="mt-2 flex items-center gap-2 text-sm" style={{ color: "#6b9a32" }}>
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         {formatDate(event.event_date)}
                       </div>
-                      <div className="mt-1 flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                      <div className="mt-1 flex items-center gap-2 text-sm" style={{ color: "#6b9a32" }}>
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         {event.location}
                       </div>
-                      <p className="mt-3 text-sm flex-grow" style={{ color: "#064e3b" }}>{event.description}</p>
+                      <p className="mt-3 text-sm flex-grow" style={{ color: "#4a7022" }}>{event.description}</p>
                       {event.registration_link && (
                         <a
                           href={event.registration_link}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-4 inline-block rounded-full px-6 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                          style={{ backgroundColor: "#059669" }}
+                          style={{ backgroundColor: "#8bc046" }}
                         >
                           Register Now
                         </a>
@@ -937,21 +935,21 @@ const WriPartnershipPage = () => {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="survey" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }} settings={settings}>
+      <AnimatedSection id="survey" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#e8f5d0" }} settings={settings}>
         <div className="mx-auto max-w-4xl">
           {!surveyStarted ? (
             <div className="text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#064e3b" }}>KEREA Survey</h2>
-              <p className="text-lg mb-2" style={{ color: "#065f46" }}>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#4a7022" }}>KEREA Survey</h2>
+              <p className="text-lg mb-2" style={{ color: "#6b9a32" }}>
                 Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement
               </p>
-              <p className="text-sm mb-8" style={{ color: "#065f46" }}>
+              <p className="text-sm mb-8" style={{ color: "#6b9a32" }}>
                 Estimated completion time: 5–7 minutes
               </p>
               <button
                 onClick={() => setSurveyStarted(true)}
                 className="relative px-8 py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
-                style={{ backgroundColor: "#059669", animation: "breathe 2s ease-in-out infinite" }}
+                style={{ backgroundColor: "#8bc046", animation: "breathe 2s ease-in-out infinite" }}
               >
                 <span className="relative z-10">Start Now</span>
                 <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-white opacity-50" style={{ animation: "borderSpin 2s linear infinite" }}></div>
@@ -960,8 +958,8 @@ const WriPartnershipPage = () => {
           ) : (
             <>
               <div className="text-center mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>KEREA Survey</h2>
-                <p className="mt-4 text-lg" style={{ color: "#065f46" }}>
+                <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#4a7022" }}>KEREA Survey</h2>
+                <p className="mt-4 text-lg" style={{ color: "#6b9a32" }}>
                   Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement
                 </p>
               </div>
@@ -979,12 +977,12 @@ const WriPartnershipPage = () => {
 
                 return Object.entries(groupedQuestions).map(([sectionNum, questions]) => (
                   <StaggeredItem key={`section-${sectionNum}`} settings={settings} index={parseInt(sectionNum) - 1} enabled={false}>
-                    <div className="rounded-2xl border p-6" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-                      <h3 className="text-xl font-semibold mb-4" style={{ color: "#064e3b" }}>Section {sectionNum}</h3>
+                    <div className="rounded-2xl border p-6" style={{ backgroundColor: "#e8f5d0", borderColor: "#c5e8a3" }}>
+                      <h3 className="text-xl font-semibold mb-4" style={{ color: "#4a7022" }}>Section {sectionNum}</h3>
                       <div className="space-y-4">
                         {questions.map((question, qIndex) => (
                           <div key={question.id}>
-                            <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>
+                            <label className="block text-sm font-medium mb-2" style={{ color: "#4a7022" }}>
                               {question.question_text} {question.required && "*"}
                             </label>
                             {question.question_type === "text" && (
@@ -994,7 +992,7 @@ const WriPartnershipPage = () => {
                                 value={surveyForm[`question_${question.id}`] || ""}
                                 onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
                                 className="w-full rounded-lg border px-3 py-2"
-                                style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                                style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                               />
                             )}
                             {question.question_type === "email" && (
@@ -1004,7 +1002,7 @@ const WriPartnershipPage = () => {
                                 value={surveyForm[`question_${question.id}`] || ""}
                                 onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
                                 className="w-full rounded-lg border px-3 py-2"
-                                style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                                style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                               />
                             )}
                             {question.question_type === "tel" && (
@@ -1014,7 +1012,7 @@ const WriPartnershipPage = () => {
                                 value={surveyForm[`question_${question.id}`] || ""}
                                 onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
                                 className="w-full rounded-lg border px-3 py-2"
-                                style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                                style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                               />
                             )}
                             {question.question_type === "textarea" && (
@@ -1023,14 +1021,14 @@ const WriPartnershipPage = () => {
                                 value={surveyForm[`question_${question.id}`] || ""}
                                 onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: e.target.value })}
                                 className="w-full rounded-lg border px-3 py-2"
-                                style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                                style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                                 rows={3}
                               />
                             )}
                             {question.question_type === "radio" && (
                               <div className="space-y-2">
                                 {question.options.map((option, optIndex) => (
-                                  <label key={optIndex} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                                  <label key={optIndex} className="flex items-center gap-2 text-sm" style={{ color: "#6b9a32" }}>
                                     <input
                                       type="radio"
                                       name={`question_${question.id}`}
@@ -1047,7 +1045,7 @@ const WriPartnershipPage = () => {
                                     value={surveyForm[`question_${question.id}_other`] || ""}
                                     onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}_other`]: e.target.value })}
                                     className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                                    style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                                    style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                                     rows={2}
                                   />
                                 )}
@@ -1056,7 +1054,7 @@ const WriPartnershipPage = () => {
                             {question.question_type === "checkbox" && (
                               <div className="space-y-2">
                                 {question.options.map((option, optIndex) => (
-                                  <label key={optIndex} className="flex items-center gap-2 text-sm" style={{ color: "#065f46" }}>
+                                  <label key={optIndex} className="flex items-center gap-2 text-sm" style={{ color: "#6b9a32" }}>
                                     <input
                                       type="checkbox"
                                       checked={Array.isArray(surveyForm[`question_${question.id}`]) ? surveyForm[`question_${question.id}`].includes(option) : false}
@@ -1078,7 +1076,7 @@ const WriPartnershipPage = () => {
                                     value={surveyForm[`question_${question.id}_other`] || ""}
                                     onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}_other`]: e.target.value })}
                                     className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
-                                    style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                                    style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                                     rows={2}
                                   />
                                 )}
@@ -1087,7 +1085,7 @@ const WriPartnershipPage = () => {
                             {question.question_type === "scale" && (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-4">
-                                  <span className="text-sm" style={{ color: "#065f46" }}>1 (Lowest)</span>
+                                  <span className="text-sm" style={{ color: "#6b9a32" }}>1 (Lowest)</span>
                                   <input
                                     type="range"
                                     min="1"
@@ -1097,9 +1095,9 @@ const WriPartnershipPage = () => {
                                     onChange={(e) => setSurveyForm({ ...surveyForm, [`question_${question.id}`]: parseInt(e.target.value) })}
                                     className="flex-1"
                                   />
-                                  <span className="text-sm" style={{ color: "#065f46" }}>10 (Highest)</span>
+                                  <span className="text-sm" style={{ color: "#6b9a32" }}>10 (Highest)</span>
                                 </div>
-                                <div className="text-center font-bold" style={{ color: "#064e3b" }}>
+                                <div className="text-center font-bold" style={{ color: "#4a7022" }}>
                                   {surveyForm[`question_${question.id}`] || 5}
                                 </div>
                               </div>
@@ -1121,7 +1119,7 @@ const WriPartnershipPage = () => {
                 type="submit"
                 disabled={surveySubmitting}
                 className="w-full rounded-full py-3 text-lg font-semibold text-white disabled:opacity-50 transition hover:scale-105"
-                style={{ backgroundColor: "#059669" }}
+                style={{ backgroundColor: "#8bc046" }}
               >
                 {surveySubmitting ? "Submitting..." : "Submit Survey"}
               </button>
@@ -1134,17 +1132,17 @@ const WriPartnershipPage = () => {
 
       {showSuccessPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="rounded-2xl border p-8 text-center max-w-md mx-4" style={{ backgroundColor: "#ffffff", borderColor: "#a7f3d0" }}>
-            <svg className="w-16 h-16 mx-auto mb-4" style={{ color: "#059669" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="rounded-2xl border p-8 text-center max-w-md mx-4" style={{ backgroundColor: "#ffffff", borderColor: "#c5e8a3" }}>
+            <svg className="w-16 h-16 mx-auto mb-4" style={{ color: "#8bc046" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 className="text-2xl font-semibold mb-2" style={{ color: "#064e3b" }}>Thank You!</h3>
-            <p className="mb-6" style={{ color: "#065f46" }}>Your survey response has been submitted successfully.</p>
+            <h3 className="text-2xl font-semibold mb-2" style={{ color: "#4a7022" }}>Thank You!</h3>
+            <p className="mb-6" style={{ color: "#6b9a32" }}>Your survey response has been submitted successfully.</p>
             <div className="flex gap-4 justify-center">
               <button
                 onClick={() => setShowSuccessPopup(false)}
                 className="px-6 py-2 rounded-full font-semibold text-white transition hover:scale-105"
-                style={{ backgroundColor: "#059669" }}
+                style={{ backgroundColor: "#8bc046" }}
               >
                 Close
               </button>
@@ -1157,7 +1155,7 @@ const WriPartnershipPage = () => {
                   setOtherInputs({});
                 }}
                 className="px-6 py-2 rounded-full font-semibold text-white transition hover:scale-105"
-                style={{ backgroundColor: "#065f46" }}
+                style={{ backgroundColor: "#6b9a32" }}
               >
                 Submit Again
               </button>
@@ -1170,23 +1168,23 @@ const WriPartnershipPage = () => {
         <AnimatedSection id="support" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
           <div className="mx-auto max-w-4xl">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Need Support?</h2>
-              <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
+              <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#4a7022" }}>Need Support?</h2>
+              <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#6b9a32" }}>
                 Have questions or need assistance? Reach out to us directly.
               </p>
             </div>
-            <div className="rounded-2xl border p-8 text-center" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
-              <svg className="w-16 h-16 mx-auto mb-4" style={{ color: "#059669" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="rounded-2xl border p-8 text-center" style={{ backgroundColor: "#e8f5d0", borderColor: "#c5e8a3" }}>
+              <svg className="w-16 h-16 mx-auto mb-4" style={{ color: "#8bc046" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <h3 className="text-2xl font-semibold mb-2" style={{ color: "#064e3b" }}>Contact Us</h3>
-              <p className="mb-6" style={{ color: "#065f46" }}>
+              <h3 className="text-2xl font-semibold mb-2" style={{ color: "#4a7022" }}>Contact Us</h3>
+              <p className="mb-6" style={{ color: "#6b9a32" }}>
                 Send us an email for general inquiries or support
               </p>
               <a
                 href={`mailto:${settings?.support?.email || "info@kerea.org"}`}
                 className="inline-block px-8 py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
-                style={{ backgroundColor: "#059669" }}
+                style={{ backgroundColor: "#8bc046" }}
               >
                 {settings?.support?.email || "info@kerea.org"}
               </a>
@@ -1195,39 +1193,39 @@ const WriPartnershipPage = () => {
         </AnimatedSection>
       )}
 
-      <AnimatedSection id="partners" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }} settings={settings}>
+      <AnimatedSection id="partners" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#e8f5d0" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Partners & Stakeholders</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#4a7022" }}>Partners & Stakeholders</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#6b9a32" }}>
               Approved organisations and partners participating in the Kenya–China Renewable Energy Partnership.
             </p>
           </div>
           {partners.length === 0 ? (
-            <p className="text-center py-8" style={{ color: "#065f46" }}>No partners listed at this time.</p>
+            <p className="text-center py-8" style={{ color: "#6b9a32" }}>No partners listed at this time.</p>
           ) : (
             <div className="relative overflow-hidden">
               <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 {partners.map((partner, index) => (
                   <StaggeredItem key={partner.id} settings={settings} index={index} enabled={false}>
-                    <div className="flex-shrink-0 w-64 snap-center rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center text-center" style={{ backgroundColor: "#ffffff", borderColor: "#a7f3d0" }}>
-                      <div className="h-24 w-24 flex items-center justify-center rounded-full" style={{ backgroundColor: "#f0fdf4" }}>
+                    <div className="flex-shrink-0 w-64 snap-center rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center text-center" style={{ backgroundColor: "#ffffff", borderColor: "#c5e8a3" }}>
+                      <div className="h-24 w-24 flex items-center justify-center rounded-full" style={{ backgroundColor: "#e8f5d0" }}>
                         {partner.logo_url ? (
                           <img src={partner.logo_url} alt={partner.name} className="h-20 w-20 object-contain" />
                         ) : (
-                          <svg className="w-12 h-12" style={{ color: "#065f46", opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-12 h-12" style={{ color: "#6b9a32", opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
                         )}
                       </div>
-                      <h3 className="mt-4 font-semibold" style={{ color: "#064e3b" }}>{partner.name}</h3>
+                      <h3 className="mt-4 font-semibold" style={{ color: "#4a7022" }}>{partner.name}</h3>
                       {partner.website_url && (
                         <a
                           href={partner.website_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-3 inline-block rounded-full px-4 py-2 text-sm font-medium text-white transition hover:scale-105"
-                          style={{ backgroundColor: "#059669" }}
+                          style={{ backgroundColor: "#8bc046" }}
                         >
                           Visit Website
                         </a>
@@ -1244,25 +1242,25 @@ const WriPartnershipPage = () => {
       <AnimatedSection id="resources" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ffffff" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Resources</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#4a7022" }}>Resources</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#6b9a32" }}>
               Access reports, policy briefs, research, publications, and event reports.
             </p>
           </div>
           {resources.length === 0 ? (
-            <p className="text-center py-8" style={{ color: "#065f46" }}>No resources available at this time.</p>
+            <p className="text-center py-8" style={{ color: "#6b9a32" }}>No resources available at this time.</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               {resources.map((resource, index) => (
                 <StaggeredItem key={resource.id} settings={settings} index={index} enabled={false}>
-                  <div className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-lg transition-all" style={{ borderColor: "#a7f3d0" }}>
+                  <div className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-lg transition-all" style={{ borderColor: "#c5e8a3" }}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "#f0fdf4", color: "#065f46" }}>
+                        <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "#e8f5d0", color: "#6b9a32" }}>
                           {resource.resource_type}
                         </span>
-                        <h3 className="mt-3 text-lg font-semibold" style={{ color: "#064e3b" }}>{resource.title}</h3>
-                        <p className="mt-2 text-sm" style={{ color: "#065f46" }}>{resource.description}</p>
+                        <h3 className="mt-3 text-lg font-semibold" style={{ color: "#4a7022" }}>{resource.title}</h3>
+                        <p className="mt-2 text-sm" style={{ color: "#6b9a32" }}>{resource.description}</p>
                       </div>
                       <div className="ml-4 flex flex-col gap-2">
                         {resource.file_url && (
@@ -1271,7 +1269,7 @@ const WriPartnershipPage = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                            style={{ backgroundColor: "#059669" }}
+                            style={{ backgroundColor: "#8bc046" }}
                           >
                             <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -1303,34 +1301,34 @@ const WriPartnershipPage = () => {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="business-database" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#f0fdf4" }} settings={settings}>
+      <AnimatedSection id="business-database" className="py-16 md:py-24 px-4" style={{ backgroundColor: "#e8f5d0" }} settings={settings}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#064e3b" }}>Business Database</h2>
-            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#065f46" }}>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#4a7022" }}>Business Database</h2>
+            <p className="mt-4 text-lg max-w-3xl mx-auto" style={{ color: "#6b9a32" }}>
               Search the directory of participating businesses approved for public display.
             </p>
           </div>
-          <div className="rounded-2xl border p-6 mb-8" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+          <div className="rounded-2xl border p-6 mb-8" style={{ backgroundColor: "#e8f5d0", borderColor: "#c5e8a3" }}>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Country</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#4a7022" }}>Country</label>
                 <input
                   type="text"
                   value={businessFilters.country}
                   onChange={(e) => setBusinessFilters({ ...businessFilters, country: e.target.value })}
                   placeholder="Filter by country"
                   className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                  style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Technology</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#4a7022" }}>Technology</label>
                 <select
                   value={businessFilters.technology}
                   onChange={(e) => setBusinessFilters({ ...businessFilters, technology: e.target.value })}
                   className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                  style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                 >
                   <option value="">All technologies</option>
                   <option value="Solar PV">Solar PV</option>
@@ -1350,12 +1348,12 @@ const WriPartnershipPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Organisation Type</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#4a7022" }}>Organisation Type</label>
                 <select
                   value={businessFilters.organisation_type}
                   onChange={(e) => setBusinessFilters({ ...businessFilters, organisation_type: e.target.value })}
                   className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                  style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                 >
                   <option value="">All types</option>
                   <option value="Company">Company</option>
@@ -1369,50 +1367,50 @@ const WriPartnershipPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Nature of Business</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#4a7022" }}>Nature of Business</label>
                 <input
                   type="text"
                   value={businessFilters.nature_of_business}
                   onChange={(e) => setBusinessFilters({ ...businessFilters, nature_of_business: e.target.value })}
                   placeholder="Filter by business nature"
                   className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                  style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#064e3b" }}>Partnership Interest</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#4a7022" }}>Partnership Interest</label>
                 <input
                   type="text"
                   value={businessFilters.partnership_interest}
                   onChange={(e) => setBusinessFilters({ ...businessFilters, partnership_interest: e.target.value })}
                   placeholder="Filter by interest"
                   className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#a7f3d0", backgroundColor: "#ffffff" }}
+                  style={{ borderColor: "#c5e8a3", backgroundColor: "#ffffff" }}
                 />
               </div>
             </div>
           </div>
           {businesses.length === 0 ? (
-            <p className="text-center py-8" style={{ color: "#065f46" }}>No businesses found matching your filters.</p>
+            <p className="text-center py-8" style={{ color: "#6b9a32" }}>No businesses found matching your filters.</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {businesses.map((business) => (
-                <div key={business.id} className="rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all" style={{ backgroundColor: "#f0fdf4", borderColor: "#a7f3d0" }}>
+                <div key={business.id} className="rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all" style={{ backgroundColor: "#e8f5d0", borderColor: "#c5e8a3" }}>
                   {business.logo_url && (
                     <img src={business.logo_url} alt={business.name} className="h-20 w-20 object-contain" />
                   )}
-                  <h3 className="mt-4 text-lg font-semibold" style={{ color: "#064e3b" }}>{business.name}</h3>
-                  <p className="mt-1 text-sm" style={{ color: "#065f46" }}>{business.country}</p>
-                  <p className="mt-1 text-sm" style={{ color: "#065f46" }}>{business.technology}</p>
-                  <p className="mt-1 text-sm" style={{ color: "#065f46" }}>{business.organisation_type}</p>
-                  <p className="mt-2" style={{ color: "#064e3b" }}>{business.description}</p>
+                  <h3 className="mt-4 text-lg font-semibold" style={{ color: "#4a7022" }}>{business.name}</h3>
+                  <p className="mt-1 text-sm" style={{ color: "#6b9a32" }}>{business.country}</p>
+                  <p className="mt-1 text-sm" style={{ color: "#6b9a32" }}>{business.technology}</p>
+                  <p className="mt-1 text-sm" style={{ color: "#6b9a32" }}>{business.organisation_type}</p>
+                  <p className="mt-2" style={{ color: "#4a7022" }}>{business.description}</p>
                   {business.website_url && (
                     <a
                       href={business.website_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-4 inline-block rounded-full px-6 py-2 text-sm font-semibold text-white transition hover:scale-105"
-                      style={{ backgroundColor: "#059669" }}
+                      style={{ backgroundColor: "#8bc046" }}
                     >
                       Visit Website
                     </a>
@@ -1424,12 +1422,12 @@ const WriPartnershipPage = () => {
         </div>
       </AnimatedSection>
 
-      <footer className="py-12 px-4" style={{ backgroundColor: "#064e3b", color: "#ffffff" }}>
+      <footer className="py-12 px-4" style={{ backgroundColor: "#4a7022", color: "#ffffff" }}>
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-8 md:grid-cols-3">
             <div>
               <h3 className="text-lg font-semibold">Africa–China Renewable Energy Partnership</h3>
-              <p className="mt-2" style={{ color: "#a7f3d0" }}>
+              <p className="mt-2" style={{ color: "#c5e8a3" }}>
                 {settings?.footer?.description || "A dedicated platform connecting Kenya's renewable energy sector with Chinese technology, investment, and business opportunities."}
               </p>
             </div>
@@ -1443,7 +1441,7 @@ const WriPartnershipPage = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="transition hover:opacity-80"
-                      style={{ color: "#a7f3d0" }}
+                      style={{ color: "#c5e8a3" }}
                     >
                       {link.label}
                     </a>
@@ -1453,7 +1451,7 @@ const WriPartnershipPage = () => {
                   <button
                     onClick={() => scrollToSection("business-database")}
                     className="transition hover:opacity-80"
-                    style={{ color: "#a7f3d0" }}
+                    style={{ color: "#c5e8a3" }}
                   >
                     Business Database
                   </button>
@@ -1462,18 +1460,18 @@ const WriPartnershipPage = () => {
             </div>
             <div>
               <h3 className="text-lg font-semibold">Contact</h3>
-              <p className="mt-2" style={{ color: "#a7f3d0" }}>
+              <p className="mt-2" style={{ color: "#c5e8a3" }}>
                 <a
                   href={`mailto:${settings?.footer?.contactEmail || "info@kerea.org"}`}
                   className="transition hover:opacity-80"
-                  style={{ color: "#a7f3d0" }}
+                  style={{ color: "#c5e8a3" }}
                 >
                   {settings?.footer?.contactEmail || "info@kerea.org"}
                 </a>
               </p>
             </div>
           </div>
-          <div className="mt-8 border-t pt-8 text-center" style={{ borderColor: "#a7f3d0", color: "#a7f3d0" }}>
+          <div className="mt-8 border-t pt-8 text-center" style={{ borderColor: "#c5e8a3", color: "#c5e8a3" }}>
             <p>© 2026 Kenya Renewable Energy Association (KEREA). All rights reserved.</p>
           </div>
         </div>
