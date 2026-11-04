@@ -433,25 +433,6 @@ export const defaultSolarMkononiSettings = {
       backgroundImageUrl: "",
       overlayOpacity: 0.3
     },
-    colors: {
-      primary: "#8bc046",
-      primaryDark: "#6b9a32",
-      primaryLight: "#a8d658",
-      textDark: "#4a7022",
-      textMedium: "#6b9a32",
-      backgroundLight: "#e8f5d0",
-      border: "#c5e8a3",
-      footerBackground: "#4a7022",
-      footerText: "#ffffff",
-      footerLink: "#c5e8a3"
-    },
-    survey: {
-      title: "KEREA Survey",
-      description: "Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement",
-      estimatedTime: "Estimated completion time: 5–7 minutes",
-      startButtonText: "Start Now",
-      submitButtonText: "Submit Survey"
-    },
     about: {
       title: "About the Partnership",
       description: "The Kenya–China Renewable Energy Partnership focuses on strengthening collaboration across key areas:",
