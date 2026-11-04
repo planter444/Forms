@@ -20,6 +20,25 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
       backgroundImageUrl: "",
       overlayOpacity: 0.3
     },
+    colors: {
+      primary: "#8bc046",
+      primaryDark: "#6b9a32",
+      primaryLight: "#a8d658",
+      textDark: "#4a7022",
+      textMedium: "#6b9a32",
+      backgroundLight: "#e8f5d0",
+      border: "#c5e8a3",
+      footerBackground: "#4a7022",
+      footerText: "#ffffff",
+      footerLink: "#c5e8a3"
+    },
+    survey: {
+      title: "KEREA Survey",
+      description: "Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement",
+      estimatedTime: "Estimated completion time: 5–7 minutes",
+      startButtonText: "Start Now",
+      submitButtonText: "Submit Survey"
+    },
     support: {
       email: "info@kerea.org",
       enabled: true
@@ -1079,6 +1098,7 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
       <div className="flex flex-wrap gap-2 border-b pb-2" style={{ borderColor: palette.borderColor }}>
         {[
           { id: "real-hero", label: "Real Hero", icon: "⭐" },
+          { id: "colors-survey", label: "Colors & Survey", icon: "🎨" },
           { id: "animation", label: "Animation", icon: "🎬" },
           { id: "support", label: "Support", icon: "❓" },
           { id: "quick-links", label: "Quick Links", icon: "🔗" },
@@ -1116,6 +1136,342 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
 
       {activeSubTab === "real-hero" && (
         <WriRealHeroAdmin token={token} palette={palette} setNotice={setNotice} setError={setError} />
+      )}
+
+      {activeSubTab === "colors-survey" && (
+        <div className="rounded-[28px] border p-6" style={{ borderColor: palette.borderColor, backgroundColor: palette.surfaceBackground }}>
+          <h3 className="text-lg font-semibold mb-4" style={{ color: palette.textColor }}>Colors & Survey Settings</h3>
+          
+          <div className="space-y-6">
+            {/* Colors Section */}
+            <div>
+              <h4 className="text-md font-semibold mb-3" style={{ color: palette.textColor }}>Color Palette</h4>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Primary Color</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={wriSettings.colors?.primary || "#8bc046"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, primary: e.target.value }
+                      })}
+                      className="w-12 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={wriSettings.colors?.primary || "#8bc046"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, primary: e.target.value }
+                      })}
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: palette.borderColor }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Primary Dark</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={wriSettings.colors?.primaryDark || "#6b9a32"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, primaryDark: e.target.value }
+                      })}
+                      className="w-12 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={wriSettings.colors?.primaryDark || "#6b9a32"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, primaryDark: e.target.value }
+                      })}
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: palette.borderColor }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Primary Light</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={wriSettings.colors?.primaryLight || "#a8d658"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, primaryLight: e.target.value }
+                      })}
+                      className="w-12 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={wriSettings.colors?.primaryLight || "#a8d658"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, primaryLight: e.target.value }
+                      })}
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: palette.borderColor }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Text Dark</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={wriSettings.colors?.textDark || "#4a7022"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, textDark: e.target.value }
+                      })}
+                      className="w-12 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={wriSettings.colors?.textDark || "#4a7022"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, textDark: e.target.value }
+                      })}
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: palette.borderColor }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Text Medium</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={wriSettings.colors?.textMedium || "#6b9a32"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, textMedium: e.target.value }
+                      })}
+                      className="w-12 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={wriSettings.colors?.textMedium || "#6b9a32"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, textMedium: e.target.value }
+                      })}
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: palette.borderColor }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Background Light</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={wriSettings.colors?.backgroundLight || "#e8f5d0"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, backgroundLight: e.target.value }
+                      })}
+                      className="w-12 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={wriSettings.colors?.backgroundLight || "#e8f5d0"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, backgroundLight: e.target.value }
+                      })}
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: palette.borderColor }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Border Color</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={wriSettings.colors?.border || "#c5e8a3"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, border: e.target.value }
+                      })}
+                      className="w-12 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={wriSettings.colors?.border || "#c5e8a3"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, border: e.target.value }
+                      })}
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: palette.borderColor }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Footer Background</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={wriSettings.colors?.footerBackground || "#4a7022"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, footerBackground: e.target.value }
+                      })}
+                      className="w-12 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={wriSettings.colors?.footerBackground || "#4a7022"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, footerBackground: e.target.value }
+                      })}
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: palette.borderColor }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Footer Text</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={wriSettings.colors?.footerText || "#ffffff"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, footerText: e.target.value }
+                      })}
+                      className="w-12 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={wriSettings.colors?.footerText || "#ffffff"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, footerText: e.target.value }
+                      })}
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: palette.borderColor }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Footer Link</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={wriSettings.colors?.footerLink || "#c5e8a3"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, footerLink: e.target.value }
+                      })}
+                      className="w-12 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={wriSettings.colors?.footerLink || "#c5e8a3"}
+                      onChange={(e) => setWriSettings({
+                        ...wriSettings,
+                        colors: { ...wriSettings.colors, footerLink: e.target.value }
+                      })}
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: palette.borderColor }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Survey Text Section */}
+            <div className="border-t pt-6" style={{ borderColor: palette.borderColor }}>
+              <h4 className="text-md font-semibold mb-3" style={{ color: palette.textColor }}>Survey Text Customization</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Survey Title</label>
+                  <input
+                    type="text"
+                    value={wriSettings.survey?.title || "KEREA Survey"}
+                    onChange={(e) => setWriSettings({
+                      ...wriSettings,
+                      survey: { ...wriSettings.survey, title: e.target.value }
+                    })}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: palette.borderColor }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Survey Description</label>
+                  <textarea
+                    value={wriSettings.survey?.description || "Kenya Renewable Energy Association Survey on Kenya–China Business & Partnership Engagement"}
+                    onChange={(e) => setWriSettings({
+                      ...wriSettings,
+                      survey: { ...wriSettings.survey, description: e.target.value }
+                    })}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: palette.borderColor }}
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Estimated Time</label>
+                  <input
+                    type="text"
+                    value={wriSettings.survey?.estimatedTime || "Estimated completion time: 5–7 minutes"}
+                    onChange={(e) => setWriSettings({
+                      ...wriSettings,
+                      survey: { ...wriSettings.survey, estimatedTime: e.target.value }
+                    })}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: palette.borderColor }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Start Button Text</label>
+                  <input
+                    type="text"
+                    value={wriSettings.survey?.startButtonText || "Start Now"}
+                    onChange={(e) => setWriSettings({
+                      ...wriSettings,
+                      survey: { ...wriSettings.survey, startButtonText: e.target.value }
+                    })}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: palette.borderColor }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: palette.textColor }}>Submit Button Text</label>
+                  <input
+                    type="text"
+                    value={wriSettings.survey?.submitButtonText || "Submit Survey"}
+                    onChange={(e) => setWriSettings({
+                      ...wriSettings,
+                      survey: { ...wriSettings.survey, submitButtonText: e.target.value }
+                    })}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: palette.borderColor }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSaveWriSettings}
+              className="px-6 py-3 rounded-full font-medium text-white transition hover:scale-105"
+              style={{ backgroundColor: palette.primary }}
+            >
+              Save Colors & Survey Settings
+            </button>
+          </div>
+        </div>
       )}
 
       {activeSubTab === "animation" && (

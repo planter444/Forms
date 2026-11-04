@@ -13,6 +13,20 @@ const WriHeroPublic = ({ settings, onScrollToSection }) => {
     overlayOpacity: 0.3
   });
 
+  // Use customizable colors from settings or fallback to default colors
+  const colors = settings?.colors || {
+    primary: "#8bc046",
+    primaryDark: "#6b9a32",
+    primaryLight: "#a8d658",
+    textDark: "#4a7022",
+    textMedium: "#6b9a32",
+    backgroundLight: "#e8f5d0",
+    border: "#c5e8a3",
+    footerBackground: "#4a7022",
+    footerText: "#ffffff",
+    footerLink: "#c5e8a3"
+  };
+
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -58,7 +72,7 @@ const WriHeroPublic = ({ settings, onScrollToSection }) => {
       style={{
         backgroundImage: heroSettings.backgroundImageUrl
           ? `url(${heroSettings.backgroundImageUrl})`
-          : "linear-gradient(135deg, #8bc046 0%, #a8d658 50%, #6b9a32 100%)",
+          : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryLight} 50%, ${colors.primaryDark} 100%)`,
         backgroundSize: "cover",
         backgroundPosition: "center"
       }}
@@ -85,7 +99,7 @@ const WriHeroPublic = ({ settings, onScrollToSection }) => {
           <button
             onClick={() => scrollToSection("enquiry")}
             className="px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-white transition hover:scale-105 shadow-xl"
-            style={{ backgroundColor: "#ffffff", color: "#8bc046" }}
+            style={{ backgroundColor: "#ffffff", color: colors.primary }}
           >
             {heroSettings.primaryCta}
           </button>
