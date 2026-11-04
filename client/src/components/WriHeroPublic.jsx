@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const WriHeroPublic = ({ settings, onScrollToSection }) => {
   const [heroSettings, setHeroSettings] = useState({
     title: "Africa–China Renewable Energy Partnership",
-    subtitle: "Connecting Kenya's Renewable Energy Sector with Chinese Technology, Investment and Business Opportunities.",
+    subtitle: "Connectingaa Kenya's Renewable Energy Sector with Chinese Technology, Investment and Business Opportunities.",
     introduction: "This dedicated hub facilitates B2B linkages, partnership enquiries, events, business opportunities, knowledge sharing, and stakeholder engagement between Kenya and China in the renewable energy sector.",
     primaryCta: "Make a Partnership Enquiry",
     secondaryCta: "Browse Business Database",
