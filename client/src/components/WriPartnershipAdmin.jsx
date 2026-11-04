@@ -633,22 +633,22 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     try {
       console.log("Saving WRI settings:", wriSettings);
       let imageUrl = wriSettings.hero?.backgroundImageUrl || "";
-      
+
       if (heroImageFile) {
         const formData = new FormData();
         formData.append("file", heroImageFile);
         formData.append("type", "hero");
-        
+
         const uploadResponse = await fetch(`${API_URL}/api/wri/admin/upload`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: formData
         });
-        
+
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
           imageUrl = uploadData.url;
@@ -658,10 +658,10 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
           return;
         }
       }
-      
+
       const payload = { wri: { ...wriSettings, hero: { ...wriSettings.hero, backgroundImageUrl: imageUrl } } };
       console.log("Saving payload:", payload);
-      
+
       const response = await fetch(`${API_URL}/api/wri/admin/settings`, {
         method: "PUT",
         headers: {
@@ -670,11 +670,11 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
         },
         body: JSON.stringify(payload)
       });
-      
+
       console.log("Save response status:", response.status);
       const responseData = await response.json();
       console.log("Save response data:", responseData);
-      
+
       if (response.ok) {
         setNotice("Hero settings saved successfully!");
         setHeroImageFile(null);
@@ -688,6 +688,46 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
     } catch (error) {
       console.error("Error saving WRI settings:", error);
       setError("Failed to save WRI settings");
+    }
+  };
+
+  const handleSaveColorsAndSurvey = async (event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    try {
+      console.log("Saving colors and survey settings:", wriSettings);
+
+      const payload = { wri: wriSettings };
+      console.log("Saving payload:", payload);
+
+      const response = await fetch(`${API_URL}/api/wri/admin/settings`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      console.log("Save response status:", response.status);
+      const responseData = await response.json();
+      console.log("Save response data:", responseData);
+
+      if (response.ok) {
+        setNotice("Colors & Survey settings saved successfully!");
+        // Reload the entire component state
+        await fetchWriSettings();
+      } else {
+        const errorData = await response.json();
+        console.error("Save failed:", errorData);
+        setError(errorData.error || "Failed to save colors & survey settings");
+      }
+    } catch (error) {
+      console.error("Error saving colors & survey settings:", error);
+      setError("Failed to save colors & survey settings");
     }
   };
 
@@ -1464,7 +1504,7 @@ const WriPartnershipAdmin = ({ token, palette, setNotice, setError }) => {
 
             <button
               type="button"
-              onClick={handleSaveWriSettings}
+              onClick={handleSaveColorsAndSurvey}
               className="px-6 py-3 rounded-full font-medium text-white transition hover:scale-105"
               style={{ backgroundColor: palette.primary }}
             >

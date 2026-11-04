@@ -485,7 +485,22 @@ const WriPartnershipPage = () => {
   const [overHero, setOverHero] = useState(true);
 
   // Helper to get theme colors - called fresh each time
-  const getThemeColors = () => settings?.colors || {
+  const getThemeColors = () => {
+    const colors = settings?.colors || {
+      primary: "#8bc046",
+      primaryDark: "#6b9a32",
+      primaryLight: "#a8d658",
+      textDark: "#4a7022",
+      textMedium: "#6b9a32",
+      backgroundLight: "#e8f5d0",
+      border: "#c5e8a3",
+      footerBackground: "#4a7022",
+      footerText: "#ffffff",
+      footerLink: "#c5e8a3"
+    };
+    console.log("getThemeColors called, using:", colors);
+    return colors;
+  };
     primary: "#8bc046",
     primaryDark: "#6b9a32",
     primaryLight: "#a8d658",
@@ -542,7 +557,9 @@ const WriPartnershipPage = () => {
         const response = await fetch(`${API_URL}/api/wri/public/settings`);
         const data = await response.json();
         console.log("Fetched WRI settings:", data);
-        
+        console.log("WRI colors from API:", data.wri?.colors);
+        console.log("WRI survey from API:", data.wri?.survey);
+
         // The API returns { wri: { hero: {...} } }
         if (data.wri) {
           setSettings(data.wri);
